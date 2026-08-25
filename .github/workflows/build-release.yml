@@ -1,0 +1,114 @@
+name: Build and Release Windows EXE
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Install Playwright Browsers
+        run: playwright install chromium
+
+      - name: Create assets directory
+        run: mkdir -p assets/icons assets/themes
+
+      - name: Build EXE
+        run: pyinstaller WebScraperPro.spec --noconfirm
+
+      - name: Create ZIP archive
+        run: Compress-Archive -Path dist/WebScraperPro/* -DestinationPath WebScraperPro-Windows-x64.zip
+
+      - name: Generate Changelog
+        id: changelog
+        shell: bash
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "tag=${TAG#v}" >> $GITHUB_OUTPUT
+          cat > RELEASE_NOTES.md << 'EOF'
+          # WebScraper Pro - Commercial Web Scraping Application
+
+          ## Features
+
+          ### Core Engine
+          - **Static Scraping**: Fast HTTP-based scraping with requests + BeautifulSoup
+          - **Dynamic Scraping**: Full browser automation with Playwright (JavaScript rendering)
+          - **Auto Mode**: Automatically selects the best scraping method
+          - **Proxy Rotation**: Multiple strategies (random, round-robin, least-used, fastest)
+          - **Rate Limiting**: Token bucket, sliding window, fixed delay, adaptive algorithms
+          - **Smart Parsing**: CSS Selector, XPath, Regex, JSON Path, Table extraction
+
+          ### Data Export
+          - CSV (Excel-compatible with UTF-8 BOM)
+          - JSON (pretty-printed)
+          - Excel XLSX (with formatting, auto-filter, frozen headers)
+          - XML (structured)
+          - HTML Table (styled, responsive)
+          - SQLite Database
+
+          ### Professional UI
+          - Modern dark/light theme
+          - Dashboard with real-time progress
+          - Visual extraction rules manager
+          - Proxy management with health monitoring
+          - Task scheduler for automated scraping
+          - Comprehensive settings panel
+
+          ### Advanced Features
+          - Stealth mode to avoid bot detection
+          - Custom page actions (click, type, scroll, wait)
+          - Auto-scroll for infinite pages
+          - Link following and crawling
+          - Per-domain rate limiting
+          - Scheduled tasks (interval, daily, weekly, monthly)
+
+          ## Installation
+          1. Download and extract the ZIP file
+          2. Run `WebScraperPro.exe`
+          3. No installation required - portable application
+
+          ## System Requirements
+          - Windows 10/11 (64-bit)
+          - ~150 MB disk space
+          - Internet connection for scraping
+
+          ---
+          Built with Python, CustomTkinter, Playwright, and BeautifulSoup
+          EOF
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: "WebScraper Pro ${{ steps.changelog.outputs.tag }}"
+          body_path: RELEASE_NOTES.md
+          files: |
+            WebScraperPro-Windows-x64.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
