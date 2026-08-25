@@ -11,6 +11,8 @@ from ui.panels.dashboard_panel import DashboardPanel
 from ui.panels.proxy_panel import ProxyPanel
 from ui.panels.scheduler_panel import SchedulerPanel
 from ui.panels.settings_panel import SettingsPanel
+from ui.panels.log_panel import LogPanel
+from ui.panels.log_panel import LogPanel
 
 
 class MainWindow(ctk.CTk):
@@ -20,11 +22,12 @@ class MainWindow(ctk.CTk):
         "dashboard": "⬡",
         "scraper": "◈",
         "proxies": "⊕",
+        "logs": "☰",
         "scheduler": "⏲",
         "settings": "⚙",
     }
-    NAV_LABELS = ["Scraper", "Proxies", "Scheduler", "Settings"]
-    NAV_KEYS = ["dashboard", "scraper", "proxies", "scheduler", "settings"]
+    NAV_LABELS = ["Scraper", "Proxies", "Logs", "Scheduler", "Settings"]
+    NAV_KEYS = ["dashboard", "scraper", "proxies", "logs", "scheduler", "settings"]
 
     def __init__(self):
         super().__init__()
@@ -106,7 +109,7 @@ class MainWindow(ctk.CTk):
             self._nav_buttons[key] = btn
 
         # Bottom version label
-        ctk.CTkLabel(sidebar, text="v1.0.0",
+        ctk.CTkLabel(sidebar, text="v1.1.0",
                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
                       text_color=theme.colors.TEXT_MUTED
                       ).grid(row=10, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
@@ -166,6 +169,8 @@ class MainWindow(ctk.CTk):
         self._panels["proxies"] = ProxyPanel(self._content_frame)
         self._panels["scheduler"] = SchedulerPanel(self._content_frame)
         self._panels["settings"] = SettingsPanel(self._content_frame)
+        self._panels["logs"] = LogPanel(self._content_frame)
+        self._log_panel = self._panels["logs"]
 
     # ------------------------------------------------------------------
     # Status Bar
@@ -255,6 +260,7 @@ class MainWindow(ctk.CTk):
             "dashboard": "Scraper",
             "scraper": "Scraper",
             "proxies": "Proxy Manager",
+            "logs": "Logs",
             "scheduler": "Task Scheduler",
             "settings": "Settings",
         }
@@ -338,7 +344,7 @@ class MainWindow(ctk.CTk):
             text_color=color_map.get(status, theme.colors.TEXT_MUTED)))
 
     def _on_log(self, message: str, level: str = "info"):
-        pass  # Could connect to a log panel in future
+        self.after(0, lambda: self._log_panel.add_log(message, level))  # Could connect to a log panel in future
 
     # ------------------------------------------------------------------
     # Periodic Update

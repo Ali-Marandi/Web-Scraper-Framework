@@ -11,6 +11,7 @@ from ui.styles import (
 )
 from core.data_parser import ExtractionRule, ExtractionMethod
 from core.scraper_engine import ScrapingMode
+from core.templates import TEMPLATES, get_template_names
 
 
 class DashboardPanel(ctk.CTkFrame):
@@ -37,7 +38,7 @@ class DashboardPanel(ctk.CTkFrame):
     def _build_toolbar(self):
         bar = ctk.CTkFrame(self, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
         bar.grid(row=0, column=0, columnspan=2, sticky="ew", padx=Spacing.MD, pady=(Spacing.MD, 0))
-        bar.grid_columnconfigure(1, weight=1)
+        bar.grid_columnconfigure(3, weight=1)
 
         ctk.CTkLabel(bar, text="Scraping Mode", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
                       text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, padx=(Spacing.MD, Spacing.XS))
@@ -61,16 +62,30 @@ class DashboardPanel(ctk.CTkFrame):
             fg_color=theme.colors.ERROR, hover_color=theme.colors.ERROR, corner_radius=Radius.MD,
             command=self._on_stop, state="disabled",
         )
-        self._btn_stop.grid(row=0, column=3, padx=(0, Spacing.MD), pady=Spacing.SM)
+        self._btn_stop.grid(row=0, column=3, padx=Spacing.SM, pady=Spacing.SM)
+
+        # Templates dropdown
+        ctk.CTkLabel(bar, text="Templates", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=4, padx=(Spacing.LG, Spacing.XS))
+        self._template_menu = ctk.CTkOptionMenu(
+            bar, values=get_template_names(), width=160,
+            font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+            fg_color=theme.colors.BG_INPUT, button_color=theme.colors.BG_ELEVATED,
+            button_hover_color=theme.colors.BG_HOVER,
+            dropdown_fg_color=theme.colors.BG_ELEVATED,
+            text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+            command=self._on_template_selected,
+        )
+        self._template_menu.grid(row=0, column=5, padx=(Spacing.XS, Spacing.MD), pady=Spacing.SM)
 
     def _build_main_area(self):
         left = ctk.CTkFrame(self, fg_color="transparent")
-        left.grid(row=1, column=0, sticky="nsew", padx=(Spacing.MD, Spacing.XS / 2), pady=Spacing.MD)
+        left.grid(row=1, column=0, sticky="nsew", padx=(Spacing.MD, 4), pady=Spacing.MD)
         left.grid_rowconfigure(2, weight=1)
         left.grid_columnconfigure(0, weight=1)
 
         right = ctk.CTkFrame(self, fg_color="transparent")
-        right.grid(row=1, column=1, sticky="nsew", padx=(Spacing.XS / 2, Spacing.MD), pady=Spacing.MD)
+        right.grid(row=1, column=1, sticky="nsew", padx=(4, Spacing.MD), pady=Spacing.MD)
         right.grid_rowconfigure(2, weight=1)
         right.grid_columnconfigure(0, weight=1)
 
@@ -352,7 +367,26 @@ class DashboardPanel(ctk.CTkFrame):
                        command=_remove_row).grid(row=0, column=3, padx=(Spacing.XS, 0))
 
     def _rebuild_action_rows(self):
+        # Recollect actions from remaining rows
         pass
+
+    def _on_export(self, fmt: str):
+        path = filedialog.asksaveasfilename(
+            defaultextension=f".{fmt}",
+            filetypes=[(f"{fmt.upper()} files", f"*.{fmt}"), ("All files", "*.*")],
+        )
+        if path:
+            try:
+                app = self.winfo_toplevel()
+                if hasattr(app, 'engine') and app.engine.results:
+                    app.engine.export_results(fmt, path)
+                    from tkinter import messagebox
+                    messagebox.showinfo("Export", f"Exported {len(app.engine.results)} records to:\n{path}")
+                    if hasattr(app, '_log_panel'):
+                        app._log_panel.add_log(f"Exported to {path}", "info")
+            except Exception as e:
+                from tkinter import messagebox
+                messagebox.showerror("Export Error", str(e))
 
     def _collect_page_actions(self) -> list[dict]:
         actions = []
@@ -397,19 +431,35 @@ class DashboardPanel(ctk.CTkFrame):
         self._results_text.configure(state="normal")
         self._results_text.delete("0.0", "end")
         if not results:
-            self._results_text.insert("end", "No results yet. Configure rules and start scraping.")
+            self._results_text.insert("end", "No results yet. Add extraction rules and start scraping.")
         else:
-            headers = list(results[0].keys())
-            col_widths = {h: max(len(str(h)), max((len(str(r.get(h, ""))) for r in results), default=0)) for h in headers}
-            col_widths = {h: min(w, 40) for h, w in col_widths.items()}
+            # Filter out internal fields
+            display = []
+            for r in results:
+                display.append({k: v for k, v in r.items() if not k.startswith("_")})
+            headers = list(display[0].keys()) if display else []
+            col_widths = {}
+            for h in headers:
+                w = len(str(h))
+                for r in display:
+                    val = str(r.get(h, ""))
+                    if isinstance(r.get(h), list):
+                        val = "; ".join(str(v) for v in r.get(h, []))
+                    w = max(w, len(val))
+                col_widths[h] = min(w, 40)
 
             header_line = "  |  ".join(str(h).ljust(col_widths.get(h, 12)) for h in headers)
             sep_line = "-+-".join("-" * col_widths.get(h, 12) for h in headers)
             self._results_text.insert("end", header_line + "\n")
             self._results_text.insert("end", sep_line + "\n")
-            for row in results:
-                line = "  |  ".join(str(row.get(h, ""))[:col_widths.get(h, 12)].ljust(col_widths.get(h, 12)) for h in headers)
-                self._results_text.insert("end", line + "\n")
+            for row in display:
+                cells = []
+                for h in headers:
+                    val = row.get(h, "")
+                    if isinstance(val, list):
+                        val = "; ".join(str(v) for v in val)
+                    cells.append(str(val)[:col_widths.get(h, 12)].ljust(col_widths.get(h, 12)))
+                self._results_text.insert("end", "  |  ".join(cells) + "\n")
         self._results_text.configure(state="disabled")
 
     # ------------------------------------------------------------------
@@ -436,20 +486,6 @@ class DashboardPanel(ctk.CTkFrame):
             ).grid(row=1, column=col, padx=(Spacing.MD if col == 0 else 2, Spacing.MD if col == 4 else 2),
                    pady=(Spacing.XS, Spacing.MD))
 
-    def _on_export(self, fmt: str):
-        path = filedialog.asksaveasfilename(
-            defaultextension=f".{fmt}",
-            filetypes=[(f"{fmt.upper()} files", f"*.{fmt}"), ("All files", "*.*")],
-        )
-        if path:
-            engine = self.winfo_toplevel().engine
-            if engine and engine.results:
-                try:
-                    engine.export_results(fmt, path)
-                    messagebox.showinfo("Export", f"Results exported to:\n{path}")
-                except Exception as e:
-                    messagebox.showerror("Export Error", str(e))
-
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
@@ -457,28 +493,81 @@ class DashboardPanel(ctk.CTkFrame):
     def _on_mode_change(self, value):
         pass
 
-    def _on_start(self):
-        engine = self.winfo_toplevel().engine
-        if not engine:
+    def _on_template_selected(self, name):
+        from core.templates import get_template_by_name
+        t = get_template_by_name(name)
+        if not t:
             return
+        # Set URLs
+        self._url_text.configure(state="normal")
+        self._url_text.delete("0.0", "end")
+        for url in t.urls:
+            self._url_text.insert("end", url + "\n")
+        # Set mode
+        mode_map = {"static": "Static", "dynamic": "Dynamic", "auto": "Auto"}
+        self._mode_seg.set(mode_map.get(t.mode, "Static"))
+
+        # Set options
+        self._var_auto_scroll.set(t.options.get("auto_scroll", False))
+        self._var_follow_links.set(t.options.get("follow_links", False))
+        max_p = t.options.get("max_pages", 100)
+        self._max_pages_entry.delete("0", "end")
+        self._max_pages_entry.insert("0", str(max_p))
+
+        # Set extraction rules
+        self._extraction_rules.clear()
+        for rd in t.extraction_rules:
+            self._extraction_rules.append(ExtractionRule(
+                name=rd["name"],
+                method=ExtractionMethod(rd["method"]),
+                selector=rd["selector"],
+                attribute=rd.get("attribute"),
+                default=rd.get("default"),
+                is_list=rd.get("is_list", False),
+            ))
+        self._refresh_rules_list()
+
+    def _on_start(self):
+        app = self.winfo_toplevel()
+        if not hasattr(app, 'engine'):
+            return
+        engine = app.engine
         urls_text = self._url_text.get("0.0", "end").strip()
         if not urls_text:
+            messagebox.showwarning("Warning", "Please enter at least one URL.")
             return
         urls = [u.strip() for u in urls_text.splitlines() if u.strip()]
+        # Basic URL validation
+        valid_urls = []
+        for u in urls:
+            if u.startswith(("http://", "https://")):
+                valid_urls.append(u)
+            else:
+                messagebox.showwarning("Invalid URL", f"URL must start with http:// or https://:\n{u}")
+                return
+        if not valid_urls:
+            return
         mode_map = {"Static": ScrapingMode.STATIC, "Dynamic": ScrapingMode.DYNAMIC, "Auto": ScrapingMode.AUTO}
         mode = mode_map.get(self._mode_seg.get(), ScrapingMode.STATIC)
 
+        # Clear old rules and add current
+        engine.data_parser.clear_rules()
         for rule in self._extraction_rules:
             engine.data_parser.add_rule(rule)
 
+        engine.clear_results()
         self._btn_start.configure(state="disabled")
         self._btn_stop.configure(state="normal")
-        engine.scrape_urls(urls, mode, callback=self._on_progress)
+        if hasattr(app, '_log_panel'):
+            app._log_panel.add_log(f"Starting {mode.value} scrape of {len(valid_urls)} URL(s)", "info")
+        engine.scrape_urls(valid_urls, mode, callback=self._on_progress)
 
     def _on_stop(self):
-        engine = self.winfo_toplevel().engine
-        if engine:
-            engine.stop()
+        app = self.winfo_toplevel()
+        if hasattr(app, 'engine') and app.engine:
+            app.engine.stop()
+            if hasattr(app, '_log_panel'):
+                app._log_panel.add_log("Scraping stopped by user", "warning")
         self._btn_start.configure(state="normal")
         self._btn_stop.configure(state="disabled")
 
