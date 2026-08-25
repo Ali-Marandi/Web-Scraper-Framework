@@ -34,7 +34,8 @@ jobs:
       - name: Install Playwright Browsers
         run: playwright install chromium
 
-      - name: Create assets directory
+      - name: Ensure assets directories exist
+        shell: bash
         run: mkdir -p assets/icons assets/themes
 
       - name: Build EXE
