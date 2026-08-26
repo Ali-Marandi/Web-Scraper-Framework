@@ -114,7 +114,7 @@ jobs:
           name: "WebScraper Pro ${{ steps.changelog.outputs.tag }}"
           body_path: RELEASE_NOTES.md
           files: |
-            WebScraperPro-Windows-x64.zip
+            WebScraperPro/WebScraperPro-Windows-x64.zip
           draft: false
           prerelease: false
         env:
