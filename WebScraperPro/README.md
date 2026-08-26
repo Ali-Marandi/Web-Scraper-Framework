@@ -17,6 +17,19 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 
 ---
 
+## What's New in v1.3.0
+
+- **URL Explorer** - New panel that crawls pages and categorizes all links (internal, external, images, documents, videos, emails, social, feeds) with tree view and filters
+- **Link Validation** - Validate extracted links with HTTP status codes, detect broken links, measure response times
+- **CSS Selector Tester** - New tool tab: test CSS selectors against HTML with attribute extraction
+- **XPath Tester** - New tool tab: test XPath expressions against HTML pages
+- **JSON Path Tester** - New tool tab: test JSON path queries against JSON data with slice support
+- **Response Inspector** - New tool tab: inspect HTTP responses with formatted headers, body, and raw request/response details
+- **Enhanced Proxy Panel** - JSON file import, export proxy list, auto-remove dead proxies after testing, detailed test results with IP and timing
+- **9 Navigation Panels** - Added Explorer panel (Scraper, Explorer, Proxies, Tools, Headers, History, Logs, Scheduler, Settings)
+
+---
+
 ## What's New in v1.2.0
 
 - **Scrape History** - Full session history with stats, search, detail view, and re-export

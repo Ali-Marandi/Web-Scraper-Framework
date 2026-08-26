@@ -299,7 +299,7 @@ class SettingsPanel(ctk.CTkScrollableFrame):
         card = self._section_card("About", 6)
 
         info_text = (
-            "WebScraper Pro  v1.2.0\n"
+            "WebScraper Pro  v1.3.0\n"
             "A commercial-grade web scraping application.\n"
             "Built with Python, CustomTkinter, and Playwright.\n\n"
             "Features:\n"
@@ -317,6 +317,9 @@ class SettingsPanel(ctk.CTkScrollableFrame):
             "  - Data transform pipeline (15 operations)\n"
             "  - Captcha detection (reCAPTCHA, hCaptcha, Cloudflare)\n"
             "  - Scrape history with session replay & re-export\n"
+            "  - URL Explorer with link categorization & validation\n"
+            "  - CSS/XPath/JSON Path testers & Response Inspector\n"
+            "  - Enhanced proxy panel: file import, auto-remove dead\n"
         )
 
         ctk.CTkLabel(card, text=info_text, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),

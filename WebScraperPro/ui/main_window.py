@@ -15,24 +15,26 @@ from ui.panels.log_panel import LogPanel
 from ui.panels.tools_panel import ToolsPanel
 from ui.panels.headers_panel import HeadersPanel
 from ui.panels.history_panel import HistoryPanel
+from ui.panels.explorer_panel import ExplorerPanel
 
 
 class MainWindow(ctk.CTk):
     """Main application window for WebScraper Pro."""
 
     NAV_ICONS = {
-        "dashboard": "⬡",
-        "scraper": "◈",
-        "proxies": "⊕",
-        "tools": "✦",
-        "headers": "☰",
-        "history": "⏰",
-        "logs": "≡",
-        "scheduler": "⏲",
-        "settings": "⚙",
+        "dashboard": "\u2421",
+        "scraper": "\u25c8",
+        "explorer": "\u25c9",
+        "proxies": "\u2295",
+        "tools": "\u2726",
+        "headers": "\u2630",
+        "history": "\u23f0",
+        "logs": "\u2261",
+        "scheduler": "\u23f2",
+        "settings": "\u2699",
     }
-    NAV_LABELS = ["Scraper", "Proxies", "Tools", "Headers", "History", "Logs", "Scheduler", "Settings"]
-    NAV_KEYS = ["dashboard", "scraper", "proxies", "tools", "headers", "history", "logs", "scheduler", "settings"]
+    NAV_LABELS = ["Scraper", "Explorer", "Proxies", "Tools", "Headers", "History", "Logs", "Scheduler", "Settings"]
+    NAV_KEYS = ["dashboard", "scraper", "explorer", "proxies", "tools", "headers", "history", "logs", "scheduler", "settings"]
 
     def __init__(self):
         super().__init__()
@@ -125,11 +127,11 @@ class MainWindow(ctk.CTk):
             self._nav_buttons[key] = btn
 
         # Bottom version label
-        self._version_label = ctk.CTkLabel(sidebar, text="v1.2.0",
+        self._version_label = ctk.CTkLabel(sidebar, text="v1.3.0",
                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
                       text_color=theme.colors.TEXT_MUTED
                       )
-        self._version_label.grid(row=12, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
+        self._version_label.grid(row=13, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
 
     # ------------------------------------------------------------------
     # Header
@@ -154,14 +156,14 @@ class MainWindow(ctk.CTk):
         right.pack(side="right", padx=Spacing.LG, fill="y")
 
         self._indicator_label = ctk.CTkLabel(
-            right, text="● Idle",
+            right, text="* Idle",
             font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
             text_color=theme.colors.TEXT_MUTED,
         )
         self._indicator_label.pack(side="right", padx=Spacing.SM, pady=Spacing.SM)
 
         self._theme_btn = ctk.CTkButton(
-            right, text="☽", width=34, height=30,
+            right, text=":", width=34, height=30,
             font=(Typography.FONT_FAMILY, Typography.H2_SIZE),
             fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
             text_color=theme.colors.TEXT_SECONDARY, corner_radius=Radius.MD,
@@ -183,6 +185,7 @@ class MainWindow(ctk.CTk):
         # Create all panels (only one visible at a time)
         self._panels["dashboard"] = DashboardPanel(self._content_frame)
         self._panels["scraper"] = self._panels["dashboard"]  # alias
+        self._panels["explorer"] = ExplorerPanel(self._content_frame)
         self._panels["proxies"] = ProxyPanel(self._content_frame)
         self._panels["tools"] = ToolsPanel(self._content_frame)
         self._panels["headers"] = HeadersPanel(self._content_frame)
@@ -284,6 +287,7 @@ class MainWindow(ctk.CTk):
         title_map = {
             "dashboard": "Scraper",
             "scraper": "Scraper",
+            "explorer": "URL Explorer",
             "proxies": "Proxy Manager",
             "tools": "Developer Tools",
             "headers": "Headers & Cookies",
@@ -302,7 +306,7 @@ class MainWindow(ctk.CTk):
         theme.toggle()
         apply_custom_styles()
         self.configure(fg_color=theme.colors.BG_MAIN)
-        icon = "☀" if theme.is_dark else "☽"
+        icon = "\u2600" if theme.is_dark else "\u263d"
         self._theme_btn.configure(text=icon)
         self._reapply_theme_colors()
         # Refresh current panel
@@ -368,7 +372,7 @@ class MainWindow(ctk.CTk):
             "idle": theme.colors.TEXT_MUTED,
         }
         self.after(0, lambda: self._indicator_label.configure(
-            text=f"● {status.capitalize()}",
+            text=f"* {status.capitalize()}",
             text_color=color_map.get(status, theme.colors.TEXT_MUTED)))
 
     def _resolve_icon_path(self) -> str | None:
