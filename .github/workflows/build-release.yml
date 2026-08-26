@@ -33,15 +33,21 @@ jobs:
 
       - name: Install Playwright Browsers
         run: playwright install chromium
+        continue-on-error: true
+
+      - name: Change to project directory
+        run: cd WebScraperPro
 
       - name: Ensure assets directories exist
         shell: bash
         run: mkdir -p assets/icons assets/themes
 
       - name: Build EXE
+        working-directory: WebScraperPro
         run: pyinstaller WebScraperPro.spec --noconfirm
 
       - name: Create ZIP archive
+        working-directory: WebScraperPro
         run: Compress-Archive -Path dist/WebScraperPro/* -DestinationPath WebScraperPro-Windows-x64.zip
 
       - name: Generate Changelog
