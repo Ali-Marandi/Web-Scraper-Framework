@@ -1,2 +1,10 @@
-skills/
-node_modules/
+__pycache__/
+*.pyc
+tool-results/
+dist/
+build/
+*.spec
+projects/
+history/
+worklog.md
+.download/

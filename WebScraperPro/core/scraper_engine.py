@@ -23,6 +23,8 @@ from .rate_limiter import RateLimiter, LimitStrategy, DomainLimits
 from .data_parser import DataParser, ExtractionRule, ExtractionMethod, ParseResult
 from .data_exporter import DataExporter
 from .scheduler import TaskScheduler, ScheduledTask, ScheduleType
+from .history import HistoryManager, HistoryEntry
+from .captcha_detector import detect_captcha, get_captcha_info_for_log
 
 
 class ScrapingMode(Enum):
@@ -72,11 +74,9 @@ class ScrapingProject:
     max_depth: int = 1
     follow_links: bool = False
     max_pages: int = 100
+    concurrent_workers: int = 1
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    concurrent_workers: int = 1
-    use_proxy: bool = False
-    use_rate_limit: bool = True
 
     def to_dict(self) -> Dict:
         return {
@@ -128,6 +128,7 @@ class ScraperEngine:
         self._data_parser = DataParser()
         self._data_exporter = DataExporter()
         self._scheduler = TaskScheduler()
+        self._history = HistoryManager()
 
         # Scrapers (created on demand)
         self._static_scraper: Optional[StaticScraper] = None
@@ -191,6 +192,10 @@ class ScraperEngine:
     @property
     def scheduler(self) -> TaskScheduler:
         return self._scheduler
+
+    @property
+    def history(self) -> HistoryManager:
+        return self._history
 
     @property
     def projects(self) -> List[ScrapingProject]:
@@ -354,6 +359,11 @@ class ScraperEngine:
                                 new_links.append(link)
                     except Exception:
                         pass
+
+                # Log captcha warnings
+                if metadata.get("captcha_detected"):
+                    captcha_info = metadata.get("captcha_info", "Captcha detected")
+                    self._log(f"WARNING: {captcha_info} on {url}", "warning")
 
                 return (url, row, None, metadata, new_links)
             else:
@@ -519,6 +529,26 @@ class ScraperEngine:
             self._update_progress(total, total, "completed")
             self._log(f"Scraping completed: {result.records_count} records in {elapsed:.1f}s")
 
+            # Record session in history
+            try:
+                rule_names = [r.name for r in self._data_parser.rules]
+                session_name = self._current_project.name if self._current_project else "Quick Scrape"
+                self._history.record_session(
+                    name=session_name,
+                    mode=mode.value,
+                    urls=urls,
+                    records=list(self._results),
+                    errors=list(self._errors),
+                    duration=elapsed,
+                    status_codes=result.status_codes,
+                    total_bytes=result.total_bytes,
+                    rule_names=rule_names,
+                    error_message=result.error or "",
+                )
+                self._log(f"Session recorded in history: {session_name}", "success")
+            except Exception as e:
+                self._log(f"Failed to record history: {e}", "error")
+
             # Auto-export if configured
             if (result.success and self._current_project
                     and self._current_project.export_format
@@ -571,9 +601,10 @@ class ScraperEngine:
         self._update_progress(self._progress["current"], self._progress["total"], "stopping")
         self._log("Stopping scraping...")
 
-    def export_results(self, format: str, filepath: str, **kwargs) -> str:
-        """Export current results to a file."""
-        return self._data_exporter.export(self._results, format, filepath, **kwargs)
+    def export_results(self, format: str, filepath: str, data: Optional[List[Dict]] = None, **kwargs) -> str:
+        """Export current results (or provided data) to a file."""
+        export_data = data if data is not None else self._results
+        return self._data_exporter.export(export_data, format, filepath, **kwargs)
 
     def clear_results(self) -> None:
         self._results.clear()

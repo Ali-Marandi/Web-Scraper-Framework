@@ -13,6 +13,7 @@ from urllib.parse import urljoin, urlparse
 from .proxy_manager import ProxyManager, ProxyConfig
 from .rate_limiter import RateLimiter
 from .data_parser import DataParser, ParseResult
+from .captcha_detector import detect_captcha, get_captcha_info_for_log
 
 
 @dataclass
@@ -162,6 +163,13 @@ class StaticScraper:
 
                 html_content = response.text
                 self._total_bytes += len(response.content)
+
+                # Captcha detection
+                captcha = detect_captcha(html_content)
+                if captcha.detected:
+                    metadata["captcha_detected"] = True
+                    metadata["captcha_type"] = captcha.captcha_type
+                    metadata["captcha_info"] = captcha.description
 
                 # Report success to proxy and rate limiter
                 if proxy_config:

@@ -26,6 +26,75 @@ class ExtractionMethod(Enum):
 
 
 @dataclass
+class TransformRule:
+    """Defines a data transformation to apply after extraction."""
+    operation: str  # trim, uppercase, lowercase, strip_html, normalize_spaces, remove_numbers, remove_urls, replace
+    pattern: str = ""  # For 'replace' operation: the pattern to find
+    replacement: str = ""  # For 'replace' operation: the replacement string
+    
+    TRANSFORM_OPERATIONS = [
+        "trim", "uppercase", "lowercase", "title_case",
+        "strip_html", "normalize_spaces", "remove_numbers",
+        "remove_urls", "remove_emails", "replace", "prefix", "suffix",
+        "to_int", "to_float", "reverse",
+    ]
+
+
+def apply_transform(value: str, transform: TransformRule) -> str:
+    """Apply a single transform to a value."""
+    if not value:
+        return value
+    
+    op = transform.operation
+    
+    if op == "trim":
+        return value.strip()
+    elif op == "uppercase":
+        return value.upper()
+    elif op == "lowercase":
+        return value.lower()
+    elif op == "title_case":
+        return value.title()
+    elif op == "strip_html":
+        return re.sub(r'<[^>]+>', '', value)
+    elif op == "normalize_spaces":
+        return re.sub(r'\s+', ' ', value).strip()
+    elif op == "remove_numbers":
+        return re.sub(r'\d+', '', value)
+    elif op == "remove_urls":
+        return re.sub(r'https?://\S+', '', value)
+    elif op == "remove_emails":
+        return re.sub(r'\S+@\S+\.\S+', '', value)
+    elif op == "replace":
+        if transform.pattern:
+            return re.sub(transform.pattern, transform.replacement, value)
+        return value
+    elif op == "prefix":
+        return transform.replacement + value
+    elif op == "suffix":
+        return value + transform.replacement
+    elif op == "reverse":
+        return value[::-1]
+    elif op == "to_int":
+        match = re.search(r'-?\d+', value)
+        return str(int(match.group())) if match else value
+    elif op == "to_float":
+        match = re.search(r'-?\d+\.?\d*', value)
+        return str(float(match.group())) if match else value
+    return value
+
+
+def apply_transform_chain(value: str, transforms: list) -> str:
+    """Apply a chain of transforms to a value."""
+    for t in transforms:
+        if isinstance(t, dict):
+            t = TransformRule(**t)
+        if isinstance(t, TransformRule):
+            value = apply_transform(value, t)
+    return value
+
+
+@dataclass
 class ExtractionRule:
     """Defines a single data extraction rule."""
     name: str  # Field name for output
@@ -36,6 +105,7 @@ class ExtractionRule:
     prefix: str = ""  # Prefix to add to extracted value
     suffix: str = ""  # Suffix to add to extracted value
     regex_replace: Optional[Dict[str, str]] = None  # {pattern: replacement}
+    transforms: List = field(default_factory=list)  # List of TransformRule dicts
     is_list: bool = False  # Extract multiple items
     max_items: int = 0  # Max items to extract (0 = unlimited)
 
@@ -193,7 +263,7 @@ class DataParser:
         return []
 
     def _apply_transforms(self, values: List[str], rule: ExtractionRule) -> List[str]:
-        """Apply prefix, suffix, and regex replacements."""
+        """Apply prefix, suffix, regex replacements, and transform chain."""
         result = []
         for val in values:
             val = str(val).strip()
@@ -201,6 +271,9 @@ class DataParser:
                 for pattern, replacement in rule.regex_replace.items():
                     val = re.sub(pattern, replacement, val)
             val = rule.prefix + val + rule.suffix
+            # Apply transform chain
+            if rule.transforms:
+                val = apply_transform_chain(val, rule.transforms)
             result.append(val)
 
         if rule.max_items > 0:

@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlparse
 
 from .data_parser import DataParser, ParseResult
+from .captcha_detector import detect_captcha
 
 
 @dataclass
@@ -287,6 +288,13 @@ class DynamicScraper:
 
             # Get page content
             html_content = await self._page.content()
+
+            # Captcha detection
+            captcha = detect_captcha(html_content)
+            if captcha.detected:
+                metadata["captcha_detected"] = True
+                metadata["captcha_type"] = captcha.captcha_type
+                metadata["captcha_info"] = captcha.description
 
             # Screenshot if configured
             if self._config.screenshot:

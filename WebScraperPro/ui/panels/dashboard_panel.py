@@ -8,7 +8,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
 from ui.styles import theme, Typography, Spacing, Radius
-from core.data_parser import ExtractionRule, ExtractionMethod
+from core.data_parser import ExtractionRule, ExtractionMethod, TransformRule
 from core.scraper_engine import ScrapingMode
 from core.templates import TEMPLATES, get_template_names
 from ui.components.table_widget import DataTable
@@ -318,7 +318,7 @@ class DashboardPanel(ctk.CTkFrame):
                          fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
                          ).grid(row=0, column=1, padx=Spacing.SM, pady=Spacing.SM)
 
-        ctk.CTkLabel(bar, text="Max Pages", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+        ctk.CTkLabel(card, text="Max Pages", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
                       text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=2, padx=Spacing.SM, pady=Spacing.SM, sticky="e")
         self._max_pages_entry = ctk.CTkEntry(
             card, width=60, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
@@ -418,7 +418,7 @@ class DashboardPanel(ctk.CTkFrame):
     def _show_rule_dialog(self, edit_index: int = -1):
         dialog = ctk.CTkToplevel(self)
         dialog.title("Edit Extraction Rule" if edit_index >= 0 else "Add Extraction Rule")
-        dialog.geometry("480x420")
+        dialog.geometry("520x560")
         dialog.configure(fg_color=theme.colors.BG_MAIN)
         dialog.transient(self.winfo_toplevel())
         dialog.grab_set()
@@ -469,6 +469,74 @@ class DashboardPanel(ctk.CTkFrame):
                          fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
                          ).grid(row=5, column=0, columnspan=2, sticky="w", padx=Spacing.MD, pady=Spacing.SM)
 
+        # Transforms section
+        dialog.grid_rowconfigure(6, weight=1)
+        ctk.CTkLabel(dialog, text="Transforms", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+                      text_color=theme.colors.TEXT_SECONDARY).grid(row=6, column=0, sticky="nw", padx=Spacing.MD, pady=(Spacing.SM, 0))
+
+        transforms_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        transforms_frame.grid(row=6, column=1, sticky="nsew", padx=(0, Spacing.MD), pady=(Spacing.SM, 0))
+        transforms_frame.grid_rowconfigure(0, weight=1)
+        transforms_frame.grid_columnconfigure(1, weight=1)
+
+        _transforms_list: list[dict] = []
+
+        def _add_transform():
+            tf = ctk.CTkFrame(transforms_frame, fg_color="transparent")
+            tf.pack(fill="x", pady=1)
+
+            op_menu = ctk.CTkOptionMenu(tf, values=TransformRule.TRANSFORM_OPERATIONS, width=120,
+                                         font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+                                         fg_color=theme.colors.BG_INPUT, button_color=theme.colors.BG_ELEVATED,
+                                         button_hover_color=theme.colors.BG_HOVER,
+                                         dropdown_fg_color=theme.colors.BG_ELEVATED,
+                                         text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD)
+            op_menu.pack(side="left", padx=(0, Spacing.XS))
+
+            pat_entry = ctk.CTkEntry(tf, placeholder_text="Pattern (for replace)",
+                                      font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+                                      fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+                                      border_width=1, corner_radius=Radius.MD,
+                                      text_color=theme.colors.TEXT_PRIMARY, height=26, width=120)
+            pat_entry.pack(side="left", padx=Spacing.XS)
+
+            rep_entry = ctk.CTkEntry(tf, placeholder_text="Replacement",
+                                      font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+                                      fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+                                      border_width=1, corner_radius=Radius.MD,
+                                      text_color=theme.colors.TEXT_PRIMARY, height=26, width=100)
+            rep_entry.pack(side="left", padx=Spacing.XS)
+
+            def _remove_tf():
+                _transforms_list.remove({"operation": op_menu.get(), "pattern": pat_entry.get(), "replacement": rep_entry.get()})
+                tf.destroy()
+
+            ctk.CTkButton(tf, text="X", width=24, height=24,
+                           font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+                           fg_color=theme.colors.ERROR, hover_color=theme.colors.ERROR,
+                           text_color=theme.colors.TEXT_INVERSE, corner_radius=Radius.MD,
+                           command=_remove_tf).pack(side="left", padx=(Spacing.XS, 0))
+
+            _transforms_list.append({"operation": op_menu.get(), "pattern": pat_entry.get(), "replacement": rep_entry.get()})
+
+            def _on_change(*args):
+                for t in _transforms_list:
+                    if t.get("_widget_ref") == id(tf):
+                        t["operation"] = op_menu.get()
+                        t["pattern"] = pat_entry.get()
+                        t["replacement"] = rep_entry.get()
+                        break
+
+            op_menu.configure(command=_on_change)
+
+        transforms_btn_frame = ctk.CTkFrame(transforms_frame, fg_color="transparent")
+        transforms_btn_frame.pack(fill="x", pady=(Spacing.XS, 0))
+        ctk.CTkButton(transforms_btn_frame, text="+ Add Transform", width=110, height=24,
+                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD, border_width=1,
+                       border_color=theme.colors.BORDER, command=_add_transform).pack(side="left")
+
         if existing:
             name_entry.insert("0", existing.name)
             method_menu.set(existing.method.value)
@@ -478,6 +546,9 @@ class DashboardPanel(ctk.CTkFrame):
             if existing.default:
                 default_entry.insert("0", existing.default)
             var_is_list.set(existing.is_list)
+            # Load existing transforms
+            for td in (existing.transforms or []):
+                _add_transform()
 
         def _save():
             name = name_entry.get().strip()
@@ -490,6 +561,7 @@ class DashboardPanel(ctk.CTkFrame):
                 attribute=attr_entry.get().strip() or None,
                 default=default_entry.get().strip() or None,
                 is_list=var_is_list.get(),
+                transforms=list(_transforms_list),
             )
             if edit_index >= 0:
                 self._extraction_rules[edit_index] = rule
@@ -501,7 +573,7 @@ class DashboardPanel(ctk.CTkFrame):
         ctk.CTkButton(dialog, text="Save Rule", command=_save, width=140,
                        font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
                        fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
-                       corner_radius=Radius.MD).grid(row=6, column=0, columnspan=2, pady=Spacing.MD)
+                       corner_radius=Radius.MD).grid(row=7, column=0, columnspan=2, pady=Spacing.MD)
 
     # ------------------------------------------------------------------
     # Page Actions Section (Dynamic mode)

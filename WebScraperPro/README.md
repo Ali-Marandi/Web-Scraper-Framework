@@ -19,14 +19,11 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 
 ## What's New in v1.2.0
 
-- **Concurrent Scraping** - Multi-threaded static scraping with configurable worker count (1-20)
-- **Developer Tools Panel** - Regex tester with match highlighting and HTML source preview
-- **Headers & Cookies Panel** - Full custom HTTP headers and cookie management with import/export
-- **HTML Source Preview** - Fetch and inspect raw HTML for debugging extraction rules
-- **Regex Tester** - Test regex patterns against text before using them in rules
-- **Workers Control** - Configure concurrent workers from the dashboard options bar
-- **Improved Engine** - Thread-safe concurrent scraping with ThreadPoolExecutor
-- **7 Navigation Panels** - Scraper, Proxies, Tools, Headers, Logs, Scheduler, Settings
+- **Scrape History** - Full session history with stats, search, detail view, and re-export
+- **Data Transform Pipeline** - 15 post-extraction operations (trim, uppercase, strip HTML, remove URLs, regex replace, type conversion, etc.)
+- **Captcha Detection** - Automatic detection of reCAPTCHA, hCaptcha, Cloudflare challenges with warning logs
+- **Bug Fixes** - Fixed dashboard options bar reference error, removed duplicate dataclass fields
+- **8 Navigation Panels** - Scraper, Proxies, Tools, Headers, History, Logs, Scheduler, Settings
 
 ---
 
@@ -132,6 +129,8 @@ WebScraperPro/
 |   +-- data_exporter.py       # Multi-format export
 |   +-- scheduler.py           # Task scheduling
 |   +-- templates.py           # 11 pre-built templates
+|   +-- history.py             # Scrape session history
+|   +-- captcha_detector.py    # Captcha detection
 +-- ui/                        # User interface
 |   +-- main_window.py         # Main application window
 |   +-- styles.py              # Design system & theme
@@ -145,6 +144,7 @@ WebScraperPro/
 |       +-- scheduler_panel.py # Task scheduler
 |       +-- settings_panel.py  # Settings
 |       +-- log_panel.py       # Real-time log viewer
+|       +-- history_panel.py   # Scrape session history
 +-- assets/                    # Icons and themes
 +-- .github/workflows/        # CI/CD for Windows build
 ```

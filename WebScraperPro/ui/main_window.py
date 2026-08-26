@@ -14,6 +14,7 @@ from ui.panels.settings_panel import SettingsPanel
 from ui.panels.log_panel import LogPanel
 from ui.panels.tools_panel import ToolsPanel
 from ui.panels.headers_panel import HeadersPanel
+from ui.panels.history_panel import HistoryPanel
 
 
 class MainWindow(ctk.CTk):
@@ -25,12 +26,13 @@ class MainWindow(ctk.CTk):
         "proxies": "⊕",
         "tools": "✦",
         "headers": "☰",
+        "history": "⏰",
         "logs": "≡",
         "scheduler": "⏲",
         "settings": "⚙",
     }
-    NAV_LABELS = ["Scraper", "Proxies", "Tools", "Headers", "Logs", "Scheduler", "Settings"]
-    NAV_KEYS = ["dashboard", "scraper", "proxies", "tools", "headers", "logs", "scheduler", "settings"]
+    NAV_LABELS = ["Scraper", "Proxies", "Tools", "Headers", "History", "Logs", "Scheduler", "Settings"]
+    NAV_KEYS = ["dashboard", "scraper", "proxies", "tools", "headers", "history", "logs", "scheduler", "settings"]
 
     def __init__(self):
         super().__init__()
@@ -127,7 +129,7 @@ class MainWindow(ctk.CTk):
                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
                       text_color=theme.colors.TEXT_MUTED
                       )
-        self._version_label.grid(row=11, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
+        self._version_label.grid(row=12, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
 
     # ------------------------------------------------------------------
     # Header
@@ -187,6 +189,7 @@ class MainWindow(ctk.CTk):
         self._panels["scheduler"] = SchedulerPanel(self._content_frame)
         self._panels["settings"] = SettingsPanel(self._content_frame)
         self._panels["logs"] = LogPanel(self._content_frame)
+        self._panels["history"] = HistoryPanel(self._content_frame)
         self._log_panel = self._panels["logs"]
 
         # Flush buffered logs
@@ -287,6 +290,7 @@ class MainWindow(ctk.CTk):
             "logs": "Logs",
             "scheduler": "Task Scheduler",
             "settings": "Settings",
+            "history": "Scrape History",
         }
         self._header_title.configure(text=title_map.get(key, "WebScraper Pro"))
 
