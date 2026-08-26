@@ -1,4 +1,4 @@
- """
+"""
 WebScraper Pro - Design System & Styles
 Centralized color palette, typography, and component styling for a professional commercial look.
 """

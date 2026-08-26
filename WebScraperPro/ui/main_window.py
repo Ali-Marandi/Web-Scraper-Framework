@@ -12,7 +12,6 @@ from ui.panels.proxy_panel import ProxyPanel
 from ui.panels.scheduler_panel import SchedulerPanel
 from ui.panels.settings_panel import SettingsPanel
 from ui.panels.log_panel import LogPanel
-from ui.panels.log_panel import LogPanel
 
 
 class MainWindow(ctk.CTk):
@@ -35,8 +34,19 @@ class MainWindow(ctk.CTk):
         # Window setup
         self.title("WebScraper Pro")
         self.geometry("1400x800")
-        self.minsize(1400, 800)
+        self.minsize(1200, 700)
         self.configure(fg_color=theme.colors.BG_MAIN)
+
+        # Set window icon
+        try:
+            icon_path = self._resolve_icon_path()
+            if icon_path:
+                self.iconbitmap(icon_path)
+        except Exception:
+            pass
+
+        # Log startup
+        self._log_buffer: list[tuple[str, str]] = []
 
         # Apply theme
         apply_custom_styles()
@@ -109,10 +119,11 @@ class MainWindow(ctk.CTk):
             self._nav_buttons[key] = btn
 
         # Bottom version label
-        ctk.CTkLabel(sidebar, text="v1.1.0",
+        self._version_label = ctk.CTkLabel(sidebar, text="v1.1.0",
                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
                       text_color=theme.colors.TEXT_MUTED
-                      ).grid(row=10, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
+                      )
+        self._version_label.grid(row=10, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
 
     # ------------------------------------------------------------------
     # Header
@@ -171,6 +182,11 @@ class MainWindow(ctk.CTk):
         self._panels["settings"] = SettingsPanel(self._content_frame)
         self._panels["logs"] = LogPanel(self._content_frame)
         self._log_panel = self._panels["logs"]
+
+        # Flush buffered logs
+        for msg, lvl in self._log_buffer:
+            self._log_panel.add_log(msg, lvl)
+        self._log_buffer.clear()
 
     # ------------------------------------------------------------------
     # Status Bar
@@ -343,8 +359,25 @@ class MainWindow(ctk.CTk):
             text=f"● {status.capitalize()}",
             text_color=color_map.get(status, theme.colors.TEXT_MUTED)))
 
+    def _resolve_icon_path(self) -> str | None:
+        """Resolve icon path for both dev and PyInstaller frozen environments."""
+        import os, sys
+        candidates = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "icons", "app.ico"),
+            os.path.join(getattr(sys, "_MEIPASS", ""), "assets", "icons", "app.ico"),
+            "assets\\icons\\app.ico",
+        ]
+        for p in candidates:
+            if os.path.isfile(p):
+                return os.path.normpath(p)
+        return None
+
     def _on_log(self, message: str, level: str = "info"):
-        self.after(0, lambda: self._log_panel.add_log(message, level))  # Could connect to a log panel in future
+        # Buffer logs before log panel is ready
+        if hasattr(self, '_log_panel') and self._log_panel:
+            self.after(0, lambda: self._log_panel.add_log(message, level))
+        else:
+            self._log_buffer.append((message, level))
 
     # ------------------------------------------------------------------
     # Periodic Update

@@ -126,6 +126,21 @@ class SettingsPanel(ctk.CTkScrollableFrame):
                          fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
                          ).grid(row=4, column=1, padx=Spacing.SM, pady=Spacing.SM, sticky="w")
 
+        # User-Agent
+        ua_frame = ctk.CTkFrame(card, fg_color="transparent")
+        ua_frame.grid(row=5, column=0, columnspan=2, sticky="ew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+        ua_frame.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(ua_frame, text="User-Agent", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, sticky="w", pady=Spacing.XS)
+
+        self._ua_entry = ctk.CTkEntry(ua_frame, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+                                       fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+                                       border_width=1, corner_radius=Radius.MD,
+                                       text_color=theme.colors.TEXT_PRIMARY, height=28)
+        self._ua_entry.grid(row=0, column=1, sticky="ew", padx=Spacing.SM, pady=Spacing.XS)
+        self._ua_entry.insert("0", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+
     # ------------------------------------------------------------------
     # Browser Settings
     # ------------------------------------------------------------------
@@ -281,19 +296,24 @@ class SettingsPanel(ctk.CTkScrollableFrame):
     # ------------------------------------------------------------------
 
     def _build_about_section(self):
-        card = self._section_card("About", 5)
+        card = self._section_card("About", 6)
 
         info_text = (
-            "WebScraper Pro  v1.0.0\n"
+            "WebScraper Pro  v1.1.0\n"
             "A commercial-grade web scraping application.\n"
             "Built with Python, CustomTkinter, and Playwright.\n\n"
             "Features:\n"
-            "  • Static & dynamic (JS) page scraping\n"
-            "  • CSS, XPath, Regex, JSON Path extraction\n"
-            "  • Proxy rotation with health monitoring\n"
-            "  • Adaptive rate limiting\n"
-            "  • Multi-format data export\n"
-            "  • Task scheduling\n"
+            "  - Static & dynamic (JS) page scraping\n"
+            "  - CSS, XPath, Regex, JSON Path extraction\n"
+            "  - Proxy rotation with health monitoring\n"
+            "  - Adaptive rate limiting (4 strategies)\n"
+            "  - Multi-format data export (6 formats)\n"
+            "  - Task scheduling (5 schedule types)\n"
+            "  - Pre-built scraping templates (11 templates)\n"
+            "  - Project save/load with persistence\n"
+            "  - Real-time log viewer with filtering\n"
+            "  - Sortable data table with search\n"
+            "  - Import/export extraction rules as JSON\n"
         )
 
         ctk.CTkLabel(card, text=info_text, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),

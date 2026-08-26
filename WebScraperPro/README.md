@@ -17,9 +17,24 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 
 ---
 
+## What's New in v1.1.0
+
+- **Real-time Log Viewer** - Color-coded log panel with level filtering, auto-scroll, and copy-all
+- **Sortable Data Table** - Professional results display with clickable column headers for sorting
+- **Results Search & Filter** - Instantly filter results by typing in the search bar
+- **Project Management UI** - Save, load, and manage scraping projects from the dashboard
+- **Import/Export Rules** - Share extraction rules as JSON files
+- **Crawl Depth Control** - Configure link-following depth from the UI
+- **Custom User-Agent** - Set custom User-Agent string in settings
+- **Application Icon** - Professional multi-resolution Windows icon
+- **11 Pre-built Templates** - Page Title, Links, Images, Tables, Articles, Products, Contact Info, SEO, API/JSON, Directory Crawler, and Full Text
+- **UI Polish** - Fixed duplicate imports, improved layout, SQLite export button added
+
+---
+
 ## Screenshot
 
-> Modern dark-themed UI with sidebar navigation, real-time progress tracking, and comprehensive data extraction tools.
+> Modern dark/light-themed UI with sidebar navigation, real-time log viewer, sortable data table, and comprehensive data extraction tools.
 
 ## Features
 
@@ -31,7 +46,7 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 | Stealth | N/A | Anti-Detection |
 | Resources | Minimal | Browser Required |
 
-### Data Extraction Methods
+### Data Extraction Methods (9 methods)
 - **CSS Selectors** - Standard CSS selector syntax
 - **XPath** - Full XPath 1.0 support
 - **Regular Expressions** - Pattern matching with groups
@@ -42,7 +57,7 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 - **HTML Attributes** - Extract any element attribute
 - **Meta Tags** - Page metadata extraction
 
-### Export Formats
+### Export Formats (6 formats)
 | Format | Description |
 |--------|-------------|
 | CSV | Excel-compatible with UTF-8 BOM |
@@ -60,7 +75,7 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 - Import from file
 - Authentication support
 
-### Rate Limiting
+### Rate Limiting (4 strategies)
 - **Token Bucket** - Burst-friendly rate control
 - **Sliding Window** - Precise request counting
 - **Fixed Delay** - Simple time-based throttling
@@ -68,10 +83,24 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 - Per-domain configuration
 - Global request rate control
 
-### Task Scheduler
+### Task Scheduler (5 types)
 - One-time, interval, daily, weekly, monthly schedules
 - Auto-export on completion
 - Execution history tracking
+
+### Project Management
+- Save and load project configurations
+- Import/export extraction rules as JSON
+- 11 pre-built templates for common scenarios
+- Persistent storage across sessions
+
+### UI Features
+- Dark and light theme support
+- Real-time log viewer with filtering
+- Sortable data table with search
+- Sidebar navigation
+- Progress tracking
+- Professional icon and branding
 
 ## Project Structure
 
@@ -89,14 +118,18 @@ WebScraperPro/
 |   +-- data_parser.py         # Data extraction engine
 |   +-- data_exporter.py       # Multi-format export
 |   +-- scheduler.py           # Task scheduling
+|   +-- templates.py           # 11 pre-built templates
 +-- ui/                        # User interface
 |   +-- main_window.py         # Main application window
 |   +-- styles.py              # Design system & theme
+|   +-- components/            # Reusable UI components
+|   |   +-- table_widget.py    # Sortable data table
 |   +-- panels/                # UI panels
 |       +-- dashboard_panel.py # Main scraper panel
 |       +-- proxy_panel.py     # Proxy management
 |       +-- scheduler_panel.py # Task scheduler
 |       +-- settings_panel.py  # Settings
+|       +-- log_panel.py       # Real-time log viewer
 +-- assets/                    # Icons and themes
 +-- .github/workflows/        # CI/CD for Windows build
 ```
