@@ -318,7 +318,7 @@ class DashboardPanel(ctk.CTkFrame):
                          fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
                          ).grid(row=0, column=1, padx=Spacing.SM, pady=Spacing.SM)
 
-        ctk.CTkLabel(card, text="Max Pages", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+        ctk.CTkLabel(bar, text="Max Pages", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
                       text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=2, padx=Spacing.SM, pady=Spacing.SM, sticky="e")
         self._max_pages_entry = ctk.CTkEntry(
             card, width=60, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
@@ -336,7 +336,17 @@ class DashboardPanel(ctk.CTkFrame):
             border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=28,
         )
         self._depth_entry.insert("0", "1")
-        self._depth_entry.grid(row=0, column=5, padx=(Spacing.XS, Spacing.MD), pady=Spacing.SM)
+        self._depth_entry.grid(row=0, column=5, padx=(Spacing.XS, Spacing.SM), pady=Spacing.SM)
+
+        ctk.CTkLabel(card, text="Workers", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=6, padx=Spacing.SM, pady=Spacing.SM, sticky="e")
+        self._workers_entry = ctk.CTkEntry(
+            card, width=40, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=28,
+        )
+        self._workers_entry.insert("0", "1")
+        self._workers_entry.grid(row=0, column=7, padx=(Spacing.XS, Spacing.MD), pady=Spacing.SM)
 
     # ------------------------------------------------------------------
     # Extraction Rules Section

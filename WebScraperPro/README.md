@@ -17,6 +17,19 @@ Built with Python, CustomTkinter, Playwright, and BeautifulSoup.
 
 ---
 
+## What's New in v1.2.0
+
+- **Concurrent Scraping** - Multi-threaded static scraping with configurable worker count (1-20)
+- **Developer Tools Panel** - Regex tester with match highlighting and HTML source preview
+- **Headers & Cookies Panel** - Full custom HTTP headers and cookie management with import/export
+- **HTML Source Preview** - Fetch and inspect raw HTML for debugging extraction rules
+- **Regex Tester** - Test regex patterns against text before using them in rules
+- **Workers Control** - Configure concurrent workers from the dashboard options bar
+- **Improved Engine** - Thread-safe concurrent scraping with ThreadPoolExecutor
+- **7 Navigation Panels** - Scraper, Proxies, Tools, Headers, Logs, Scheduler, Settings
+
+---
+
 ## What's New in v1.1.0
 
 - **Real-time Log Viewer** - Color-coded log panel with level filtering, auto-scroll, and copy-all
@@ -127,6 +140,8 @@ WebScraperPro/
 |   +-- panels/                # UI panels
 |       +-- dashboard_panel.py # Main scraper panel
 |       +-- proxy_panel.py     # Proxy management
+|       +-- tools_panel.py     # Regex tester & HTML preview
+|       +-- headers_panel.py   # Headers & cookies management
 |       +-- scheduler_panel.py # Task scheduler
 |       +-- settings_panel.py  # Settings
 |       +-- log_panel.py       # Real-time log viewer

@@ -12,6 +12,8 @@ from ui.panels.proxy_panel import ProxyPanel
 from ui.panels.scheduler_panel import SchedulerPanel
 from ui.panels.settings_panel import SettingsPanel
 from ui.panels.log_panel import LogPanel
+from ui.panels.tools_panel import ToolsPanel
+from ui.panels.headers_panel import HeadersPanel
 
 
 class MainWindow(ctk.CTk):
@@ -21,12 +23,14 @@ class MainWindow(ctk.CTk):
         "dashboard": "⬡",
         "scraper": "◈",
         "proxies": "⊕",
-        "logs": "☰",
+        "tools": "✦",
+        "headers": "☰",
+        "logs": "≡",
         "scheduler": "⏲",
         "settings": "⚙",
     }
-    NAV_LABELS = ["Scraper", "Proxies", "Logs", "Scheduler", "Settings"]
-    NAV_KEYS = ["dashboard", "scraper", "proxies", "logs", "scheduler", "settings"]
+    NAV_LABELS = ["Scraper", "Proxies", "Tools", "Headers", "Logs", "Scheduler", "Settings"]
+    NAV_KEYS = ["dashboard", "scraper", "proxies", "tools", "headers", "logs", "scheduler", "settings"]
 
     def __init__(self):
         super().__init__()
@@ -119,11 +123,11 @@ class MainWindow(ctk.CTk):
             self._nav_buttons[key] = btn
 
         # Bottom version label
-        self._version_label = ctk.CTkLabel(sidebar, text="v1.1.0",
+        self._version_label = ctk.CTkLabel(sidebar, text="v1.2.0",
                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
                       text_color=theme.colors.TEXT_MUTED
                       )
-        self._version_label.grid(row=10, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
+        self._version_label.grid(row=11, column=0, sticky="s", padx=Spacing.LG, pady=Spacing.MD)
 
     # ------------------------------------------------------------------
     # Header
@@ -178,6 +182,8 @@ class MainWindow(ctk.CTk):
         self._panels["dashboard"] = DashboardPanel(self._content_frame)
         self._panels["scraper"] = self._panels["dashboard"]  # alias
         self._panels["proxies"] = ProxyPanel(self._content_frame)
+        self._panels["tools"] = ToolsPanel(self._content_frame)
+        self._panels["headers"] = HeadersPanel(self._content_frame)
         self._panels["scheduler"] = SchedulerPanel(self._content_frame)
         self._panels["settings"] = SettingsPanel(self._content_frame)
         self._panels["logs"] = LogPanel(self._content_frame)
@@ -276,6 +282,8 @@ class MainWindow(ctk.CTk):
             "dashboard": "Scraper",
             "scraper": "Scraper",
             "proxies": "Proxy Manager",
+            "tools": "Developer Tools",
+            "headers": "Headers & Cookies",
             "logs": "Logs",
             "scheduler": "Task Scheduler",
             "settings": "Settings",

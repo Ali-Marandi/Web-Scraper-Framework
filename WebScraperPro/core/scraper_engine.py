@@ -8,11 +8,13 @@ import time
 import json
 import os
 import uuid
+import re
 from datetime import datetime
 from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from urllib.parse import urlparse, urljoin
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .static_scraper import StaticScraper, RequestConfig
 from .dynamic_scraper import DynamicScraper, BrowserConfig, PageAction
@@ -72,6 +74,9 @@ class ScrapingProject:
     max_pages: int = 100
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    concurrent_workers: int = 1
+    use_proxy: bool = False
+    use_rate_limit: bool = True
 
     def to_dict(self) -> Dict:
         return {
@@ -82,7 +87,7 @@ class ScrapingProject:
             "page_actions": self.page_actions, "export_format": self.export_format,
             "export_path": self.export_path, "auto_scroll": self.auto_scroll,
             "max_depth": self.max_depth, "follow_links": self.follow_links,
-            "max_pages": self.max_pages,
+            "max_pages": self.max_pages, "concurrent_workers": self.concurrent_workers,
             "created_at": self.created_at, "updated_at": self.updated_at,
         }
 
@@ -307,9 +312,60 @@ class ScraperEngine:
         thread.start()
         return result
 
+    def _scrape_single_url(self, url: str, static_scraper: Optional[StaticScraper],
+                                dynamic_scraper: Optional[DynamicScraper],
+                                mode: ScrapingMode, use_proxy: bool, use_rate_limit: bool,
+                                auto_scroll: bool, page_actions: list) -> tuple:
+        """Scrape a single URL. Returns (url, result_row, error_dict, metadata, new_links)."""
+        if self._state == EngineState.STOPPING:
+            return (url, None, None, {}, [])
+
+        use_dynamic = (mode == ScrapingMode.DYNAMIC)
+        html_content = None
+        metadata = {}
+        new_links = []
+
+        try:
+            if use_dynamic and dynamic_scraper:
+                actions = [PageAction(**a) for a in page_actions]
+                html_content, metadata = dynamic_scraper.scrape(url, actions=actions, auto_scroll=auto_scroll)
+            elif static_scraper:
+                html_content, metadata = static_scraper.fetch(url)
+
+            if html_content:
+                parse_result = self._data_parser.parse(html_content, url)
+                row = None
+                if parse_result.fields:
+                    row = parse_result.to_dict()
+                    row["_url"] = url
+                    row["_scraped_at"] = datetime.now().isoformat()
+
+                # Extract links for crawling
+                if self._current_project and self._current_project.follow_links:
+                    try:
+                        soup = __import__("bs4", fromlist=["BeautifulSoup"]).BeautifulSoup(html_content, "lxml")
+                        links = self._data_parser._extract_links(
+                            soup, url, ExtractionRule(name="", method=ExtractionMethod.LINKS, selector="a")
+                        )
+                        base = urlparse(url)
+                        for link in links:
+                            parsed = urlparse(link)
+                            if parsed.netloc == base.netloc:
+                                new_links.append(link)
+                    except Exception:
+                        pass
+
+                return (url, row, None, metadata, new_links)
+            else:
+                error_msg = metadata.get("error", "No content")
+                return (url, None, {"url": url, "error": error_msg}, metadata, [])
+
+        except Exception as e:
+            return (url, None, {"url": url, "error": str(e)[:200]}, {}, [])
+
     def _scrape_urls_sync(self, urls: List[str], mode: ScrapingMode,
                            result: ScrapingResult, callback: Optional[Callable]) -> None:
-        """Synchronous scraping implementation."""
+        """Synchronous scraping implementation with concurrent worker support."""
         with self._state_lock:
             if self._state == EngineState.RUNNING:
                 result.error = "Engine is already running"
@@ -321,10 +377,16 @@ class ScraperEngine:
         start_time = time.time()
         total = len(urls)
 
-        self._update_progress(0, total, "running")
-        self._log(f"Starting scrape of {total} URLs in {mode.value} mode")
+        # Determine workers
+        workers = 1
+        if mode == ScrapingMode.STATIC and self._current_project:
+            workers = max(1, self._current_project.concurrent_workers or 1)
+        elif mode == ScrapingMode.DYNAMIC:
+            workers = 1  # Dynamic scraping is not thread-safe
 
-        # Setup scrapers
+        self._update_progress(0, total, "running")
+        self._log(f"Starting scrape of {total} URLs in {mode.value} mode ({workers} worker(s))")
+
         static_scraper = None
         dynamic_scraper = None
 
@@ -341,75 +403,100 @@ class ScraperEngine:
                 browser_cfg = BrowserConfig(**self._current_project.browser_config) if self._current_project else BrowserConfig()
                 dynamic_scraper = DynamicScraper(config=browser_cfg)
 
+            use_proxy = self._current_project.use_proxy if self._current_project else False
+            use_rate_limit = self._current_project.use_rate_limit if self._current_project else True
+            auto_scroll = self._current_project.auto_scroll if self._current_project else False
+            page_actions = self._current_project.page_actions if self._current_project else []
+            max_pages = (self._current_project.max_pages if self._current_project else 100)
+
             visited_urls = set()
             urls_to_scrape = list(urls)
             pages_scraped = 0
+            results_lock = threading.Lock()
+            errors_lock = threading.Lock()
+            links_lock = threading.Lock()
 
-            while urls_to_scrape and pages_scraped < (self._current_project.max_pages if self._current_project else 100):
-                url = urls_to_scrape.pop(0)
-                if url in visited_urls:
-                    continue
-                visited_urls.add(url)
+            while urls_to_scrape and pages_scraped < max_pages:
+                if self._state == EngineState.STOPPING:
+                    break
 
-                # Determine mode
-                use_dynamic = (mode == ScrapingMode.DYNAMIC)
-                if mode == ScrapingMode.AUTO:
-                    # Use static first, fall back to dynamic
-                    use_dynamic = False
+                # Take a batch
+                batch_size = min(len(urls_to_scrape), max_pages - pages_scraped)
+                batch = []
+                for _ in range(batch_size):
+                    if not urls_to_scrape:
+                        break
+                    url = urls_to_scrape.pop(0)
+                    if url not in visited_urls:
+                        visited_urls.add(url)
+                        batch.append(url)
 
-                html_content = None
-                metadata = {}
+                if not batch:
+                    break
 
-                try:
-                    if use_dynamic and dynamic_scraper:
-                        actions = []
-                        if self._current_project:
-                            actions = [PageAction(**a) for a in self._current_project.page_actions]
-                        html_content, metadata = dynamic_scraper.scrape(
-                            url, actions=actions,
-                            auto_scroll=self._current_project.auto_scroll if self._current_project else False,
+                if workers > 1 and len(batch) > 1:
+                    # Concurrent scraping
+                    with ThreadPoolExecutor(max_workers=workers) as executor:
+                        futures = {
+                            executor.submit(
+                                self._scrape_single_url, url, static_scraper, dynamic_scraper,
+                                mode, use_proxy, use_rate_limit, auto_scroll, page_actions
+                            ): url for url in batch
+                        }
+                        for future in as_completed(futures):
+                            if self._state == EngineState.STOPPING:
+                                break
+                            url, row, error, metadata, new_links = future.result()
+
+                            with results_lock:
+                                if row:
+                                    self._results.append(row)
+                            with errors_lock:
+                                if error:
+                                    self._errors.append(error)
+
+                            status = metadata.get("status_code", 0)
+                            if status:
+                                result.status_codes[status] = result.status_codes.get(status, 0) + 1
+                            result.total_bytes += metadata.get("content_length", 0)
+
+                            with links_lock:
+                                for link in new_links:
+                                    if link not in visited_urls:
+                                        urls_to_scrape.append(link)
+
+                            pages_scraped += 1
+                            self._update_progress(pages_scraped, total, "running")
+                            if callback:
+                                callback(pages_scraped, total, len(self._results))
+                else:
+                    # Sequential scraping (dynamic mode or 1 worker)
+                    for url in batch:
+                        if self._state == EngineState.STOPPING:
+                            break
+                        url, row, error, metadata, new_links = self._scrape_single_url(
+                            url, static_scraper, dynamic_scraper, mode,
+                            use_proxy, use_rate_limit, auto_scroll, page_actions
                         )
-                    elif static_scraper:
-                        html_content, metadata = static_scraper.fetch(url)
 
-                    if html_content:
-                        parse_result = self._data_parser.parse(html_content, url)
-                        if parse_result.fields:
-                            row = parse_result.to_dict()
-                            row["_url"] = url
-                            row["_scraped_at"] = datetime.now().isoformat()
+                        if row:
                             self._results.append(row)
+                        if error:
+                            self._errors.append(error)
 
-                        # Follow links if enabled
-                        if (self._current_project and self._current_project.follow_links
-                                and pages_scraped < (self._current_project.max_pages or 100)):
-                            links = self._data_parser._extract_links(
-                                __import__("bs4", fromlist=["BeautifulSoup"]).BeautifulSoup(html_content, "lxml"),
-                                url, ExtractionRule(name="", method=ExtractionMethod.LINKS, selector="a")
-                            )
-                            for link in links:
-                                parsed = urlparse(link)
-                                base = urlparse(url)
-                                if parsed.netloc == base.netloc and link not in visited_urls:
-                                    urls_to_scrape.append(link)
-
-                        # Track status codes
                         status = metadata.get("status_code", 0)
                         if status:
                             result.status_codes[status] = result.status_codes.get(status, 0) + 1
                         result.total_bytes += metadata.get("content_length", 0)
 
-                    elif metadata.get("error"):
-                        self._errors.append({"url": url, "error": metadata["error"]})
+                        for link in new_links:
+                            if link not in visited_urls:
+                                urls_to_scrape.append(link)
 
-                except Exception as e:
-                    self._errors.append({"url": url, "error": str(e)[:200]})
-
-                pages_scraped += 1
-                self._update_progress(pages_scraped, total, "running")
-
-                if callback:
-                    callback(pages_scraped, total, len(self._results))
+                        pages_scraped += 1
+                        self._update_progress(pages_scraped, total, "running")
+                        if callback:
+                            callback(pages_scraped, total, len(self._results))
 
         except Exception as e:
             result.error = str(e)[:200]
@@ -444,6 +531,37 @@ class ScraperEngine:
                     self._log(f"Auto-exported to: {result.export_path}")
                 except Exception as e:
                     self._log(f"Export failed: {e}", "error")
+
+    def fetch_html_preview(self, url: str, mode: ScrapingMode = ScrapingMode.STATIC) -> tuple:
+        """Fetch a URL and return (html_content, metadata) for preview. Thread-safe."""
+        def _fetch():
+            if mode == ScrapingMode.DYNAMIC:
+                scraper = DynamicScraper()
+                html, meta = scraper.scrape(url)
+                scraper.close()
+            else:
+                scraper = StaticScraper()
+                html, meta = scraper.fetch(url)
+                scraper.close()
+            return html, meta
+
+        if threading.current_thread() is threading.main_thread():
+            # Run in background to avoid blocking UI
+            result_holder = [None]
+            def _run():
+                result_holder[0] = _fetch()
+            t = threading.Thread(target=_run, daemon=True)
+            t.start()
+            t.join(timeout=60)
+            return result_holder[0] or (None, {"error": "Timeout"})
+        return _fetch()
+
+    def test_regex(self, pattern: str, text: str) -> list:
+        """Test a regex pattern against text and return all matches."""
+        try:
+            return re.findall(pattern, text)
+        except re.error as e:
+            return [f"Regex error: {e}"]
 
     def stop(self) -> None:
         """Stop the current scraping operation."""
