@@ -1,0 +1,642 @@
+     1→"""
+     2→WebScraper Pro - Main Scraper Engine
+     3→Orchestrates all scraping components: static/dynamic scrapers, proxy, rate limiting, parsing, export.
+     4→"""
+     5→
+     6→import threading
+     7→import time
+     8→import json
+     9→import os
+    10→import uuid
+    11→import re
+    12→from datetime import datetime
+    13→from typing import Optional, List, Dict, Any, Callable
+    14→from dataclasses import dataclass, field
+    15→from enum import Enum
+    16→from urllib.parse import urlparse, urljoin
+    17→from concurrent.futures import ThreadPoolExecutor, as_completed
+    18→
+    19→from .static_scraper import StaticScraper, RequestConfig
+    20→from .dynamic_scraper import DynamicScraper, BrowserConfig, PageAction
+    21→from .proxy_manager import ProxyManager, ProxyConfig, ProxyType
+    22→from .rate_limiter import RateLimiter, LimitStrategy, DomainLimits
+    23→from .data_parser import DataParser, ExtractionRule, ExtractionMethod, ParseResult
+    24→from .data_exporter import DataExporter
+    25→from .scheduler import TaskScheduler, ScheduledTask, ScheduleType
+    26→from .history import HistoryManager, HistoryEntry
+    27→from .captcha_detector import detect_captcha, get_captcha_info_for_log
+    28→
+    29→
+    30→class ScrapingMode(Enum):
+    31→    STATIC = "static"
+    32→    DYNAMIC = "dynamic"
+    33→    AUTO = "auto"
+    34→
+    35→
+    36→class EngineState(Enum):
+    37→    IDLE = "idle"
+    38→    RUNNING = "running"
+    39→    PAUSED = "paused"
+    40→    STOPPING = "stopping"
+    41→    ERROR = "error"
+    42→
+    43→
+    44→@dataclass
+    45→class ScrapingResult:
+    46→    """Result of a scraping operation."""
+    47→    success: bool
+    48→    url: str
+    49→    data: Optional[List[Dict[str, Any]]] = None
+    50→    error: Optional[str] = None
+    51→    records_count: int = 0
+    52→    elapsed_time: float = 0.0
+    53→    status_codes: Dict[int, int] = field(default_factory=dict)
+    54→    total_bytes: int = 0
+    55→    export_path: Optional[str] = None
+    56→
+    57→
+    58→@dataclass
+    59→class ScrapingProject:
+    60→    """A saved scraping project configuration."""
+    61→    id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    62→    name: str = "Untitled Project"
+    63→    urls: List[str] = field(default_factory=list)
+    64→    mode: ScrapingMode = ScrapingMode.STATIC
+    65→    extraction_rules: List[Dict] = field(default_factory=list)
+    66→    use_proxy: bool = False
+    67→    use_rate_limit: bool = True
+    68→    request_config: Dict = field(default_factory=dict)
+    69→    browser_config: Dict = field(default_factory=dict)
+    70→    page_actions: List[Dict] = field(default_factory=list)
+    71→    export_format: str = "json"
+    72→    export_path: str = ""
+    73→    auto_scroll: bool = False
+    74→    max_depth: int = 1
+    75→    follow_links: bool = False
+    76→    max_pages: int = 100
+    77→    concurrent_workers: int = 1
+    78→    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    79→    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    80→
+    81→    def to_dict(self) -> Dict:
+    82→        return {
+    83→            "id": self.id, "name": self.name, "urls": self.urls,
+    84→            "mode": self.mode.value, "extraction_rules": self.extraction_rules,
+    85→            "use_proxy": self.use_proxy, "use_rate_limit": self.use_rate_limit,
+    86→            "request_config": self.request_config, "browser_config": self.browser_config,
+    87→            "page_actions": self.page_actions, "export_format": self.export_format,
+    88→            "export_path": self.export_path, "auto_scroll": self.auto_scroll,
+    89→            "max_depth": self.max_depth, "follow_links": self.follow_links,
+    90→            "max_pages": self.max_pages, "concurrent_workers": self.concurrent_workers,
+    91→            "created_at": self.created_at, "updated_at": self.updated_at,
+    92→        }
+    93→
+    94→    @classmethod
+    95→    def from_dict(cls, data: Dict) -> "ScrapingProject":
+    96→        d = data.copy()
+    97→        d["mode"] = ScrapingMode(d.get("mode", "static"))
+    98→        rules = []
+    99→        for r in d.get("extraction_rules", []):
+   100→            rules.append(r)
+   101→        d["extraction_rules"] = rules
+   102→        return cls(**d)
+   103→
+   104→
+   105→class ScraperEngine:
+   106→    """
+   107→    Main scraping engine that orchestrates all components.
+   108→    
+   109→    This is the central controller that manages:
+   110→    - Static and dynamic scraping
+   111→    - Proxy management and rotation
+   112→    - Rate limiting per domain
+   113→    - Data extraction with configurable rules
+   114→    - Multi-format data export
+   115→    - Project management (save/load)
+   116→    - Task scheduling
+   117→    - Real-time progress reporting
+   118→    - Thread-safe operation
+   119→    """
+   120→
+   121→    def __init__(self):
+   122→        self._state = EngineState.IDLE
+   123→        self._state_lock = threading.RLock()
+   124→
+   125→        # Core components
+   126→        self._proxy_manager = ProxyManager()
+   127→        self._rate_limiter = RateLimiter(LimitStrategy.TOKEN_BUCKET)
+   128→        self._data_parser = DataParser()
+   129→        self._data_exporter = DataExporter()
+   130→        self._scheduler = TaskScheduler()
+   131→        self._history = HistoryManager()
+   132→
+   133→        # Scrapers (created on demand)
+   134→        self._static_scraper: Optional[StaticScraper] = None
+   135→        self._dynamic_scraper: Optional[DynamicScraper] = None
+   136→
+   137→        # Projects
+   138→        self._projects: Dict[str, ScrapingProject] = {}
+   139→        self._current_project: Optional[ScrapingProject] = None
+   140→
+   141→        # Results
+   142→        self._results: List[Dict[str, Any]] = []
+   143→        self._errors: List[Dict] = []
+   144→
+   145→        # Progress
+   146→        self._progress_callback: Optional[Callable] = None
+   147→        self._log_callback: Optional[Callable] = None
+   148→        self._progress = {"current": 0, "total": 0, "status": "idle"}
+   149→
+   150→        # Config
+   151→        self._projects_dir = "projects"
+   152→        os.makedirs(self._projects_dir, exist_ok=True)
+   153→
+   154→        self._load_projects()
+   155→
+   156→    @property
+   157→    def state(self) -> EngineState:
+   158→        return self._state
+   159→
+   160→    @property
+   161→    def results(self) -> List[Dict]:
+   162→        return list(self._results)
+   163→
+   164→    @property
+   165→    def result_count(self) -> int:
+   166→        return len(self._results)
+   167→
+   168→    @property
+   169→    def errors(self) -> List[Dict]:
+   170→        return list(self._errors)
+   171→
+   172→    @property
+   173→    def progress(self) -> Dict:
+   174→        return dict(self._progress)
+   175→
+   176→    @property
+   177→    def proxy_manager(self) -> ProxyManager:
+   178→        return self._proxy_manager
+   179→
+   180→    @property
+   181→    def rate_limiter(self) -> RateLimiter:
+   182→        return self._rate_limiter
+   183→
+   184→    @property
+   185→    def data_parser(self) -> DataParser:
+   186→        return self._data_parser
+   187→
+   188→    @property
+   189→    def data_exporter(self) -> DataExporter:
+   190→        return self._data_exporter
+   191→
+   192→    @property
+   193→    def scheduler(self) -> TaskScheduler:
+   194→        return self._scheduler
+   195→
+   196→    @property
+   197→    def history(self) -> HistoryManager:
+   198→        return self._history
+   199→
+   200→    @property
+   201→    def projects(self) -> List[ScrapingProject]:
+   202→        return list(self._projects.values())
+   203→
+   204→    @property
+   205→    def current_project(self) -> Optional[ScrapingProject]:
+   206→        return self._current_project
+   207→
+   208→    def set_progress_callback(self, callback: Callable) -> None:
+   209→        self._progress_callback = callback
+   210→
+   211→    def set_log_callback(self, callback: Callable) -> None:
+   212→        self._log_callback = callback
+   213→
+   214→    def _log(self, message: str, level: str = "info") -> None:
+   215→        if self._log_callback:
+   216→            self._log_callback(message, level)
+   217→
+   218→    def _update_progress(self, current: int, total: int, status: str = "") -> None:
+   219→        self._progress = {"current": current, "total": total, "status": status or self._progress["status"]}
+   220→        if self._progress_callback:
+   221→            self._progress_callback(self._progress)
+   222→
+   223→    # ---- Project Management ----
+   224→
+   225→    def create_project(self, name: str = "", **kwargs) -> ScrapingProject:
+   226→        project = ScrapingProject(name=name or "Untitled Project", **kwargs)
+   227→        project.updated_at = datetime.now().isoformat()
+   228→        self._projects[project.id] = project
+   229→        self._save_projects()
+   230→        self._log(f"Project created: {project.name} ({project.id})")
+   231→        return project
+   232→
+   233→    def load_project(self, project_id: str) -> Optional[ScrapingProject]:
+   234→        project = self._projects.get(project_id)
+   235→        if project:
+   236→            self._current_project = project
+   237→            self._data_parser.clear_rules()
+   238→            for rule_dict in project.extraction_rules:
+   239→                rule = ExtractionRule(
+   240→                    name=rule_dict["name"],
+   241→                    method=ExtractionMethod(rule_dict["method"]),
+   242→                    selector=rule_dict["selector"],
+   243→                    attribute=rule_dict.get("attribute"),
+   244→                    default=rule_dict.get("default"),
+   245→                    prefix=rule_dict.get("prefix", ""),
+   246→                    suffix=rule_dict.get("suffix", ""),
+   247→                    is_list=rule_dict.get("is_list", False),
+   248→                    max_items=rule_dict.get("max_items", 0),
+   249→                )
+   250→                self._data_parser.add_rule(rule)
+   251→            self._log(f"Project loaded: {project.name}")
+   252→        return project
+   253→
+   254→    def delete_project(self, project_id: str) -> bool:
+   255→        if project_id in self._projects:
+   256→            name = self._projects[project_id].name
+   257→            del self._projects[project_id]
+   258→            if self._current_project and self._current_project.id == project_id:
+   259→                self._current_project = None
+   260→            self._save_projects()
+   261→            self._log(f"Project deleted: {name}")
+   262→            return True
+   263→        return False
+   264→
+   265→    def save_current_project(self) -> bool:
+   266→        if not self._current_project:
+   267→            return False
+   268→        self._current_project.updated_at = datetime.now().isoformat()
+   269→        self._current_project.extraction_rules = [
+   270→            {"name": r.name, "method": r.method.value, "selector": r.selector,
+   271→             "attribute": r.attribute, "default": r.default,
+   272→             "prefix": r.prefix, "suffix": r.suffix,
+   273→             "is_list": r.is_list, "max_items": r.max_items}
+   274→            for r in self._data_parser.rules
+   275→        ]
+   276→        self._projects[self._current_project.id] = self._current_project
+   277→        self._save_projects()
+   278→        self._log(f"Project saved: {self._current_project.name}")
+   279→        return True
+   280→
+   281→    def _save_projects(self) -> None:
+   282→        try:
+   283→            data = {pid: p.to_dict() for pid, p in self._projects.items()}
+   284→            path = os.path.join(self._projects_dir, "projects.json")
+   285→            with open(path, "w", encoding="utf-8") as f:
+   286→                json.dump(data, f, indent=2, ensure_ascii=False)
+   287→        except Exception as e:
+   288→            self._log(f"Failed to save projects: {e}", "error")
+   289→
+   290→    def _load_projects(self) -> None:
+   291→        path = os.path.join(self._projects_dir, "projects.json")
+   292→        if not os.path.exists(path):
+   293→            return
+   294→        try:
+   295→            with open(path, "r", encoding="utf-8") as f:
+   296→                data = json.load(f)
+   297→            for pid, pdata in data.items():
+   298→                self._projects[pid] = ScrapingProject.from_dict(pdata)
+   299→            self._log(f"Loaded {len(self._projects)} projects")
+   300→        except Exception as e:
+   301→            self._log(f"Failed to load projects: {e}", "error")
+   302→
+   303→    # ---- Scraping ----
+   304→
+   305→    def scrape_urls(self, urls: List[str], mode: ScrapingMode = ScrapingMode.STATIC,
+   306→                    callback: Optional[Callable] = None) -> ScrapingResult:
+   307→        """
+   308→        Scrape a list of URLs with configured extraction rules.
+   309→        Runs in a background thread.
+   310→        """
+   311→        result = ScrapingResult(success=False, url="", elapsed_time=0)
+   312→        thread = threading.Thread(
+   313→            target=self._scrape_urls_sync,
+   314→            args=(urls, mode, result, callback),
+   315→            daemon=True,
+   316→        )
+   317→        thread.start()
+   318→        return result
+   319→
+   320→    def _scrape_single_url(self, url: str, static_scraper: Optional[StaticScraper],
+   321→                                dynamic_scraper: Optional[DynamicScraper],
+   322→                                mode: ScrapingMode, use_proxy: bool, use_rate_limit: bool,
+   323→                                auto_scroll: bool, page_actions: list) -> tuple:
+   324→        """Scrape a single URL. Returns (url, result_row, error_dict, metadata, new_links)."""
+   325→        if self._state == EngineState.STOPPING:
+   326→            return (url, None, None, {}, [])
+   327→
+   328→        use_dynamic = (mode == ScrapingMode.DYNAMIC)
+   329→        html_content = None
+   330→        metadata = {}
+   331→        new_links = []
+   332→
+   333→        try:
+   334→            if use_dynamic and dynamic_scraper:
+   335→                actions = [PageAction(**a) for a in page_actions]
+   336→                html_content, metadata = dynamic_scraper.scrape(url, actions=actions, auto_scroll=auto_scroll)
+   337→            elif static_scraper:
+   338→                html_content, metadata = static_scraper.fetch(url)
+   339→
+   340→            if html_content:
+   341→                parse_result = self._data_parser.parse(html_content, url)
+   342→                row = None
+   343→                if parse_result.fields:
+   344→                    row = parse_result.to_dict()
+   345→                    row["_url"] = url
+   346→                    row["_scraped_at"] = datetime.now().isoformat()
+   347→
+   348→                # Extract links for crawling
+   349→                if self._current_project and self._current_project.follow_links:
+   350→                    try:
+   351→                        soup = __import__("bs4", fromlist=["BeautifulSoup"]).BeautifulSoup(html_content, "lxml")
+   352→                        links = self._data_parser._extract_links(
+   353→                            soup, url, ExtractionRule(name="", method=ExtractionMethod.LINKS, selector="a")
+   354→                        )
+   355→                        base = urlparse(url)
+   356→                        for link in links:
+   357→                            parsed = urlparse(link)
+   358→                            if parsed.netloc == base.netloc:
+   359→                                new_links.append(link)
+   360→                    except Exception:
+   361→                        pass
+   362→
+   363→                # Log captcha warnings
+   364→                if metadata.get("captcha_detected"):
+   365→                    captcha_info = metadata.get("captcha_info", "Captcha detected")
+   366→                    self._log(f"WARNING: {captcha_info} on {url}", "warning")
+   367→
+   368→                return (url, row, None, metadata, new_links)
+   369→            else:
+   370→                error_msg = metadata.get("error", "No content")
+   371→                return (url, None, {"url": url, "error": error_msg}, metadata, [])
+   372→
+   373→        except Exception as e:
+   374→            return (url, None, {"url": url, "error": str(e)[:200]}, {}, [])
+   375→
+   376→    def _scrape_urls_sync(self, urls: List[str], mode: ScrapingMode,
+   377→                           result: ScrapingResult, callback: Optional[Callable]) -> None:
+   378→        """Synchronous scraping implementation with concurrent worker support."""
+   379→        with self._state_lock:
+   380→            if self._state == EngineState.RUNNING:
+   381→                result.error = "Engine is already running"
+   382→                return
+   383→            self._state = EngineState.RUNNING
+   384→
+   385→        self._results.clear()
+   386→        self._errors.clear()
+   387→        start_time = time.time()
+   388→        total = len(urls)
+   389→
+   390→        # Determine workers
+   391→        workers = 1
+   392→        if mode == ScrapingMode.STATIC and self._current_project:
+   393→            workers = max(1, self._current_project.concurrent_workers or 1)
+   394→        elif mode == ScrapingMode.DYNAMIC:
+   395→            workers = 1  # Dynamic scraping is not thread-safe
+   396→
+   397→        self._update_progress(0, total, "running")
+   398→        self._log(f"Starting scrape of {total} URLs in {mode.value} mode ({workers} worker(s))")
+   399→
+   400→        static_scraper = None
+   401→        dynamic_scraper = None
+   402→
+   403→        try:
+   404→            if mode in (ScrapingMode.STATIC, ScrapingMode.AUTO):
+   405→                req_config = RequestConfig(**self._current_project.request_config) if self._current_project else RequestConfig()
+   406→                static_scraper = StaticScraper(
+   407→                    config=req_config,
+   408→                    proxy_manager=self._proxy_manager if self._current_project and self._current_project.use_proxy else None,
+   409→                    rate_limiter=self._rate_limiter if self._current_project and self._current_project.use_rate_limit else None,
+   410→                )
+   411→
+   412→            if mode in (ScrapingMode.DYNAMIC, ScrapingMode.AUTO):
+   413→                browser_cfg = BrowserConfig(**self._current_project.browser_config) if self._current_project else BrowserConfig()
+   414→                dynamic_scraper = DynamicScraper(config=browser_cfg)
+   415→
+   416→            use_proxy = self._current_project.use_proxy if self._current_project else False
+   417→            use_rate_limit = self._current_project.use_rate_limit if self._current_project else True
+   418→            auto_scroll = self._current_project.auto_scroll if self._current_project else False
+   419→            page_actions = self._current_project.page_actions if self._current_project else []
+   420→            max_pages = (self._current_project.max_pages if self._current_project else 100)
+   421→
+   422→            visited_urls = set()
+   423→            urls_to_scrape = list(urls)
+   424→            pages_scraped = 0
+   425→            results_lock = threading.Lock()
+   426→            errors_lock = threading.Lock()
+   427→            links_lock = threading.Lock()
+   428→
+   429→            while urls_to_scrape and pages_scraped < max_pages:
+   430→                if self._state == EngineState.STOPPING:
+   431→                    break
+   432→
+   433→                # Take a batch
+   434→                batch_size = min(len(urls_to_scrape), max_pages - pages_scraped)
+   435→                batch = []
+   436→                for _ in range(batch_size):
+   437→                    if not urls_to_scrape:
+   438→                        break
+   439→                    url = urls_to_scrape.pop(0)
+   440→                    if url not in visited_urls:
+   441→                        visited_urls.add(url)
+   442→                        batch.append(url)
+   443→
+   444→                if not batch:
+   445→                    break
+   446→
+   447→                if workers > 1 and len(batch) > 1:
+   448→                    # Concurrent scraping
+   449→                    with ThreadPoolExecutor(max_workers=workers) as executor:
+   450→                        futures = {
+   451→                            executor.submit(
+   452→                                self._scrape_single_url, url, static_scraper, dynamic_scraper,
+   453→                                mode, use_proxy, use_rate_limit, auto_scroll, page_actions
+   454→                            ): url for url in batch
+   455→                        }
+   456→                        for future in as_completed(futures):
+   457→                            if self._state == EngineState.STOPPING:
+   458→                                break
+   459→                            url, row, error, metadata, new_links = future.result()
+   460→
+   461→                            with results_lock:
+   462→                                if row:
+   463→                                    self._results.append(row)
+   464→                            with errors_lock:
+   465→                                if error:
+   466→                                    self._errors.append(error)
+   467→
+   468→                            status = metadata.get("status_code", 0)
+   469→                            if status:
+   470→                                result.status_codes[status] = result.status_codes.get(status, 0) + 1
+   471→                            result.total_bytes += metadata.get("content_length", 0)
+   472→
+   473→                            with links_lock:
+   474→                                for link in new_links:
+   475→                                    if link not in visited_urls:
+   476→                                        urls_to_scrape.append(link)
+   477→
+   478→                            pages_scraped += 1
+   479→                            self._update_progress(pages_scraped, total, "running")
+   480→                            if callback:
+   481→                                callback(pages_scraped, total, len(self._results))
+   482→                else:
+   483→                    # Sequential scraping (dynamic mode or 1 worker)
+   484→                    for url in batch:
+   485→                        if self._state == EngineState.STOPPING:
+   486→                            break
+   487→                        url, row, error, metadata, new_links = self._scrape_single_url(
+   488→                            url, static_scraper, dynamic_scraper, mode,
+   489→                            use_proxy, use_rate_limit, auto_scroll, page_actions
+   490→                        )
+   491→
+   492→                        if row:
+   493→                            self._results.append(row)
+   494→                        if error:
+   495→                            self._errors.append(error)
+   496→
+   497→                        status = metadata.get("status_code", 0)
+   498→                        if status:
+   499→                            result.status_codes[status] = result.status_codes.get(status, 0) + 1
+   500→                        result.total_bytes += metadata.get("content_length", 0)
+   501→
+   502→                        for link in new_links:
+   503→                            if link not in visited_urls:
+   504→                                urls_to_scrape.append(link)
+   505→
+   506→                        pages_scraped += 1
+   507→                        self._update_progress(pages_scraped, total, "running")
+   508→                        if callback:
+   509→                            callback(pages_scraped, total, len(self._results))
+   510→
+   511→        except Exception as e:
+   512→            result.error = str(e)[:200]
+   513→            self._log(f"Scraping error: {e}", "error")
+   514→
+   515→        finally:
+   516→            if static_scraper:
+   517→                static_scraper.close()
+   518→            if dynamic_scraper:
+   519→                dynamic_scraper.close()
+   520→
+   521→            elapsed = time.time() - start_time
+   522→            result.success = len(self._results) > 0
+   523→            result.data = list(self._results)
+   524→            result.records_count = len(self._results)
+   525→            result.elapsed_time = round(elapsed, 2)
+   526→
+   527→            with self._state_lock:
+   528→                self._state = EngineState.IDLE
+   529→            self._update_progress(total, total, "completed")
+   530→            self._log(f"Scraping completed: {result.records_count} records in {elapsed:.1f}s")
+   531→
+   532→            # Record session in history
+   533→            try:
+   534→                rule_names = [r.name for r in self._data_parser.rules]
+   535→                session_name = self._current_project.name if self._current_project else "Quick Scrape"
+   536→                self._history.record_session(
+   537→                    name=session_name,
+   538→                    mode=mode.value,
+   539→                    urls=urls,
+   540→                    records=list(self._results),
+   541→                    errors=list(self._errors),
+   542→                    duration=elapsed,
+   543→                    status_codes=result.status_codes,
+   544→                    total_bytes=result.total_bytes,
+   545→                    rule_names=rule_names,
+   546→                    error_message=result.error or "",
+   547→                )
+   548→                self._log(f"Session recorded in history: {session_name}", "success")
+   549→            except Exception as e:
+   550→                self._log(f"Failed to record history: {e}", "error")
+   551→
+   552→            # Auto-export if configured
+   553→            if (result.success and self._current_project
+   554→                    and self._current_project.export_format
+   555→                    and self._current_project.export_path):
+   556→                try:
+   557→                    result.export_path = self._data_exporter.export(
+   558→                        self._results, self._current_project.export_format,
+   559→                        self._current_project.export_path,
+   560→                    )
+   561→                    self._log(f"Auto-exported to: {result.export_path}")
+   562→                except Exception as e:
+   563→                    self._log(f"Export failed: {e}", "error")
+   564→
+   565→    def fetch_html_preview(self, url: str, mode: ScrapingMode = ScrapingMode.STATIC) -> tuple:
+   566→        """Fetch a URL and return (html_content, metadata) for preview. Thread-safe."""
+   567→        def _fetch():
+   568→            if mode == ScrapingMode.DYNAMIC:
+   569→                scraper = DynamicScraper()
+   570→                html, meta = scraper.scrape(url)
+   571→                scraper.close()
+   572→            else:
+   573→                scraper = StaticScraper()
+   574→                html, meta = scraper.fetch(url)
+   575→                scraper.close()
+   576→            return html, meta
+   577→
+   578→        if threading.current_thread() is threading.main_thread():
+   579→            # Run in background to avoid blocking UI
+   580→            result_holder = [None]
+   581→            def _run():
+   582→                result_holder[0] = _fetch()
+   583→            t = threading.Thread(target=_run, daemon=True)
+   584→            t.start()
+   585→            t.join(timeout=60)
+   586→            return result_holder[0] or (None, {"error": "Timeout"})
+   587→        return _fetch()
+   588→
+   589→    def test_regex(self, pattern: str, text: str) -> list:
+   590→        """Test a regex pattern against text and return all matches."""
+   591→        try:
+   592→            return re.findall(pattern, text)
+   593→        except re.error as e:
+   594→            return [f"Regex error: {e}"]
+   595→
+   596→    def stop(self) -> None:
+   597→        """Stop the current scraping operation."""
+   598→        with self._state_lock:
+   599→            if self._state == EngineState.RUNNING:
+   600→                self._state = EngineState.STOPPING
+   601→        self._update_progress(self._progress["current"], self._progress["total"], "stopping")
+   602→        self._log("Stopping scraping...")
+   603→
+   604→    def export_results(self, format: str, filepath: str, data: Optional[List[Dict]] = None, **kwargs) -> str:
+   605→        """Export current results (or provided data) to a file."""
+   606→        export_data = data if data is not None else self._results
+   607→        return self._data_exporter.export(export_data, format, filepath, **kwargs)
+   608→
+   609→    def clear_results(self) -> None:
+   610→        self._results.clear()
+   611→        self._errors.clear()
+   612→        self._update_progress(0, 0, "idle")
+   613→
+   614→    def quick_scrape(self, url: str, mode: ScrapingMode = ScrapingMode.STATIC) -> ParseResult:
+   615→        """Quick scrape a single URL for preview/testing."""
+   616→        if mode == ScrapingMode.DYNAMIC:
+   617→            scraper = DynamicScraper()
+   618→            html, meta = scraper.scrape(url)
+   619→            scraper.close()
+   620→        else:
+   621→            scraper = StaticScraper()
+   622→            html, meta = scraper.fetch(url)
+   623→            scraper.close()
+   624→
+   625→        if html is None:
+   626→            return ParseResult(url=url, error=meta.get("error", "Failed"))
+   627→
+   628→        return self._data_parser.parse(html, url)
+   629→
+   630→    def get_engine_stats(self) -> Dict:
+   631→        """Get comprehensive engine statistics."""
+   632→        stats = {
+   633→            "state": self._state.value,
+   634→            "total_results": len(self._results),
+   635→            "total_errors": len(self._errors),
+   636→            "projects_count": len(self._projects),
+   637→            "proxies": self._proxy_manager.get_summary(),
+   638→            "rate_limiter": self._rate_limiter.get_stats(),
+   639→            "scheduler": self._scheduler.get_summary(),
+   640→        }
+   641→        return stats
+   642→
