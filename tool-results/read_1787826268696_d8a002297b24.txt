@@ -1,0 +1,990 @@
+     1→"""
+     2→Content Intelligence Module for Web Scraping.
+     3→
+     4→Applies NLP, Information Theory, and text analysis methodologies to scraped
+     5→content using ONLY the Python standard library and numpy. No external NLP
+     6→libraries are required.
+     7→
+     8→Classes:
+     9→    TextStatistics      – Readability, frequency, TF-IDF, entropy, diversity, language detection.
+    10→    KeywordExtractor    – TF-IDF keywords, RAKE, basic named-entity pattern extraction.
+    11→    SentimentAnalyzer   – Lexicon-based polarity / subjectivity with negation handling.
+    12→    ContentFingerprinter – SimHash fingerprints, Hamming similarity, duplicate detection.
+    13→    ContentAnalyzer     – Facade combining all of the above plus extractive summarisation.
+    14→"""
+    15→
+    16→from __future__ import annotations
+    17→
+    18→import hashlib
+    19→import math
+    20→import re
+    21→import unicodedata
+    22→from collections import Counter, defaultdict
+    23→from typing import Any
+    24→
+    25→import numpy as np
+    26→
+    27→
+    28→# ---------------------------------------------------------------------------
+    29→# Internal helpers
+    30→# ---------------------------------------------------------------------------
+    31→
+    32→_PUNCT_RE = re.compile(r"[^\w\s]", re.UNICODE)
+    33→_WHITESPACE_RE = re.compile(r"\s+", re.UNICODE)
+    34→_SENTENCE_RE = re.compile(r"[.!?]+\s*|\n\s*", re.UNICODE)
+    35→_WORD_RE = re.compile(r"\b[\w\u4e00-\u9fff]+\b", re.UNICODE)
+    36→
+    37→# Stop-word list (small, covers en/da/de/es/fr/it/nl/no/pl/pt/ru/sv)
+    38→_STOP_WORDS: frozenset[str] = frozenset(
+    39→    "a about above after again against all am an and any are aren't as at be because "
+    40→    "been before being below between both but by can't cannot could couldn't did didn't "
+    41→    "do does doesn't doing don't down during each few for from further get got had hadn't "
+    42→    "has hasn't have haven't having he he'd he'll he's her here here's hers herself him "
+    43→    "himself his how how's i i'd i'll i'm i've if in into is isn't it it's its itself "
+    44→    "let's me more most mustn't my myself no nor not of off on once only or other ought "
+    45→    "our ours ourselves out over own same shan't she she'd she'll she's should shouldn't so "
+    46→    "some such than that that's the their theirs them themselves then there there's these "
+    47→    "they they'd they'll they're they've this those through to too under until up very was "
+    48→    "wasn't we we'd we'll we're we've were weren't what what's when when's where where's "
+    49→    "which while who who's whom why why's will with won't would wouldn't you you'd you'll "
+    50→    "you're you've your yours yourself yourselves also just like even still well back much "
+    51→    "many since may might shall yet however already always never often another every one "
+    52→    "two new now way use used using make made said say says go went gone come came take "
+    53→    "took taken see saw seen know knew known think thought tell told give gave given find "
+    54→    "found found work works working worked call called long look looked get got getting "
+    55→    "der die das und in von zu den ist ein eine es sich mit auf für hat sein ich "
+    56→    "nicht er es auch des dem das wie ein eine und der die "
+    57→    "le la les de des du un une en et est que qui dans pour ne pas sur ce il "
+    58→    "el la los las de del en un una y es que por con no se su al como más "
+    59→    "и в на не с к от для что это он она по как но да "
+    60→    "的 了 在 是 我 有 和 就 不 人 都 一 一个 上 也 很 到 说 要 去 你 会 着 没有 看 好 "
+    61→    .split()
+    62→)
+    63→
+    64→
+    65→def _normalise(text: str) -> str:
+    66→    """Lower-case, strip diacritics, collapse whitespace."""
+    67→    text = text.lower()
+    68→    nfkd = unicodedata.normalize("NFKD", text)
+    69→    text = "".join(ch for ch in nfkd if not unicodedata.combining(ch))
+    70→    return _WHITESPACE_RE.sub(" ", text).strip()
+    71→
+    72→
+    73→def _tokenise(text: str) -> list[str]:
+    74→    """Return lowercase word tokens, ignoring pure punctuation."""
+    75→    return [w for w in _WORD_RE.findall(_normalise(text)) if w]
+    76→
+    77→
+    78→def _sentences(text: str) -> list[str]:
+    79→    """Split *text* into sentences."""
+    80→    parts = _SENTENCE_RE.split(text)
+    81→    return [s.strip() for s in parts if s.strip() and len(s.strip()) > 2]
+    82→
+    83→
+    84→# ===========================================================================
+    85→# 1. TextStatistics
+    86→# ===========================================================================
+    87→
+    88→class TextStatistics:
+    89→    """Quantitative and statistical analysis of text.
+    90→
+    91→    Provides readability metrics (Flesch-Kincaid), word-frequency tables,
+    92→    TF-IDF across document collections, Shannon entropy, lexical diversity,
+    93→    and a simple statistical language detector.
+    94→    """
+    95→
+    96→    # Common-word frequency tables for statistical language detection.
+    97→    # Each entry is a set of the ~60 most frequent words in the language.
+    98→    _LANG_MARKERS: dict[str, set[str]] = {
+    99→        "en": {
+   100→            "the", "be", "to", "of", "and", "a", "in", "that", "have", "i",
+   101→            "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
+   102→            "this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
+   103→            "or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
+   104→            "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+   105→            "when", "make", "can", "like", "time", "no", "just", "him", "know", "take",
+   106→            "people", "into", "year", "your", "good", "some", "could", "them", "see",
+   107→            "other", "than", "then", "now", "look", "only", "come", "its", "over",
+   108→        },
+   109→        "fa": {
+   110→            "و", "در", "به", "از", "که", "این", "را", "با", "است", "برای",
+   111→            "آن", "یک", "نمی", "های", "کرد", "بود", "هم", "بر", "خیلی", "او",
+   112→            "من", "هر", «", «», "رو", "تا", "باید", "می», "شده", "کرد",
+   113→            "دارد", «همین», «می», «پیش», «کرد», «بعد», «کرد», «شد», «نشده",
+   114→            "مورد», «کنند», «می», «شود», «برای», «اول», «هم», «دو», «دیگر",
+   115→            "بی», «کرد», «کنند», «می», «گفت", «بود», «اول», "آنها", "کند",
+   116→            "باید", «می», «شود», «می», «کنند", «هر», «بیشتر", "می", "کرد",
+   117→        },
+   118→        "de": {
+   119→            "der", "die", "und", "in", "den", "von", "zu", "das", "mit", "ist",
+   120→            "ein", "eine", "es", "sich", "auf", "nicht", "für", "wie", "auch", "hat",
+   121→            "sein", "ich", "dem", "so", "er", "war", "aus", "als", "nur", "oder",
+   122→            "aber", "noch", "sind", "an", "wird", "hier", "bei", "wir", "was",
+   123→            "können", "über", "dann", "dieser", "einem", "einer", "eines", "doch",
+   124→            "schon", "wurde", "durch", "nach", "dies", "jeder", "wo", "well", "sie",
+   125→            "haben", "wurden", "diese", "ihre", "kann", "dann", "des", "man", "da",
+   126→            "wir", "daß", "soll", "euch", "ihr", "mich", "mir", "unser", "euch",
+   127→        },
+   128→        "fr": {
+   129→            "de", "la", "le", "les", "des", "et", "en", "un", "une", "est",
+   130→            "que", "qui", "dans", "pour", "ne", "pas", "sur", "ce", "il", "son",
+   131→            "avec", "plus", "par", "je", "se", "au", "sont", "mais", "comme", "nous",
+   132→            "tout", "ont", "ou", "été", "aux", "peut", "aussi", "ses", "leurs", "cette",
+   133→            "fait", "si", "bien", "elle", "lui", "où", "même", "encore", "deux",
+   134→            "autres", "très", "entre", "nous", "après", "première", "temps", "homme",
+   135→            "peu", "années", "pays", "jours", "vie", "grand", "hommes", "monde",
+   136→            "contre", "donc", "doit", "rien", "ces", "tout", "sans", "sous",
+   137→        },
+   138→        "es": {
+   139→            "de", "la", "el", "en", "y", "a", "los", "del", "se", "las",
+   140→            "por", "un", "para", "con", "no", "una", "su", "al", "lo", "como",
+   141→            "más", "pero", "sus", "le", "ya", "o", "este", "sí", "porque", "esta",
+   142→            "entre", "cuando", "muy", "sin", "sobre", "también", "me", "hasta", "hay",
+   143→            "donde", "quien", "desde", "todo", "nos", "durante", "todos", "uno", "les",
+   144→            "ni", "contra", "otros", "ese", "eso", "ante", "ellos", "e", "esto",
+   145→            "mí", "antes", "algunos", "qué", "unos", "yo", "otro", "otras", "otra",
+   146→            "él", "tanto", "esa", "estos", "mucho", "quienes", "nada", "muchos",
+   147→        },
+   148→        "ar": {
+   149→            "في", "من", "على", "إلى", "عن", "مع", "هذا", "التي", "التي", "أن",
+   150→            "لم", "هو", "كان", "هذه", "قد", "لا", "بين", "كل", "بعد", "عند",
+   151→            "ذلك", "بها", "أنه", "إليه", "لقد", "إذا", "ليس", "حتى", "ما", "كان",
+   152→            "هل", "أو", "لكن", "وقد", "ذلك", "كذلك", "أما", "ثم", "نحن", "هم",
+   153→            "أولئك", "فيها", "منه", "هنا", "منذ", "حول", "خلال", "عليه", "وهو",
+   154→            "وهي", "فإن", "ولا", "كانت", "لأن", "ولكن", "وأن", "كما", "إلا",
+   155→            "إليها", "بعد", "قبل", "أي", "به", "لها", "وفي", "ذات", "وإذا",
+   156→            "حيث", "يمكن", "ذلك", "وذلك", "منهم", "كانوا", "بهذه", "تلك", "وهذه",
+   157→        },
+   158→        "zh": {
+   159→            "的", "了", "在", "是", "我", "有", "和", "就", "不", "人",
+   160→            "都", "一", "一个", "上", "也", "很", "到", "说", "要", "去",
+   161→            "你", "会", "着", "没有", "看", "好", "自己", "这", "他", "她",
+   162→            "它", "们", "那", "里", "什么", "吗", "吧", "呢", "啊", "哦",
+   163→            "哈", "嗯", "呀", "把", "被", "让", "给", "对", "从", "而",
+   164→            "过", "还", "又", "只", "已", "来", "得", "地", "能", "为",
+   165→            "所", "以", "之", "等", "中", "大", "个", "下", "多", "小",
+   166→        },
+   167→        "ru": {
+   168→            "и", "в", "не", "на", "я", "с", "что", "по", "это", "он",
+   169→            "как", "а", "то", "все", "она", "так", "его", "но", "да", "ты",
+   170→            "к", "у", "же", "вы", "за", "бы", "только", «её», "мне», "было",
+   171→            "вот», «от», «меня», «ещё», «нет», «о», «из», «ему», «теперь», «когда",
+   172→            "что», «даже», «ну», «вдруг», «ли», «под», «у», «ж», «тогда», «кто»,
+   173→            «этот», «того», «потому», «этого», «какой», «совсем», «ним», «здесь",
+   174→            «этом», «один», «почти», «мой», «тем», «чтобы», «нее», «сейчас», «были»,
+   175→            «куда», «зачем», «всех», «никогда», «можно», «при», «наконец», «два»,
+   176→        },
+   177→    }
+   178→
+   179→    # ------------------------------------------------------------------
+   180→    # Readability
+   181→    # ------------------------------------------------------------------
+   182→
+   183→    def compute_readability(self, text: str) -> dict[str, Any]:
+   184→        """Compute readability statistics for *text*.
+   185→
+   186→        Returns a dictionary containing:
+   187→            flesch_kincaid    – Flesch-Kincaid Grade Level score
+   188→            sentence_count    – number of sentences
+   189→            word_count        – number of word tokens
+   190→            avg_sentence_len  – mean words per sentence
+   191→            avg_word_len      – mean characters per word
+   192→        """
+   193→        sentences = _sentences(text)
+   194→        words = _tokenise(text)
+   195→        n_sents = max(len(sentences), 1)
+   196→        n_words = max(len(words), 1)
+   197→        avg_sl = n_words / n_sents
+   198→        avg_wl = sum(len(w) for w in words) / n_words if words else 0.0
+   199→
+   200→        # Syllable estimation (heuristic for English-like text)
+   201→        def _syllables(word: str) -> int:
+   202→            w = word.lower()
+   203→            if len(w) <= 3:
+   204→                return 1
+   205→            w = re.sub(r"(?:[^laeiouy]es|ed|[^laeiouy]e)$", "", w)
+   206→            w = re.sub(r"^y", "", w)
+   207→            count = len(re.findall(r"[aeiouy]{1,2}", w))
+   208→            return max(count, 1)
+   209→
+   210→        total_syllables = sum(_syllables(w) for w in words)
+   211→        fk = 0.0
+   212→        if n_words > 0 and n_sents > 0:
+   213→            fk = 0.39 * (n_words / n_sents) + 11.8 * (total_syllables / n_words) - 15.59
+   214→
+   215→        return {
+   216→            "flesch_kincaid": round(fk, 2),
+   217→            "sentence_count": n_sents,
+   218→            "word_count": n_words,
+   219→            "avg_sentence_length": round(avg_sl, 2),
+   220→            "avg_word_length": round(avg_wl, 2),
+   221→        }
+   222→
+   223→    # ------------------------------------------------------------------
+   224→    # Word frequency
+   225→    # ------------------------------------------------------------------
+   226→
+   227→    def compute_word_frequency(
+   228→        self, text: str, top_n: int = 50
+   229→    ) -> list[tuple[str, int, float]]:
+   230→        """Return the *top_n* most frequent words.
+   231→
+   232→        Each entry is ``(word, raw_count, relative_frequency)`` where
+   233→        ``relative_frequency`` is ``count / total_words``.
+   234→        Stop-words are **excluded**.
+   235→        """
+   236→        words = _tokenise(text)
+   237→        filtered = [w for w in words if w not in _STOP_WORDS and len(w) > 1]
+   238→        total = max(len(filtered), 1)
+   239→        counts = Counter(filtered).most_common(top_n)
+   240→        return [(w, c, round(c / total, 4)) for w, c in counts]
+   241→
+   242→    # ------------------------------------------------------------------
+   243→    # TF-IDF
+   244→    # ------------------------------------------------------------------
+   245→
+   246→    def compute_tf_idf(self, documents: list[str]) -> list[dict[str, float]]:
+   247→        """Compute a TF-IDF vector for each document in *documents*.
+   248→
+   249→        Returns a list of dictionaries ``{word: tfidf_score, ...}`` sorted
+   250→        descending by score (top 100 terms per document).  Stop-words are
+   251→        excluded.
+   252→        """
+   253→        tokenised: list[list[str]] = [
+   254→            [w for w in _tokenise(d) if w not in _STOP_WORDS and len(w) > 1]
+   255→            for d in documents
+   256→        ]
+   257→        n_docs = len(documents)
+   258→        if n_docs == 0:
+   259→            return []
+   260→
+   261→        # Document frequency
+   262→        df: Counter[str] = Counter()
+   263→        for tokens in tokenised:
+   264→            unique = set(tokens)
+   265→            for t in unique:
+   266→                df[t] += 1
+   267→
+   268→        results: list[dict[str, float]] = []
+   269→        for tokens in tokenised:
+   270→            tf = Counter(tokens)
+   271→            n_words = max(len(tokens), 1)
+   272→            vec: dict[str, float] = {}
+   273→            for word, count in tf.items():
+   274→                term_freq = count / n_words
+   275→                idf = math.log((n_docs + 1) / (df[word] + 1)) + 1  # smoothed
+   276→                vec[word] = round(term_freq * idf, 6)
+   277→            top = sorted(vec.items(), key=lambda x: x[1], reverse=True)[:100]
+   278→            results.append(dict(top))
+   279→        return results
+   280→
+   281→    # ------------------------------------------------------------------
+   282→    # Shannon entropy
+   283→    # ------------------------------------------------------------------
+   284→
+   285→    def compute_entropy(self, text: str) -> float:
+   286→        """Compute the Shannon entropy (in bits) of the character distribution.
+   287→
+   288→        H = - Σ p(c) · log₂ p(c)
+   289→        """
+   290→        counts = Counter(text)
+   291→        total = len(text)
+   292→        if total == 0:
+   293→            return 0.0
+   294→        entropy = 0.0
+   295→        for c in counts.values():
+   296→            p = c / total
+   297→            if p > 0:
+   298→                entropy -= p * math.log2(p)
+   299→        return round(entropy, 4)
+   300→
+   301→    # ------------------------------------------------------------------
+   302→    # Lexical diversity
+   303→    # ------------------------------------------------------------------
+   304→
+   305→    def compute_lexical_diversity(self, text: str) -> float:
+   306→        """Compute the Type-Token Ratio (TTR) for *text*.
+   307→
+   308→        TTR = |unique tokens| / |total tokens|
+   309→        """
+   310→        words = _tokenise(text)
+   311→        if not words:
+   312→            return 0.0
+   313→        return round(len(set(words)) / len(words), 4)
+   314→
+   315→    # ------------------------------------------------------------------
+   316→    # Language detection
+   317→    # ------------------------------------------------------------------
+   318→
+   319→    def language_detect(self, text: str) -> str:
+   320→        """Statistical language detection.
+   321→
+   322→        Compares the overlap of word tokens with per-language marker sets
+   323→        and returns the ISO 639-1 code with the highest score.  Falls back
+   324→        to ``"unknown"`` when confidence is too low.
+   325→        Supported: en, fa, de, fr, es, ar, zh, ru.
+   326→        """
+   327→        words = set(_normalise(text).split())
+   328→        best_lang = "unknown"
+   329→        best_score = 0
+   330→        for lang, markers in self._LANG_MARKERS.items():
+   331→            score = len(words & markers)
+   332→            if score > best_score:
+   333→                best_score = score
+   334→                best_lang = lang
+   335→        # Require at least 3 marker matches for a confident detection
+   336→        if best_score < 3:
+   337→            return "unknown"
+   338→        return best_lang
+   339→
+   340→
+   341→# ===========================================================================
+   342→# 2. KeywordExtractor
+   343→# ===========================================================================
+   344→
+   345→class KeywordExtractor:
+   346→    """Extract keywords and basic named entities from text.
+   347→
+   348→    Implements TF-IDF scoring, the RAKE algorithm (Rapid Automatic Keyword
+   349→    Extraction), and pattern-based named-entity recognition for common
+   350→    entity types (emails, URLs, phones, dates, prices, hashtags, mentions).
+   351→    """
+   352→
+   353→    # ------------------------------------------------------------------
+   354→    # TF-IDF keywords
+   355→    # ------------------------------------------------------------------
+   356→
+   357→    def extract_keywords_tfidf(
+   358→        self, text: str, top_n: int = 20
+   359→    ) -> list[tuple[str, float]]:
+   360→        """Extract keywords ranked by TF-IDF from a single document.
+   361→
+   362→        The document is split into pseudo-sentences to simulate a small
+   363→        corpus so that IDF has meaning.
+   364→        """
+   365→        sentences = _sentences(text)
+   366→        if not sentences:
+   367→            sentences = [text]
+   368→        ts = TextStatistics()
+   369→        tfidf_matrix = ts.compute_tf_idf(sentences)
+   370→        # Aggregate scores across pseudo-documents
+   371→        agg: Counter[str] = Counter()
+   372→        for vec in tfidf_matrix:
+   373→            for word, score in vec.items():
+   374→                agg[word] += score
+   375→        top = agg.most_common(top_n)
+   376→        return [(w, round(s, 4)) for w, s in top]
+   377→
+   378→    # ------------------------------------------------------------------
+   379→    # RAKE
+   380→    # ------------------------------------------------------------------
+   381→
+   382→    def extract_keywords_rake(
+   383→        self, text: str, top_n: int = 20
+   384→    ) -> list[tuple[str, float]]:
+   385→        """Extract keywords using the RAKE algorithm.
+   386→
+   387→        RAKE builds a co-occurrence graph of candidate keywords and scores
+   388→        each candidate using the ratio of *degree* (co-occurrences +
+   389→        frequency) to *frequency* (word_freq).  A higher ratio means the
+   390→        word co-occurs with many different partners – a signal of
+   391→        keyword-ness.
+   392→        """
+   393→        # Split text into candidate phrases (content words only)
+   394→        sentences = _sentences(text)
+   395→        phrase_list: list[str] = []
+   396→        for sent in sentences:
+   397→            words = _tokenise(sent)
+   398→            # Build phrases: sequences of non-stop-words
+   399→n            phrase: list[str] = []
+   400→            for w in words:
+   401→                if w not in _STOP_WORDS:
+   402→                    phrase.append(w)
+   403→                else:
+   404→                    if phrase:
+   405→                        phrase_list.append(" ".join(phrase))
+   406→                        phrase = []
+   407→            if phrase:
+   408→                phrase_list.append(" ".join(phrase))
+   409→
+   410→        if not phrase_list:
+   411→            return []
+   412→
+   413→        # Word frequency
+   414→        word_freq: Counter[str] = Counter()
+   415→        for ph in phrase_list:
+   416→            for w in ph.split():
+   417→                word_freq[w] += 1
+   418→
+   419→        # Word co-occurrence (degree)
+   420→        word_degree: Counter[str] = Counter()
+   421→        word_cooccur: dict[str, set[str]] = defaultdict(set)
+   422→        for ph in phrase_list:
+   423→            words_in_phrase = ph.split()
+   424→            degree = len(words_in_phrase) - 1  # edges in complete graph
+   425→            for w in words_in_phrase:
+   426→                word_degree[w] += degree
+   427→                for other in words_in_phrase:
+   428→                    if other != w:
+   429→                        word_cooccur[w].add(other)
+   430→
+   431→        # Score each word: (degree + freq) / freq
+   432→        word_score: dict[str, float] = {}
+   433→        for w in word_freq:
+   434→            deg = word_degree[w] + word_freq[w]
+   435→            word_score[w] = deg / word_freq[w]
+   436→
+   437→        # Score each phrase as the sum of member word scores
+   438→        phrase_scores: list[tuple[str, float]] = []
+   439→        for ph in phrase_list:
+   440→            score = sum(word_score.get(w, 0) for w in ph.split())
+   441→            phrase_scores.append((ph, score))
+   442→
+   443→        # Deduplicate and sort
+   444→        seen: set[str] = set()
+   445→        unique: list[tuple[str, float]] = []
+   446→        for ph, sc in sorted(phrase_scores, key=lambda x: x[1], reverse=True):
+   447→            key = " ".join(sorted(ph.split()))
+   448→            if key not in seen:
+   449→                seen.add(key)
+   450→                unique.append((ph, round(sc, 4)))
+   451→        return unique[:top_n]
+   452→
+   453→    # ------------------------------------------------------------------
+   454→    # Basic named entities
+   455→    # ------------------------------------------------------------------
+   456→
+   457→    def extract_named_entities_basic(self, text: str) -> list[tuple[str, str]]:
+   458→        """Extract basic named entities using regex patterns.
+   459→
+   460→        Recognised entity types:
+   461→            EMAIL   – e-mail addresses
+   462→            URL     – HTTP(S)/FTP URLs
+   463→            PHONE   – phone numbers (various formats)
+   464→            DATE    – common date patterns
+   465→            PRICE   – monetary amounts ($/€/£ + digits)
+   466→            HASHTAG – #hashtags
+   467→            MENTION – @mentions
+   468→        """
+   469→        patterns: list[tuple[str, re.Pattern[str]]] = [
+   470→            (
+   471→                "EMAIL",
+   472→                re.compile(
+   473→                    r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}",
+   474→                    re.UNICODE,
+   475→                ),
+   476→            ),
+   477→            (
+   478→                "URL",
+   479→                re.compile(
+   480→                    r"https?://[^\s<>\"']+|ftp://[^\s<>\"']+")
+   481→                ),
+   482→            ),
+   483→            (
+   484→                "PHONE",
+   485→                re.compile(
+   486→                    r"(?:\+?\d{1,3}[\s\-.]?)?\(?\d{2,4}\)?[\s\-.]?"
+   487→                    r"\d{3,4}[\s\-.]?\d{3,4}"
+   488→                ),
+   489→            ),
+   490→            (
+   491→                "DATE",
+   492→                re.compile(
+   493→                    r"\d{1,4}[\s/\-]\d{1,2}[\s/\-]\d{1,4}|"
+   494→                    r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+   495→                    r"[a-z]*[\s.]\d{1,2}[\s,]\d{2,4}",
+   496→                    re.IGNORECASE,
+   497→                ),
+   498→            ),
+   499→            (
+   500→                "PRICE",
+   501→                re.compile(r"[$€£]\s?\d+(?:[.,]\d{1,2})?(?:\s?(?:million|billion|k|m|b))?",
+   502→                           re.IGNORECASE),
+   503→            ),
+   504→            ("HASHTAG", re.compile(r"#\w+")),
+   505→            ("MENTION", re.compile(r"@\w+")),
+   506→        ]
+   507→        entities: list[tuple[str, str]] = []
+   508→        seen_spans: list[tuple[int, int]] = []
+   509→        for etype, pat in patterns:
+   510→            for m in pat.finditer(text):
+   511→                span = m.span()
+   512→                # avoid overlapping matches
+   513→                if any(s <= span[0] < e or s < span[1] <= e for s, e in seen_spans):
+   514→                    continue
+   515→                seen_spans.append(span)
+   516→                entities.append((m.group(), etype))
+   517→        return entities
+   518→
+   519→
+   520→# ===========================================================================
+   521→# 3. SentimentAnalyzer
+   522→# ===========================================================================
+   523→
+   524→class SentimentAnalyzer:
+   525→    """Lexicon-based sentiment analysis (no ML models).
+   526→
+   527→    Uses a built-in sentiment lexicon of ~200 words with polarity scores
+   528→    in [-1, 1].  Supports basic negation handling (e.g. "not good" →
+   529→    negative) and batch processing.
+   530→    """
+   531→
+   532→    _LEXICON: dict[str, float] = {
+   533→        # Positive words (score > 0)
+   534→        "good": 0.7, "great": 0.9, "excellent": 1.0, "amazing": 0.95,
+   535→        "wonderful": 0.95, "fantastic": 0.9, "outstanding": 0.95,
+   536→        "superb": 0.95, "brilliant": 0.9, "perfect": 1.0,
+   537→        "love": 0.9, "loved": 0.9, "loves": 0.9, "loving": 0.85,
+   538→        "happy": 0.8, "glad": 0.7, "joyful": 0.9, "pleased": 0.7,
+   539→        "beautiful": 0.85, "gorgeous": 0.9, "stunning": 0.9,
+   540→        "impressive": 0.8, "remarkable": 0.85, "exceptional": 0.9,
+   541→        "delightful": 0.85, "charming": 0.8, "elegant": 0.8,
+   542→        "satisfied": 0.7, "recommend": 0.7, "recommended": 0.7,
+   543→        "best": 0.9, "better": 0.6, "helpful": 0.7, "useful": 0.6,
+   544→        "reliable": 0.7, "efficient": 0.7, "fast": 0.5, "easy": 0.5,
+   545→        "enjoy": 0.8, "enjoyed": 0.8, "enjoys": 0.8, "enjoyable": 0.8,
+   546→        "positive": 0.7, "success": 0.8, "successful": 0.8,
+   547→        "win": 0.7, "winning": 0.7, "winner": 0.7,
+   548→        "innovative": 0.7, "creative": 0.7, "exciting": 0.8,
+   549→        "awesome": 0.9, "cool": 0.6, "nice": 0.6, "fine": 0.4,
+   550→        "solid": 0.6, "smooth": 0.5, "clean": 0.5, "clear": 0.4,
+   551→        "bright": 0.5, "warm": 0.5, "fresh": 0.6, "fun": 0.7,
+   552→        "paradise": 0.9, "gem": 0.7, "treasure": 0.7, "praise": 0.7,
+   553→        "thank": 0.6, "thanks": 0.6, "appreciate": 0.7, "worth": 0.6,
+   554→        "valuable": 0.7, "quality": 0.6, "top": 0.6, "pro": 0.5,
+   555→        "advantage": 0.6, "benefit": 0.6, "gain": 0.5, "profit": 0.5,
+   556→        "improve": 0.6, "improved": 0.6, "improvement": 0.6,
+   557→        "growth": 0.5, "progress": 0.6, "achievement": 0.7,
+   558→        "celebrate": 0.7, "triumph": 0.8, "victory": 0.8,
+   559→        "brave": 0.6, "courage": 0.7, "hope": 0.6, "hopeful": 0.6,
+   560→        "kind": 0.6, "generous": 0.7, "honest": 0.6, "fair": 0.5,
+   561→        "peaceful": 0.6, "calm": 0.4, "safe": 0.5, "secure": 0.6,
+   562→        "comfortable": 0.5, "convenient": 0.5, "affordable": 0.5,
+   563→        "friendly": 0.7, "polite": 0.5, "welcome": 0.6, "ideal": 0.7,
+   564→        "incredible": 0.9, "magnificent": 0.9, "marvelous": 0.9,
+   565→        "splendid": 0.85, "terrific": 0.85, "phenomenal": 0.95,
+   566→        "extraordinary": 0.9, "glorious": 0.85, "divine": 0.9,
+   567→        "blissful": 0.85, "radiant": 0.7, "vibrant": 0.7,
+   568→        "enthusiastic": 0.7, "passionate": 0.7, "inspired": 0.7,
+   569→        "confident": 0.6, "proud": 0.7, "grateful": 0.7,
+   570→        "blessed": 0.8, "fortunate": 0.7, "lucky": 0.6,
+   571→        # Negative words (score < 0)
+   572→        "bad": -0.7, "terrible": -0.9, "horrible": -0.9, "awful": -0.9,
+   573→        "poor": -0.7, "worst": -1.0, "worse": -0.7, "hate": -0.9,
+   574→        "hated": -0.9, "hates": -0.9, "disgusting": -0.9,
+   575→        "ugly": -0.7, "boring": -0.6, "bored": -0.6, "dull": -0.5,
+   576→        "annoying": -0.7, "annoyed": -0.7, "frustrating": -0.7,
+   577→        "frustrated": -0.7, "disappointing": -0.8, "disappointed": -0.8,
+   578→        "disappointment": -0.8, "failure": -0.7, "fail": -0.7,
+   579→        "failed": -0.7, "wrong": -0.6, "error": -0.6, "bug": -0.5,
+   580→        "broken": -0.7, "damage": -0.7, "damaged": -0.7,
+   581→        "useless": -0.8, "worthless": -0.8, "garbage": -0.9,
+   582→        "waste": -0.7, "wasted": -0.7, "crap": -0.9, "junk": -0.7,
+   583→        "slow": -0.4, "expensive": -0.5, "overpriced": -0.7,
+   584→        "cheap": -0.4, "flimsy": -0.6, "weak": -0.5,
+   585→        "difficult": -0.4, "hard": -0.3, "complex": -0.3,
+   586→        "confusing": -0.6, "confused": -0.5, "unclear": -0.5,
+   587→        "messy": -0.5, "dirty": -0.6, "noisy": -0.4,
+   588→        "rude": -0.7, "unhelpful": -0.7, "unfriendly": -0.7,
+   589→        "unreliable": -0.8, "inefficient": -0.6, "problem": -0.5,
+   590→        "problems": -0.5, "issue": -0.4, "issues": -0.4,
+   591→        "complaint": -0.7, "complain": -0.6, "complained": -0.6,
+   592→        "regret": -0.7, "regretted": -0.7, "unfortunately": -0.6,
+   593→        "sad": -0.7, "unhappy": -0.7, "angry": -0.8, "anger": -0.7,
+   594→        "fear": -0.7, "scared": -0.6, "painful": -0.7, "suffer": -0.7,
+   595→        "loss": -0.6, "lose": -0.6, "lost": -0.6, "decline": -0.5,
+   596→        "crash": -0.7, "crashed": -0.7, "danger": -0.7, "dangerous": -0.8,
+   597→        "toxic": -0.8, "corrupt": -0.8, "fraud": -0.9, "scam": -0.9,
+   598→        "fake": -0.8, "lie": -0.7, "lies": -0.7, "liar": -0.8,
+   599→        "cheat": -0.8, "destroy": -0.8, "destroyed": -0.8,
+   600→        "kill": -0.8, "died": -0.7, "death": -0.7, "dead": -0.6,
+   601→        "sick": -0.6, "illness": -0.6, "disease": -0.7,
+   602→        "poverty": -0.7, "crisis": -0.6, "disaster": -0.8,
+   603→        "tragedy": -0.8, "catastrophe": -0.9, "horror": -0.8,
+   604→        "dreadful": -0.8, "pathetic": -0.8, "miserable": -0.8,
+   605→        "depressing": -0.8, "depressed": -0.7, "anxiety": -0.7,
+   606→        "stressful": -0.6, "stress": -0.5, "worry": -0.5,
+   607→        "worried": -0.5, "terrible": -0.9, "horrendous": -0.9,
+   608→        "abysmal": -0.9, "atrocious": -0.9, "lousy": -0.7,
+   609→        "mediocre": -0.4, "subpar": -0.5, "inferior": -0.6,
+   610→        "negative": -0.5, "unfair": -0.6, "uncomfortable": -0.5,
+   611→        "unpleasant": -0.6, "unacceptable": -0.7, "ridiculous": -0.6,
+   612→        "absurd": -0.6, "offensive": -0.7, "insulting": -0.7,
+   613→        "disrespectful": -0.7, "hostile": -0.7, "aggressive": -0.5,
+   614→    }
+   615→
+   616→    _NEGATION_WORDS: frozenset[str] = frozenset(
+   617→        "not no never neither nor nothing nobody nowhere hardly barely scarcely "
+   618→        "doesn't doesn didn't wasn't weren't isn't aren't couldn't wouldn't shouldn't "
+   619→        "won't can't don't ain't haven't hadn't without n't".split()
+   620→    )
+   621→
+   622→    # ------------------------------------------------------------------
+   623→    # Single-text analysis
+   624→    # ------------------------------------------------------------------
+   625→
+   626→    def analyze(self, text: str) -> dict[str, Any]:
+   627→        """Analyse the sentiment of *text*.
+   628→
+   629→        Returns:
+   630→            polarity_score  – float in [-1, 1]  (negative ↔ positive)
+   631→            subjectivity    – float in [0, 1]   (objective ↔ subjective)
+   632→            label           – "positive" | "negative" | "neutral"
+   633→        """
+   634→        words = _tokenise(text)
+   635→        n_words = max(len(words), 1)
+   636→        polarity_sum = 0.0
+   637→        sentiment_word_count = 0
+   638→        i = 0
+   639→        while i < len(words):
+   640→            word = words[i]
+   641→            if word in self._LEXICON:
+   642→                score = self._LEXICON[word]
+   643→                # Check for preceding negation within a 3-word window
+   644→                negated = False
+   645→                for j in range(max(0, i - 3), i):
+   646→                    if words[j] in self._NEGATION_WORDS:
+   647→                        negated = True
+   648→                        break
+   649→                if negated:
+   650→                    score = -score * 0.75  # dampen flip
+   651→                polarity_sum += score
+   652→                sentiment_word_count += 1
+   653→            i += 1
+   654→
+   655→        polarity = polarity_sum / n_words
+   656→        # Clamp
+   657→        polarity = max(-1.0, min(1.0, polarity))
+   658→
+   659→        # Subjectivity: fraction of sentiment-bearing words
+   660→        subjectivity = min(sentiment_word_count / n_words * 3.0, 1.0)
+   661→
+   662→        if polarity > 0.05:
+   663→            label = "positive"
+   664→        elif polarity < -0.05:
+   665→            label = "negative"
+   666→        else:
+   667→            label = "neutral"
+   668→
+   669→        return {
+   670→            "polarity_score": round(polarity, 4),
+   671→            "subjectivity": round(subjectivity, 4),
+   672→            "label": label,
+   673→        }
+   674→
+   675→    # ------------------------------------------------------------------
+   676→    # Batch analysis
+   677→    # ------------------------------------------------------------------
+   678→
+   679→    def analyze_batch(self, texts: list[str]) -> list[dict[str, Any]]:
+   680→        """Analyse sentiment for multiple texts.
+   681→
+   682→        Returns a list of result dictionaries, one per input text.
+   683→        """
+   684→        return [self.analyze(t) for t in texts]
+   685→
+   686→
+   687→# ===========================================================================
+   688→# 4. ContentFingerprinter
+   689→# ===========================================================================
+   690→
+   691→class ContentFingerprinter:
+   692→    """Content deduplication via SimHash fingerprints.
+   693→
+   694→    Generates a fixed-length bit-vector fingerprint for any text and uses
+   695→    Hamming distance to estimate similarity.  Suitable for near-duplicate
+   696→    detection in large-scale scraping pipelines.
+   697→    """
+   698→
+   699→    _FP_BITS: int = 64  # fingerprint size in bits
+   700→
+   701→    # ------------------------------------------------------------------
+   702→    # Fingerprint generation
+   703→    # ------------------------------------------------------------------
+   704→
+   705→    def fingerprint(self, text: str, ngram_size: int = 3) -> str:
+   706→        """Generate a SimHash fingerprint for *text*.
+   707→
+   708→        The fingerprint is a hexadecimal string representing a
+   709→        ``_FP_BITS``-bit vector.  *ngram_size* controls the character
+   710→        n-gram window used during hashing.
+   711→        """
+   712→        text = _normalise(text)
+   713→        if not text:
+   714→            return "0" * (self._FP_BITS // 4)
+   715→
+   716→        ngrams = [text[i : i + ngram_size] for i in range(len(text) - ngram_size + 1)]
+   717→        if not ngrams:
+   718→            return "0" * (self._FP_BITS // 4)
+   719→
+   720→        # Initialise bit counts
+   721→        v = np.zeros(self._FP_BITS, dtype=np.int32)
+   722→
+   723→        for ng in ngrams:
+   724→            h = hashlib.md5(ng.encode("utf-8")).digest()
+   725→            # Take first _FP_BITS bits of hash
+   726→            int_hash = int.from_bytes(h[: (self._FP_BITS + 7) // 8], "little")
+   727→            for bit in range(self._FP_BITS):
+   728→                if int_hash & (1 << bit):
+   729→                    v[bit] += 1
+   730→                else:
+   731→                    v[bit] -= 1
+   732→
+   733→        # SimHash: positive → 1, negative → 0
+   734→        fp_int = 0
+   735→        for bit in range(self._FP_BITS):
+   736→            if v[bit] >= 0:
+   737→                fp_int |= 1 << bit
+   738→
+   739→        return format(fp_int, f"0{self._FP_BITS // 4}x")
+   740→
+   741→    # ------------------------------------------------------------------
+   742→    # Similarity
+   743→    # ------------------------------------------------------------------
+   744→
+   745→    def similarity(self, fp1: str, fp2: str) -> float:
+   746→        """Compute similarity between two fingerprints using normalised Hamming distance.
+   747→
+   748→        ``similarity = 1 - hamming_distance / bit_count``
+   749→        """
+   750→        if len(fp1) != len(fp2):
+   751→            return 0.0
+   752→        try:
+   753→            i1 = int(fp1, 16)
+   754→            i2 = int(fp2, 16)
+   755→        except ValueError:
+   756→            return 0.0
+   757→        xor = i1 ^ i2
+   758→        hamming = bin(xor).count("1")
+   759→        total_bits = self._FP_BITS
+   760→        return round(1.0 - hamming / total_bits, 4)
+   761→
+   762→    # ------------------------------------------------------------------
+   763→    # Duplicate check
+   764→    # ------------------------------------------------------------------
+   765→
+   766→    def is_duplicate(self, text1: str, text2: str, threshold: float = 0.85) -> bool:
+   767→        """Return ``True`` if *text1* and *text2* are near-duplicates.
+   768→
+   769→        Uses SimHash similarity with the given *threshold*.
+   770→        """
+   771→        fp1 = self.fingerprint(text1)
+   772→        fp2 = self.fingerprint(text2)
+   773→        return self.similarity(fp1, fp2) >= threshold
+   774→
+   775→    # ------------------------------------------------------------------
+   776→    # Batch duplicate detection
+   777→    # ------------------------------------------------------------------
+   778→
+   779→    def find_duplicates(
+   780→        self, texts: list[str], threshold: float = 0.85
+   781→    ) -> list[list[int]]:
+   782→        """Find groups of near-duplicate texts.
+   783→
+   784→        Returns a list of groups, where each group is a list of indices
+   785→        into *texts* that are near-duplicates of each other.  Uses a
+   786→        union-find (disjoint set) structure for O(n) merging.
+   787→        """
+   788→        n = len(texts)
+   789→        if n == 0:
+   790→            return []
+   791→
+   792→        # Pre-compute fingerprints
+   793→        fps = [self.fingerprint(t) for t in texts]
+   794→
+   795→        # Union-Find
+   796→        parent: list[int] = list(range(n))
+   797→        rank: list[int] = [0] * n
+   798→
+   799→        def find(x: int) -> int:
+   800→            while parent[x] != x:
+   801→                parent[x] = parent[parent[x]]
+   802→                x = parent[x]
+   803→            return x
+   804→
+   805→        def union(a: int, b: int) -> None:
+   806→            ra, rb = find(a), find(b)
+   807→            if ra == rb:
+   808→                return
+   809→            if rank[ra] < rank[rb]:
+   810→                ra, rb = rb, ra
+   811→            parent[rb] = ra
+   812→            if rank[ra] == rank[rb]:
+   813→                rank[ra] += 1
+   814→
+   815→        # Compare all pairs
+   816→        for i in range(n):
+   817→            for j in range(i + 1, n):
+   818→                if self.similarity(fps[i], fps[j]) >= threshold:
+   819→                    union(i, j)
+   820→
+   821→        # Collect groups
+   822→        groups: dict[int, list[int]] = defaultdict(list)
+   823→        for i in range(n):
+   824→            groups[find(i)].append(i)
+   825→
+   826→        # Only return groups with more than one member
+   827→        return [sorted(g) for g in groups.values() if len(g) > 1]
+   828→
+   829→
+   830→# ===========================================================================
+   831→# 5. ContentAnalyzer  (facade)
+   832→# ===========================================================================
+   833→
+   834→class ContentAnalyzer:
+   835→    """Main facade that combines all content-intelligence components.
+   836→
+   837→    Provides a single entry-point for full text analysis, pairwise
+   838→    comparison, batch processing, and extractive summarisation.
+   839→    """
+   840→
+   841→    def __init__(self) -> None:
+   842→        self.stats = TextStatistics()
+   843→        self.keywords = KeywordExtractor()
+   844→        self.sentiment = SentimentAnalyzer()
+   845→        self.fingerprinter = ContentFingerprinter()
+   846→
+   847→    # ------------------------------------------------------------------
+   848→    # Full analysis
+   849→    # ------------------------------------------------------------------
+   850→
+   851→    def analyze(self, text: str) -> dict[str, Any]:
+   852→        """Run all analysis components on *text* and return combined results.
+   853→
+   854→        The returned dictionary contains:
+   855→            readability         – from :meth:`TextStatistics.compute_readability`
+   856→            word_frequency      – top-50 words with counts and frequencies
+   857→            entropy             – Shannon entropy (bits)
+   858→            lexical_diversity   – type-token ratio
+   859→            language            – detected ISO 639-1 code
+   860→            keywords_tfidf      – top-20 TF-IDF keywords
+   861→            keywords_rake       – top-20 RAKE keywords
+   862→            named_entities      – list of (entity, type) tuples
+   863→            sentiment           – polarity, subjectivity, label
+   864→            fingerprint         – SimHash hex string
+   865→        """
+   866→        return {
+   867→            "readability": self.stats.compute_readability(text),
+   868→            "word_frequency": self.stats.compute_word_frequency(text),
+   869→            "entropy": self.stats.compute_entropy(text),
+   870→            "lexical_diversity": self.stats.compute_lexical_diversity(text),
+   871→            "language": self.stats.language_detect(text),
+   872→            "keywords_tfidf": self.keywords.extract_keywords_tfidf(text),
+   873→            "keywords_rake": self.keywords.extract_keywords_rake(text),
+   874→            "named_entities": self.keywords.extract_named_entities_basic(text),
+   875→            "sentiment": self.sentiment.analyze(text),
+   876→            "fingerprint": self.fingerprinter.fingerprint(text),
+   877→        }
+   878→
+   879→    # ------------------------------------------------------------------
+   880→    # Comparison
+   881→    # ------------------------------------------------------------------
+   882→
+   883→    def compare(self, text1: str, text2: str) -> dict[str, Any]:
+   884→        """Compare two texts and return similarity-related metrics.
+   885→
+   886→        Returns:
+   887→            fingerprint_similarity – SimHash-based similarity [0, 1]
+   888→            is_duplicate           – boolean (threshold 0.85)
+   889→            language_match         – whether detected languages agree
+   890→            sentiment_diff         – absolute difference in polarity
+   891→            shared_keywords_rake   – keywords appearing in both texts
+   892→            shared_keywords_tfidf  – TF-IDF keywords appearing in both texts
+   893→        """
+   894→        fp1 = self.fingerprinter.fingerprint(text1)
+   895→        fp2 = self.fingerprinter.fingerprint(text2)
+   896→        fp_sim = self.fingerprinter.similarity(fp1, fp2)
+   897→
+   898→        kw1_rake = set(w for w, _ in self.keywords.extract_keywords_rake(text1))
+   899→        kw2_rake = set(w for w, _ in self.keywords.extract_keywords_rake(text2))
+   900→        kw1_tfidf = set(w for w, _ in self.keywords.extract_keywords_tfidf(text1))
+   901→        kw2_tfidf = set(w for w, _ in self.keywords.extract_keywords_tfidf(text2))
+   902→
+   903→        s1 = self.sentiment.analyze(text1)["polarity_score"]
+   904→        s2 = self.sentiment.analyze(text2)["polarity_score"]
+   905→
+   906→        lang1 = self.stats.language_detect(text1)
+   907→        lang2 = self.stats.language_detect(text2)
+   908→
+   909→        return {
+   910→            "fingerprint_similarity": fp_sim,
+   911→            "is_duplicate": fp_sim >= 0.85,
+   912→            "language_match": lang1 == lang2,
+   913→            "sentiment_diff": round(abs(s1 - s2), 4),
+   914→            "shared_keywords_rake": sorted(kw1_rake & kw2_rake),
+   915→            "shared_keywords_tfidf": sorted(kw1_tfidf & kw2_tfidf),
+   916→        }
+   917→
+   918→    # ------------------------------------------------------------------
+   919→    # Batch analysis
+   920→    # ------------------------------------------------------------------
+   921→
+   922→    def analyze_batch(self, texts: list[str]) -> list[dict[str, Any]]:
+   923→        """Analyse a list of texts individually.
+   924→
+   925→        Returns a list of analysis dictionaries, one per text.
+   926→        """
+   927→        return [self.analyze(t) for t in texts]
+   928→
+   929→    # ------------------------------------------------------------------
+   930→    # Extractive summarisation
+   931→    # ------------------------------------------------------------------
+   932→
+   933→    def generate_summary(self, text: str, max_sentences: int = 5) -> str:
+   934→        """Generate an extractive summary of *text*.
+   935→
+   936→        Sentences are scored using a combination of:
+   937→          1. **Word frequency** – sentences containing more frequent
+   938→             (non-stop) words score higher.
+   939→          2. **Position bias** – earlier sentences receive a small bonus.
+   940→          3. **Length normalisation** – very short sentences are penalised.
+   941→
+   942→        The top *max_sentences* are returned in their original order.
+   943→        """
+   944→        sents = _sentences(text)
+   945→        if not sents:
+   946→            return ""
+   947→        if len(sents) <= max_sentences:
+   948→            return " ".join(sents)
+   949→
+   950→        # Build word frequency table
+   951→        word_freq: Counter[str] = Counter(
+   952→            w for w in _tokenise(text) if w not in _STOP_WORDS and len(w) > 1
+   953→        )
+   954→        max_freq = max(word_freq.values()) if word_freq else 1
+   955→        n_sents = len(sents)
+   956→
+   957→        scores: list[tuple[int, float]] = []
+   958→        for idx, sent in enumerate(sents):
+   959→            words = _tokenise(sent)
+   960→            if not words:
+   961→                scores.append((idx, 0.0))
+   962→                continue
+   963→
+   964→            # Frequency score
+   965→            freq_score = sum(word_freq.get(w, 0) for w in words) / len(words)
+   966→            freq_score /= max_freq  # normalise to [0, 1]
+   967→
+   968→            # Position score: linear decay – first sentence gets 1.0, last gets ~0
+   969→            pos_score = 1.0 - idx / n_sents
+   970→
+   971→            # Length penalty: prefer sentences between 5 and 40 words
+   972→            n_w = len(words)
+   973→            if n_w < 5:
+   974→                length_score = n_w / 5.0
+   975→            elif n_w > 40:
+   976→                length_score = 40.0 / n_w
+   977→            else:
+   978→                length_score = 1.0
+   979→
+   980→            combined = 0.5 * freq_score + 0.25 * pos_score + 0.25 * length_score
+   981→            scores.append((idx, combined))
+   982→
+   983→        # Select top sentences
+   984→        top_indices = sorted(
+   985→            [idx for idx, _ in sorted(scores, key=lambda x: x[1], reverse=True)[
+   986→                :max_sentences
+   987→            ]]
+   988→        )
+   989→        return " ".join(sents[i] for i in top_indices)
+   990→

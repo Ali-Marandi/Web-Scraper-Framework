@@ -1,0 +1,939 @@
+     1→"""Anomaly Detection Module for Web Scraping Applications.
+     2→
+     3→Provides statistical, change-point, drift, pattern, and scraping-specific
+     4→anomaly detection using only the standard library and NumPy.
+     5→"""
+     6→
+     7→from __future__ import annotations
+     8→
+     9→import math
+    10→import warnings
+    11→from collections import Counter, defaultdict
+    12→from typing import Any, Dict, List, Optional, Sequence, Tuple
+    13→
+    14→import numpy as np
+    15→from numpy.typing import NDArray
+    16→
+    17→
+    18→# ---------------------------------------------------------------------------
+    19→# Helpers
+    20→# ---------------------------------------------------------------------------
+    21→
+    22→def _as_float_array(values: Sequence) -> NDArray[np.float64]:
+    23→    """Convert a sequence to a 1-D NumPy float64 array."""
+    24→    arr = np.array(values, dtype=np.float64)
+    25→    if arr.ndim != 1:
+    26→        raise ValueError("Input must be a 1-D sequence")
+    27→    return arr
+    28→
+    29→
+    30→def _norm_inv(p: float) -> float:
+    31→    """Rational approximation to the inverse normal CDF (Abramowitz & Stegun 26.2.23)."""
+    32→    if p <= 0.0:
+    33→        return float("-inf")
+    34→    if p >= 1.0:
+    35→        return float("inf")
+    36→    if p == 0.5:
+    37→        return 0.0
+    38→    a = [
+    39→        -3.969683028665376e+01, 2.209460984245205e+02,
+    40→        -2.759285104469687e+02, 1.383577518672690e+02,
+    41→        -3.066479806614716e+01, 2.506628277459239e+00,
+    42→    ]
+    43→    b = [
+    44→        -5.447609879822406e+01, 1.615858368580409e+02,
+    45→        -1.556989798598866e+02, 6.680131188771972e+01,
+    46→        -1.328068155288572e+01,
+    47→    ]
+    48→    c = [
+    49→        -7.784894002430293e-03, -3.223964580411365e-01,
+    50→        -2.400758277161838e+00, -2.549732539343734e+00,
+    51→        4.374664141464968e+00, 2.938163982698783e+00,
+    52→    ]
+    53→    d = [
+    54→        7.784695709041462e-03, 3.224671290700398e-01,
+    55→        2.445134137142996e+00, 3.754408661907416e+00,
+    56→    ]
+    57→    p_low, p_high = 0.02425, 1.0 - 0.02425
+    58→    if p < p_low:
+    59→        q = math.sqrt(-2.0 * math.log(p))
+    60→        return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / \
+    61→               ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)
+    62→    if p <= p_high:
+    63→        q = p - 0.5
+    64→        r = q * q
+    65→        return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / \
+    66→               (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1.0)
+    67→    q = math.sqrt(-2.0 * math.log(1.0 - p))
+    68→    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / \
+    69→            ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0)
+    70→
+    71→
+    72→def _log_beta(a: float, b: float) -> float:
+    73→    """Log of the Beta function B(a, b)."""
+    74→    return math.lgamma(a) + math.lgamma(b) - math.lgamma(a + b)
+    75→
+    76→
+    77→def _beta_cf(a: float, b: float, x: float) -> float:
+    78→    """Evaluate the continued fraction for the incomplete beta function (Lentz)."""
+    79→    TINY = 1e-30
+    80→    qab, qap, qam = a + b, a + 1.0, a - 1.0
+    81→    c = 1.0
+    82→    d = 1.0 - qab * x / qap
+    83→    if abs(d) < TINY:
+    84→        d = TINY
+    85→    d = 1.0 / d
+    86→    h = d
+    87→    for m in range(1, 201):
+    88→        m2 = 2 * m
+    89→        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+    90→        d = 1.0 + aa * d
+    91→        if abs(d) < TINY:
+    92→            d = TINY
+    93→        c = 1.0 + aa / c
+    94→        if abs(c) < TINY:
+    95→            c = TINY
+    96→        d = 1.0 / d
+    97→        h *= d * c
+    98→        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+    99→        d = 1.0 + aa * d
+   100→        if abs(d) < TINY:
+   101→            d = TINY
+   102→        c = 1.0 + aa / c
+   103→        if abs(c) < TINY:
+   104→            c = TINY
+   105→        d = 1.0 / d
+   106→        delta = d * c
+   107→        h *= delta
+   108→        if abs(delta - 1.0) < 1e-12:
+   109→            break
+   110→    return h
+   111→
+   112→
+   113→def _regularized_incomplete_beta(a: float, b: float, x: float) -> float:
+   114→    """Compute I_x(a, b) using a continued-fraction expansion."""
+   115→    if x <= 0.0:
+   116→        return 0.0
+   117→    if x >= 1.0:
+   118→        return 1.0
+   119→    front = math.exp(math.log(x) * a + math.log(1.0 - x) * b - _log_beta(a, b))
+   120→    if x < (a + 1.0) / (a + b + 2.0):
+   121→        return front * _beta_cf(a, b, x) / a
+   122→    return 1.0 - front * _beta_cf(b, a, 1.0 - x) / b
+   123→
+   124→
+   125→def _student_t_two_tail(alpha: float, df: int) -> float:
+   126→    """Approximate absolute t critical value via Newton-Raphson on the
+   127→    incomplete-beta formulation.  |error| < 1e-8 for Grubbs' test."""
+   128→    if df < 1:
+   129→        return float("inf")
+   130→    p = 1.0 - alpha / 2.0
+   131→
+   132→    def _cdf(t: float) -> float:
+   133→        x = t * t / (t * t + df)
+   134→        return float(_regularized_incomplete_beta(df / 2.0, 0.5, x)) / 2.0 + (0.5 if t > 0 else 0.0)
+   135→
+   136→    def _pdf(t: float) -> float:
+   137→        coeff = math.gamma((df + 1) / 2.0) / (math.sqrt(df * math.pi) * math.gamma(df / 2.0))
+   138→        return coeff * (1.0 + t * t / df) ** (-(df + 1) / 2.0)
+   139→
+   140→    z = _norm_inv(p)
+   141→    g1 = (z ** 3 + z) / 4.0
+   142→    g2 = (5 * z ** 5 + 16 * z ** 3 + 3 * z) / 96.0
+   143→    t = z + g1 / df + g2 / (df * df)
+   144→    for _ in range(60):
+   145→        f = _cdf(t) - p
+   146→        fp = _pdf(t)
+   147→        if fp < 1e-15:
+   148→            break
+   149→        t -= f / fp
+   150→        if abs(f) < 1e-12:
+   151→            break
+   152→    return abs(t)
+   153→
+   154→
+   155→def _ks_cdf(stat: float, n1: int, n2: int) -> float:
+   156→    """Asymptotic KS CDF (Kolmogorov distribution, Marsaglia et al. 2003)."""
+   157→    neff = math.sqrt(float(n1 * n2) / float(n1 + n2))
+   158→    if (neff + 0.12 + 0.11 / neff) * stat >= 4.0:
+   159→        return 1.0
+   160→    total = 0.0
+   161→    for k in range(1, 200):
+   162→        try:
+   163→            term = (-1.0) ** (k - 1) * math.exp(-2.0 * k * k * stat * stat * neff * neff)
+   164→        except OverflowError:
+   165→            term = 0.0
+   166→        total += term
+   167→        if abs(term) < 1e-15:
+   168→            break
+   169→    return max(0.0, min(1.0, 1.0 - 2.0 * total))
+   170→
+   171→
+   172→# ===========================================================================
+   173→# 1. StatisticalAnomalyDetector
+   174→# ===========================================================================
+   175→
+   176→class StatisticalAnomalyDetector:
+   177→    """Classical statistical methods for outlier detection.
+   178→
+   179→    Each method returns a list of tuples carrying the original index,
+   180→    the raw value, and the associated diagnostic score.
+   181→    """
+   182→
+   183→    def zscore_detect(
+   184→        self, values: Sequence[float], threshold: float = 3.0
+   185→    ) -> List[Tuple[int, float, float]]:
+   186→        """Detect outliers using the standard (Pearson) z-score.
+   187→
+   188→        Parameters
+   189→        ----------
+   190→        values : sequence of float
+   191→            Input data points.
+   192→        threshold : float, default 3.0
+   193→            Absolute z-score above which a point is flagged.
+   194→
+   195→        Returns
+   196→        -------
+   197→        list[tuple[int, float, float]]
+   198→            Each tuple is ``(index, value, z_score)``.
+   199→        """
+   200→        arr = _as_float_array(values)
+   201→        mean = float(np.mean(arr))
+   202→        std = float(np.std(arr, ddof=1))
+   203→        if std == 0:
+   204→            return []
+   205→        return [
+   206→            (i, float(v), float((v - mean) / std))
+   207→            for i, v in enumerate(arr)
+   208→            if abs((v - mean) / std) >= threshold
+   209→        ]
+   210→
+   211→    def iqr_detect(
+   212→        self, values: Sequence[float], k: float = 1.5
+   213→    ) -> List[Tuple[int, float, bool]]:
+   214→        """Detect outliers via the Inter-Quartile Range (Tukey fences).
+   215→
+   216→        Parameters
+   217→        ----------
+   218→        values : sequence of float
+   219→        k : float, default 1.5
+   220→            Fence multiplier (1.5 = mild, 3.0 = extreme outliers).
+   221→
+   222→        Returns
+   223→        -------
+   224→        list[tuple[int, float, bool]]
+   225→            ``(index, value, is_outlier)`` for every outlier.
+   226→        """
+   227→        arr = _as_float_array(values)
+   228→        q1, q3 = float(np.percentile(arr, 25)), float(np.percentile(arr, 75))
+   229→        iqr = q3 - q1
+   230→        if iqr == 0:
+   231→            return []
+   232→        lo, hi = q1 - k * iqr, q3 + k * iqr
+   233→        return [(i, float(v), True) for i, v in enumerate(arr) if v < lo or v > hi]
+   234→
+   235→    def modified_zscore_detect(
+   236→        self, values: Sequence[float], threshold: float = 3.5
+   237→    ) -> List[Tuple[int, float, float]]:
+   238→        """Detect outliers using the modified z-score (MAD-based).
+   239→
+   240→        Robust to non-Gaussian distributions.
+   241→
+   242→        Parameters
+   243→        ----------
+   244→        values : sequence of float
+   245→        threshold : float, default 3.5
+   246→
+   247→        Returns
+   248→        -------
+   249→        list[tuple[int, float, float]]
+   250→            ``(index, value, modified_z_score)``.
+   251→        """
+   252→        arr = _as_float_array(values)
+   253→        med = float(np.median(arr))
+   254→        mad = float(np.median(np.abs(arr - med)))
+   255→        if mad < 1e-12:
+   256→            mad = 1e-12
+   257→        factor = 0.6745 / mad
+   258→        return [
+   259→            (i, float(v), float(factor * (v - med)))
+   260→            for i, v in enumerate(arr)
+   261→            if abs(factor * (v - med)) >= threshold
+   262→        ]
+   263→
+   264→    def grubbs_test(
+   265→        self, values: Sequence[float], alpha: float = 0.05
+   266→    ) -> List[int]:
+   267→        """Iterative Grubbs' test for detecting one or more outliers.
+   268→
+   269→        Parameters
+   270→        ----------
+   271→        values : sequence of float
+   272→        alpha : float, default 0.05
+   273→            Significance level for each sequential test.
+   274→
+   275→        Returns
+   276→        -------
+   277→        list[int]
+   278→            Original indices of flagged outliers, sorted.
+   279→        """
+   280→        arr = _as_float_array(values)
+   281→        if len(arr) < 3:
+   282→            return []
+   283→        outliers: List[int] = []
+   284→        idx_map = list(range(len(arr)))
+   285→        remaining = arr.copy()
+   286→        while len(remaining) >= 3:
+   287→            m = len(remaining)
+   288→            mean = float(np.mean(remaining))
+   289→            std = float(np.std(remaining, ddof=1))
+   290→            if std == 0:
+   291→                break
+   292→            dev = np.abs(remaining - mean)
+   293→            max_pos = int(np.argmax(dev))
+   294→            g = float(dev[max_pos]) / std
+   295→            t_crit = _student_t_two_tail(alpha / m, m - 2)
+   296→            g_crit = ((m - 1) / math.sqrt(m)) * math.sqrt(
+   297→                t_crit ** 2 / (m - 2 + t_crit ** 2)
+   298→            )
+   299→            if g > g_crit:
+   300→                outliers.append(idx_map[max_pos])
+   301→                idx_map.pop(max_pos)
+   302→                remaining = np.delete(remaining, max_pos)
+   303→            else:
+   304→                break
+   305→        return sorted(outliers)
+   306→
+   307→    def detect_percentile(
+   308→        self, values: Sequence[float], lower: float = 5.0, upper: float = 95.0
+   309→    ) -> List[Tuple[int, float, bool]]:
+   310→        """Flag values outside the [lower, upper] percentile bounds.
+   311→
+   312→        Parameters
+   313→        ----------
+   314→        values : sequence of float
+   315→        lower, upper : float
+   316→            Percentile thresholds in [0, 100].
+   317→
+   318→        Returns
+   319→        -------
+   320→        list[tuple[int, float, bool]]
+   321→        """
+   322→        arr = _as_float_array(values)
+   323→        lo = float(np.percentile(arr, lower))
+   324→        hi = float(np.percentile(arr, upper))
+   325→        return [(i, float(v), True) for i, v in enumerate(arr) if v < lo or v > hi]
+   326→
+   327→    def detect_all(self, values: Sequence[float]) -> Dict[str, Any]:
+   328→        """Run every detector and return a combined report.
+   329→
+   330→        Returns
+   331→        -------
+   332→        dict with keys ``zscore``, ``iqr``, ``modified_zscore``,
+   333→        ``grubbs``, ``percentile``.
+   334→        """
+   335→        return {
+   336→            "zscore": self.zscore_detect(values),
+   337→            "iqr": self.iqr_detect(values),
+   338→            "modified_zscore": self.modified_zscore_detect(values),
+   339→            "grubbs": self.grubbs_test(values),
+   340→            "percentile": self.detect_percentile(values),
+   341→        }
+   342→
+   343→    def ensemble_detect(
+   344→        self,
+   345→        values: Sequence[float],
+   346→        methods: Optional[List[str]] = None,
+   347→    ) -> List[Tuple[int, bool, float]]:
+   348→        """Ensemble voting across multiple detectors.
+   349→
+   350→        Parameters
+   351→        ----------
+   352→        values : sequence of float
+   353→        methods : list of str or None
+   354→            Subset of {"zscore", "iqr", "modified_zscore", "grubbs",
+   355→            "percentile"}.  None uses all five.
+   356→
+   357→        Returns
+   358→        -------
+   359→        list[tuple[int, bool, float]]
+   360→            ``(index, is_anomaly, confidence)`` for every input point.
+   361→            Confidence is the fraction of methods that voted *anomaly*.
+   362→        """
+   363→        n = len(values)
+   364→        all_methods = ["zscore", "iqr", "modified_zscore", "grubbs", "percentile"]
+   365→        active = methods if methods is not None else all_methods
+   366→        if methods is not None:
+   367→            for m in methods:
+   368→                if m not in all_methods:
+   369→                    raise ValueError(f"Unknown method {m!r}")
+   370→        votes = np.zeros(n, dtype=np.float64)
+   371→        count = 0
+   372→        if "zscore" in active:
+   373→            count += 1
+   374→            for idx, _v, _z in self.zscore_detect(values):
+   375→                votes[idx] += 1
+   376→        if "iqr" in active:
+   377→            count += 1
+   378→            for idx, _v, _f in self.iqr_detect(values):
+   379→                votes[idx] += 1
+   380→        if "modified_zscore" in active:
+   381→            count += 1
+   382→            for idx, _v, _mz in self.modified_zscore_detect(values):
+   383→                votes[idx] += 1
+   384→        if "grubbs" in active:
+   385→            count += 1
+   386→            for idx in self.grubbs_test(values):
+   387→                votes[idx] += 1
+   388→        if "percentile" in active:
+   389→            count += 1
+   390→            for idx, _v, _f in self.detect_percentile(values):
+   391→                votes[idx] += 1
+   392→        return [
+   393→            (i, bool(votes[i] > 0), float(votes[i] / count) if count else 0.0)
+   394→            for i in range(n)
+   395→        ]
+   396→
+   397→
+   398→# ===========================================================================
+   399→# 2. ChangePointDetector
+   400→# ===========================================================================
+   401→
+   402→class ChangePointDetector:
+   403→    """Time-series change-point and distribution-shift detection.
+   404→
+   405→    Implements CUSUM, moving-average residual, entropy-based, and
+   406→    Kolmogorov-Smirnov tests — all without external ML libraries.
+   407→    """
+   408→
+   409→    def detect_cusum(
+   410→        self,
+   411→        values: Sequence[float],
+   412→        threshold: float = 4.0,
+   413→        drift: float = 0.0,
+   414→    ) -> List[int]:
+   415→        """Detect change-points using the CUSUM algorithm.
+   416→
+   417→        Parameters
+   418→        ----------
+   419→        values : sequence of float
+   420→        threshold : float, default 4.0
+   421→            Accumulation threshold to signal a change.
+   422→        drift : float, default 0.0
+   423→            Allowable drift / minimum shift to detect.
+   424→
+   425→        Returns
+   426→        -------
+   427→        list[int]
+   428→            Indices where a change-point is identified.
+   429→        """
+   430→        arr = _as_float_array(values)
+   431→        mean = float(np.mean(arr))
+   432→        s_pos, s_neg = 0.0, 0.0
+   433→        points: List[int] = []
+   434→        for i, v in enumerate(arr):
+   435→            s_pos = max(0.0, s_pos + (v - mean - drift))
+   436→            s_neg = max(0.0, s_neg - (v - mean - drift))
+   437→            if s_pos >= threshold or s_neg >= threshold:
+   438→                points.append(i)
+   439→                s_pos, s_neg = 0.0, 0.0
+   440→        return points
+   441→
+   442→    def detect_moving_avg(
+   443→        self,
+   444→        values: Sequence[float],
+   445→        window: int = 10,
+   446→        threshold: float = 2.0,
+   447→    ) -> List[int]:
+   448→        """Detect change-points via moving-average residuals.
+   449→
+   450→        Flags a point when |value - local_mean| > threshold * local_std.
+   451→
+   452→        Parameters
+   453→        ----------
+   454→        values : sequence of float
+   455→        window : int, default 10
+   456→        threshold : float, default 2.0
+   457→
+   458→        Returns
+   459→        -------
+   460→        list[int]
+   461→        """
+   462→        arr = _as_float_array(values)
+   463→        n = len(arr)
+   464→        if n <= window:
+   465→            return []
+   466→        points: List[int] = []
+   467→        for i in range(window, n):
+   468→            seg = arr[i - window : i]
+   469→            loc_std = float(np.std(seg, ddof=1))
+   470→            if loc_std < 1e-12:
+   471→                continue
+   472→            if abs(float(arr[i]) - float(np.mean(seg))) / loc_std >= threshold:
+   473→                points.append(i)
+   474→        return points
+   475→
+   476→    def detect_entropy_change(
+   477→        self,
+   478→        texts: List[str],
+   479→        window: int = 5,
+   480→        threshold: float = 0.3,
+   481→    ) -> List[int]:
+   482→        """Detect indices where character-level Shannon entropy changes.
+   483→
+   484→        Parameters
+   485→        ----------
+   486→        texts : list[str]
+   487→        window : int, default 5
+   488→        threshold : float, default 0.3
+   489→
+   490→        Returns
+   491→        -------
+   492→        list[int]
+   493→        """
+   494→        if len(texts) <= window:
+   495→            return []
+   496→        entropies = [self._shannon_entropy(t) for t in texts]
+   497→        points: List[int] = []
+   498→        for i in range(window, len(entropies)):
+   499→            prev_avg = float(np.mean(entropies[i - window : i]))
+   500→            if abs(entropies[i] - prev_avg) >= threshold:
+   501→                points.append(i)
+   502→        return points
+   503→
+   504→    @staticmethod
+   505→    def _shannon_entropy(text: str) -> float:
+   506→        """Compute Shannon entropy of character frequencies."""
+   507→        if not text:
+   508→            return 0.0
+   509→        counts = Counter(text)
+   510→        total = len(text)
+   511→        return -sum((c / total) * math.log2(c / total) for c in counts.values())
+   512→
+   513→    def detect_distribution_shift(
+   514→        self,
+   515→        values1: Sequence[float],
+   516→        values2: Sequence[float],
+   517→    ) -> Dict[str, float]:
+   518→        """Two-sample Kolmogorov-Smirnov test from scratch.
+   519→
+   520→        Parameters
+   521→        ----------
+   522→        values1, values2 : sequence of float
+   523→
+   524→        Returns
+   525→        -------
+   526→        dict{"ks_statistic": float, "p_value": float}
+   527→        """
+   528→        arr1, arr2 = _as_float_array(values1), _as_float_array(values2)
+   529→        n1, n2 = len(arr1), len(arr2)
+   530→        if n1 == 0 or n2 == 0:
+   531→            return {"ks_statistic": 0.0, "p_value": 1.0}
+   532→        combined = np.sort(np.concatenate([arr1, arr2]))
+   533→        ecdf1 = np.searchsorted(np.sort(arr1), combined, side="right") / n1
+   534→        ecdf2 = np.searchsorted(np.sort(arr2), combined, side="right") / n2
+   535→        stat = float(np.max(np.abs(ecdf1 - ecdf2)))
+   536→        p_value = 1.0 - _ks_cdf(stat, n1, n2)
+   537→        return {"ks_statistic": stat, "p_value": max(0.0, p_value)}
+   538→
+   539→
+   540→# ===========================================================================
+   541→# 3. DataDriftMonitor
+   542→# ===========================================================================
+   543→
+   544→class DataDriftMonitor:
+   545→    """Monitor a streaming value series for data drift using KL divergence.
+   546→
+   547→    A sliding-window approach compares the distribution of the most recent
+   548→    observations against an established baseline.
+   549→    """
+   550→
+   551→    def __init__(self, window_size: int = 50, n_bins: int = 20) -> None:
+   552→        self.window_size = window_size
+   553→        self.n_bins = n_bins
+   554→        self._buffer: List[float] = []
+   555→        self._baseline_hist: Optional[NDArray[np.float64]] = None
+   556→        self._baseline_edges: Optional[NDArray[np.float64]] = None
+   557→        self._baseline_set = False
+   558→
+   559→    def update(self, values: Sequence[float]) -> None:
+   560→        """Ingest new observations.  First ``window_size`` values form the baseline."""
+   561→        self._buffer.extend(float(v) for v in values)
+   562→        if len(self._buffer) >= self.window_size and not self._baseline_set:
+   563→            base = np.array(self._buffer[: self.window_size], dtype=np.float64)
+   564→            self._baseline_hist, self._baseline_edges = np.histogram(
+   565→                base, bins=self.n_bins, density=False
+   566→            )
+   567→            self._baseline_hist = self._baseline_hist.astype(np.float64)
+   568→            total = self._baseline_hist.sum()
+   569→            if total > 0:
+   570→                self._baseline_hist /= total
+   571→            self._baseline_set = True
+   572→        max_buf = self.window_size * 2
+   573→        if len(self._buffer) > max_buf:
+   574→            self._buffer = self._buffer[-max_buf:]
+   575→
+   576→    def get_drift_score(self) -> float:
+   577→        """Return the normalised KL-divergence between current window and baseline.
+   578→
+   579→        Returns
+   580→        -------
+   581→        float in [0, 1]
+   582→            0 = identical distributions, 1 = maximum drift.
+   583→        """
+   584→        if not self._baseline_set or len(self._buffer) < self.window_size:
+   585→            return 0.0
+   586→        current = np.array(self._buffer[-self.window_size :], dtype=np.float64)
+   587→        curr_hist, _ = np.histogram(current, bins=self._baseline_edges, density=False)  # type: ignore[arg-type]
+   588→        curr_hist = curr_hist.astype(np.float64)
+   589→        total = curr_hist.sum()
+   590→        if total == 0:
+   591→            return 0.0
+   592→        curr_hist /= total
+   593→        kl = float(_kl_divergence(self._baseline_hist, curr_hist))
+   594→        max_kl = math.log(self.n_bins) if self.n_bins > 1 else 1.0
+   595→        return min(1.0, kl / max_kl)
+   596→
+   597→    def get_drift_report(self) -> Dict[str, Any]:
+   598→        """Produce a detailed drift diagnostic report.
+   599→
+   600→        Returns
+   601→        -------
+   602→        dict
+   603→            drift_score, is_drifting, baseline_mean, current_mean,
+   604→            mean_shift, baseline_std, current_std, buffer_size, baseline_set.
+   605→        """
+   606→        score = self.get_drift_score()
+   607→        if self._baseline_set and len(self._buffer) >= self.window_size:
+   608→            base = np.array(self._buffer[: self.window_size], dtype=np.float64)
+   609→            curr = np.array(self._buffer[-self.window_size :], dtype=np.float64)
+   610→            b_mean, c_mean = float(np.mean(base)), float(np.mean(curr))
+   611→            b_std, c_std = float(np.std(base, ddof=1)), float(np.std(curr, ddof=1))
+   612→        else:
+   613→            b_mean = c_mean = b_std = c_std = 0.0
+   614→        return {
+   615→            "drift_score": score,
+   616→            "is_drifting": score >= 0.3,
+   617→            "baseline_mean": b_mean,
+   618→            "current_mean": c_mean,
+   619→            "mean_shift": c_mean - b_mean,
+   620→            "baseline_std": b_std,
+   621→            "current_std": c_std,
+   622→            "buffer_size": len(self._buffer),
+   623→            "baseline_set": self._baseline_set,
+   624→        }
+   625→
+   626→
+   627→def _kl_divergence(p: NDArray[np.float64], q: NDArray[np.float64]) -> float:
+   628→    """Compute KL(p || q) with Laplace smoothing."""
+   629→    eps = 1e-10
+   630→    p_s = p + eps
+   631→    q_s = q + eps
+   632→    p_s = p_s / p_s.sum()
+   633→    q_s = q_s / q_s.sum()
+   634→    return float(np.sum(p_s * np.log(p_s / q_s)))
+   635→
+   636→
+   637→# ===========================================================================
+   638→# 4. PatternAnomalyDetector
+   639→# ===========================================================================
+   640→
+   641→class PatternAnomalyDetector:
+   642→    """Detect anomalies in sequential/categorical patterns.
+   643→
+   644→    Useful for spotting structural changes in scraped pages, tag sequences,
+   645→    URL patterns, or extraction-order deviations.
+   646→    """
+   647→
+   648→    def __init__(self, history_size: int = 100) -> None:
+   649→        self.history_size = history_size
+   650→        self._profiles: Dict[str, List[Dict[str, float]]] = defaultdict(list)
+   651→
+   652→    def profile_sequence(
+   653→        self, seq: Sequence[str], label: str = "default"
+   654→    ) -> Dict[str, float]:
+   655→        """Build a statistical profile for a discrete token sequence.
+   656→
+   657→        Parameters
+   658→        ----------
+   659→        seq : sequence of str
+   660→        label : str, default "default"
+   661→
+   662→        Returns
+   663→        -------
+   664→        dict
+   665→            ``unique_ratio``, ``entropy``, ``transition_entropy``,
+   666→            ``repeat_rate``, ``length``.
+   667→        """
+   668→        if not seq:
+   669→            return {"unique_ratio": 0.0, "entropy": 0.0,
+   670→                    "transition_entropy": 0.0, "repeat_rate": 0.0, "length": 0}
+   671→        counts = Counter(seq)
+   672→        total = len(seq)
+   673→        unique_ratio = len(counts) / total
+   674→        probs = [c / total for c in counts.values()]
+   675→        entropy = -sum(p * math.log2(p) for p in probs)
+   676→        # Transition entropy (bigram)
+   677→        transitions: Counter = Counter()
+   678→        for a, b in zip(seq, seq[1:]):
+   679→            transitions[(a, b)] += 1
+   680→        t_total = sum(transitions.values())
+   681→        t_probs = [c / t_total for c in transitions.values()] if t_total else [1.0]
+   682→        trans_entropy = -sum(p * math.log2(p) for p in t_probs)
+   683→        # Repeat rate: fraction of positions where token == previous token
+   684→        repeats = sum(1 for a, b in zip(seq, seq[1:]) if a == b)
+   685→        repeat_rate = repeats / max(1, total - 1)
+   686→        profile = {
+   687→            "unique_ratio": unique_ratio,
+   688→            "entropy": entropy,
+   689→            "transition_entropy": trans_entropy,
+   690→            "repeat_rate": repeat_rate,
+   691→            "length": float(total),
+   692→        }
+   693→        self._profiles[label].append(profile)
+   694→        if len(self._profiles[label]) > self.history_size:
+   695→            self._profiles[label] = self._profiles[label][-self.history_size:]
+   696→        return profile
+   697→
+   698→    def detect_pattern_anomaly(
+   699→        self,
+   700→        seq: Sequence[str],
+   701→        label: str = "default",
+   702→        threshold: float = 2.0,
+   703→    ) -> Dict[str, Any]:
+   704→        """Compare a new sequence's profile against historical baselines.
+   705→
+   706→        Parameters
+   707→        ----------
+   708→        seq : sequence of str
+   709→        label : str
+   710→        threshold : float
+   711→            Z-score multiplier for each feature to flag anomalies.
+   712→
+   713→        Returns
+   714→        -------
+   715→        dict
+   716→            ``is_anomaly``, ``anomalous_features``, ``current_profile``,
+   717→            ``baseline_means``.
+   718→        """
+   719→        profile = self.profile_sequence(seq, label)
+   720→        history = self._profiles[label]
+   721→        if len(history) < 3:
+   722→            return {
+   723→                "is_anomaly": False,
+   724→                "anomalous_features": [],
+   725→                "current_profile": profile,
+   726→                "baseline_means": {},
+   727→            }
+   728→        features = ["unique_ratio", "entropy", "transition_entropy", "repeat_rate"]
+   729→        anomalous: List[str] = []
+   730→        baseline_means: Dict[str, float] = {}
+   731→        for feat in features:
+   732→            vals = [p[feat] for p in history[:-1]]  # exclude current
+   733→            if not vals:
+   734→                continue
+   735→            arr = np.array(vals, dtype=np.float64)
+   736→            mean, std = float(np.mean(arr)), float(np.std(arr, ddof=1))
+   737→            baseline_means[feat] = mean
+   738→            if std < 1e-12:
+   739→                continue
+   740→            z = abs(profile[feat] - mean) / std
+   741→            if z >= threshold:
+   742→                anomalous.append(feat)
+   743→        return {
+   744→            "is_anomaly": len(anomalous) > 0,
+   745→            "anomalous_features": anomalous,
+   746→            "current_profile": profile,
+   747→            "baseline_means": baseline_means,
+   748→        }
+   749→
+   750→
+   751→# ===========================================================================
+   752→# 5. ScrapingAnomalyDetector
+   753→# ===========================================================================
+   754→
+   755→class ScrapingAnomalyDetector:
+   756→    """High-level facade that monitors scraping-specific signals.
+   757→
+   758→    Tracks response times, HTTP status codes, payload sizes, extraction
+   759→    counts, and aggregates everything into a single health score.
+   760→    """
+   761→
+   762→    def __init__(self) -> None:
+   763→        self._stat = StatisticalAnomalyDetector()
+   764→        self._cpd = ChangePointDetector()
+   765→        self._drift = DataDriftMonitor(window_size=30, n_bins=15)
+   766→        self._pattern = PatternAnomalyDetector(history_size=50)
+   767→        self._response_times: List[float] = []
+   768→        self._status_codes: List[int] = []
+   769→        self._data_sizes: List[float] = []
+   770→        self._extraction_counts: List[int] = []
+   771→        self._url_sequences: List[str] = []
+   772→
+   773→    def record(
+   774→        self,
+   775→        response_time: float,
+   776→        status_code: int,
+   777→        data_size: float,
+   778→        extraction_count: int,
+   779→        url: str = "",
+   780→    ) -> None:
+   781→        """Record a single scrape event.
+   782→
+   783→        Parameters
+   784→        ----------
+   785→        response_time : float
+   786→            Seconds elapsed for the HTTP request.
+   787→        status_code : int
+   788→            HTTP status code.
+   789→        data_size : float
+   790→            Size of the response body in bytes.
+   791→        extraction_count : int
+   792→            Number of data items extracted from the page.
+   793→        url : str, default ""
+   794→            URL visited (used for pattern analysis).
+   795→        """
+   796→        self._response_times.append(response_time)
+   797→        self._status_codes.append(status_code)
+   798→        self._data_sizes.append(data_size)
+   799→        self._extraction_counts.append(extraction_count)
+   800→        self._url_sequences.append(url)
+   801→        self._drift.update([response_time])
+   802→
+   803→    def check_response_times(self) -> Dict[str, Any]:
+   804→        """Analyse response times for anomalies.
+   805→
+   806→        Returns
+   807→        -------
+   808→        dict with keys ``outliers``, ``change_points``, ``current_drift``.
+   809→        """
+   810→        if len(self._response_times) < 5:
+   811→            return {"outliers": [], "change_points": [], "current_drift": 0.0}
+   812→        outliers = self._stat.ensemble_detect(self._response_times)
+   813→        outliers = [(i, flag, conf) for i, flag, conf in outliers if flag]
+   814→        cps = self._cpd.detect_cusum(self._response_times)
+   815→        drift = self._drift.get_drift_score()
+   816→        return {"outliers": outliers, "change_points": cps, "current_drift": drift}
+   817→
+   818→    def check_status_codes(self, anomaly_codes: Optional[Sequence[int]] = None) -> Dict[str, Any]:
+   819→        """Analyse HTTP status-code patterns.
+   820→
+   821→        Parameters
+   822→        ----------
+   823→        anomaly_codes : sequence of int or None
+   824→            Status codes considered anomalous.  Defaults to
+   825→            {0, 403, 429, 500, 502, 503}.
+   826→
+   827→        Returns
+   828→        -------
+   829→        dict with ``anomaly_count``, ``anomaly_rate``, ``code_distribution``.
+   830→        """
+   831→        bad = set(anomaly_codes) if anomaly_codes else {0, 403, 429, 500, 502, 503}
+   832→        total = len(self._status_codes)
+   833→        if total == 0:
+   834→            return {"anomaly_count": 0, "anomaly_rate": 0.0, "code_distribution": {}}
+   835→        anom = sum(1 for c in self._status_codes if c in bad)
+   836→        dist = dict(Counter(self._status_codes))
+   837→        return {
+   838→            "anomaly_count": anom,
+   839→            "anomaly_rate": anom / total,
+   840→            "code_distribution": dist,
+   841→        }
+   842→
+   843→    def check_data_sizes(self) -> Dict[str, Any]:
+   844→        """Analyse response data sizes for anomalies.
+   845→
+   846→        Returns
+   847→        -------
+   848→        dict with ``outliers``, ``current_size``, ``mean_size``, "std_size".
+   849→        """
+   850→        if len(self._data_sizes) < 5:
+   851→            return {"outliers": [], "current_size": 0.0, "mean_size": 0.0, "std_size": 0.0}
+   852→        outliers = self._stat.iqr_detect(self._data_sizes)
+   853→        arr = np.array(self._data_sizes, dtype=np.float64)
+   854→        return {
+   855→            "outliers": outliers,
+   856→            "current_size": float(arr[-1]),
+   857→            "mean_size": float(np.mean(arr)),
+   858→            "std_size": float(np.std(arr, ddof=1)),
+   859→        }
+   860→
+   861→    def check_extraction_counts(self) -> Dict[str, Any]:
+   862→        """Analyse item extraction counts for anomalies.
+   863→
+   864→        Returns
+   865→        -------
+   866→        dict with ``outliers``, ``change_points``, "current_count".
+   867→        """
+   868→        if len(self._extraction_counts) < 5:
+   869→            return {"outliers": [], "change_points": [], "current_count": 0}
+   870→        outliers = self._stat.modified_zscore_detect(
+   871→            [float(c) for c in self._extraction_counts]
+   872→        )
+   873→        cps = self._cpd.detect_moving_avg(
+   874→            [float(c) for c in self._extraction_counts], window=5
+   875→        )
+   876→        return {
+   877→            "outliers": outliers,
+   878→            "change_points": cps,
+   879→            "current_count": self._extraction_counts[-1],
+   880→        }
+   881→
+   882→    def check_url_patterns(self) -> Dict[str, Any]:
+   883→        """Analyse URL sequence for structural anomalies.
+   884→
+   885→        Returns
+   886→        -------
+   887→        dict with ``is_anomaly``, ``anomalous_features``.
+   888→        """
+   889→        if len(self._url_sequences) < 3:
+   890→            return {"is_anomaly": False, "anomalous_features": []}
+   891→        return self._pattern.detect_pattern_anomaly(self._url_sequences)
+   892→
+   893→    def health_check(self) -> Dict[str, Any]:
+   894→        """Aggregate all sub-checks into a single health report.
+   895→
+   896→        Returns
+   897→        -------
+   898→        dict
+   899→            ``overall_score`` (0-1, 1 = healthy), ``is_healthy``, and
+   900→            per-signal reports for response times, status codes, data sizes,
+   901→            extraction counts, and URL patterns.
+   902→        """
+   903→        rt = self.check_response_times()
+   904→        sc = self.check_status_codes()
+   905→        ds = self.check_data_sizes()
+   906→        ec = self.check_extraction_counts()
+   907→        up = self.check_url_patterns()
+   908→
+   909→        # Penalty accumulation (each dimension 0-1)
+   910→        penalties = 0.0
+   911→        # Response-time outliers
+   912→        rt_anom = len(rt["outliers"]) / max(1, len(self._response_times))
+   913→        penalties += min(1.0, rt_anom * 5)
+   914→        # Drift
+   915→        penalties += rt["current_drift"]
+   916→        # Status code anomalies
+   917→        penalties += sc["anomaly_rate"] * 5
+   918→        # Data size outliers
+   919→        ds_anom = len(ds["outliers"]) / max(1, len(self._data_sizes))
+   920→        penalties += min(1.0, ds_anom * 5)
+   921→        # Extraction count outliers
+   922→        ec_anom = len(ec["outliers"]) / max(1, len(self._extraction_counts))
+   923→        penalties += min(1.0, ec_anom * 5)
+   924→        # URL pattern anomaly
+   925→        if up["is_anomaly"]:
+   926→            penalties += 1.0
+   927→
+   928→        max_penalties = 6.0
+   929→        score = max(0.0, 1.0 - penalties / max_penalties)
+   930→        return {
+   931→            "overall_score": round(score, 4),
+   932→            "is_healthy": score >= 0.6,
+   933→            "response_times": rt,
+   934→            "status_codes": sc,
+   935→            "data_sizes": ds,
+   936→            "extraction_counts": ec,
+   937→            "url_patterns": up,
+   938→        }
+   939→

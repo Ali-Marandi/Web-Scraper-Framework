@@ -1,0 +1,552 @@
+Total lines: 653
+  L  1 (ind= 0): """Data Quality Scoring Module for Web Scraping.
+  L  3 (ind= 0): Bayesian inference and information-theoretic methods for assessing and
+  L  4 (ind= 0): tracking the quality of web-scraped data.  Uses ONLY standard library
+  L  5 (ind= 0): and NumPy -- no external ML libraries.
+  L  7 (ind= 0): Classes:
+  L  8 (ind= 4):     BayesianScorer            - Beta-Bernoulli conjugate model for quality belie
+  L  9 (ind= 4):     QualityDimension         - Enum of six quality dimensions.
+  L 10 (ind= 4):     QualityIssue             - Dataclass for a single quality problem.
+  L 11 (ind= 4):     QualityReport            - Aggregated assessment result.
+  L 12 (ind= 4):     DataQualityAssessor      - Main entry point for full quality assessment.
+  L 13 (ind= 4):     InformationTheoryMetrics - Entropy, MI, KL-divergence, and composite scores.
+  L 14 (ind= 0): """
+  L 16 (ind= 0): from __future__ import annotations
+  L 18 (ind= 0): import hashlib
+  L 19 (ind= 0): import math
+  L 20 (ind= 0): import re
+  L 21 (ind= 0): from dataclasses import dataclass, field
+  L 22 (ind= 0): from datetime import datetime, timezone
+  L 23 (ind= 0): from enum import Enum
+  L 24 (ind= 0): from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+  L 26 (ind= 0): import numpy as np
+  L 29 (ind= 0): # ---------------------------------------------------------------------------
+  L 30 (ind= 0): # Enums & Data Classes
+  L 31 (ind= 0): # ---------------------------------------------------------------------------
+  L 34 (ind= 0): class QualityDimension(Enum):
+  L 35 (ind= 4):     """Six quality dimensions for scraped data."""
+  L 37 (ind= 4):     COMPLETENESS = "completeness"
+  L 38 (ind= 4):     CONSISTENCY = "consistency"
+  L 39 (ind= 4):     ACCURACY = "accuracy"
+  L 40 (ind= 4):     TIMELINESS = "timeliness"
+  L 41 (ind= 4):     UNIQUENESS = "uniqueness"
+  L 42 (ind= 4):     VALIDITY = "validity"
+  L 45 (ind= 0): @dataclass
+  L 46 (ind= 0): class QualityIssue:
+  L 47 (ind= 4):     """A single data-quality problem found during assessment.
+  L 49 (ind= 4):     Attributes:
+  L 50 (ind= 8):         dimension:      Which quality dimension this issue belongs to.
+  L 51 (ind= 8):         field:          The data field affected, or """ for record-level issues.
+  L 52 (ind= 8):         description:    Human-readable explanation of the problem.
+  L 53 (ind= 8):         severity:       One of "low", "medium", "high", "critical".
+  L 54 (ind= 8):         affected_count: Number of records impacted.
+  L 55 (ind= 4):     """
+  L 57 (ind= 4):     dimension: QualityDimension
+  L 58 (ind= 4):     field: str
+  L 59 (ind= 4):     description: str
+  L 60 (ind= 4):     severity: str
+  L 61 (ind= 4):     affected_count: int
+  L 64 (ind= 0): @dataclass
+  L 65 (ind= 0): class QualityReport:
+  L 66 (ind= 4):     """Aggregated quality-assessment result for one batch of records.
+  L 68 (ind= 4):     Attributes:
+  L 69 (ind= 8):         overall_score:     Unweighted mean of dimension scores in [0, 1].
+  L 70 (ind= 8):         dimension_scores:  Per-dimension score mapping.
+  L 71 (ind= 8):         issues:            Every issue discovered during assessment.
+  L 72 (ind= 8):         timestamp:         Unix-epoch seconds when the report was produced.
+  L 73 (ind= 8):         record_count:      Number of records assessed.
+  L 74 (ind= 8):         weighted_score:    Dimension scores combined using default weights.
+  L 75 (ind= 4):     """
+  L 77 (ind= 4):     overall_score: float
+  L 78 (ind= 4):     dimension_scores: Dict[QualityDimension, float]
+  L 79 (ind= 4):     issues: List[QualityIssue]
+  L 80 (ind= 4):     timestamp: float
+  L 81 (ind= 4):     record_count: int
+  L 82 (ind= 4):     weighted_score: float = 0.0
+  L 84 (ind= 4):     DEFAULT_WEIGHTS: Dict[QualityDimension, float] = field(
+  L 85 (ind= 8):         default_factory=lambda: {
+  L 86 (ind=12):             QualityDimension.COMPLETENESS: 0.25,
+  L 87 (ind=12):             QualityDimension.CONSISTENCY: 0.20,
+  L 88 (ind=12):             QualityDimension.ACCURACY: 0.15,
+  L 89 (ind=12):             QualityDimension.TIMELINESS: 0.10,
+  L 90 (ind=12):             QualityDimension.UNIQUENESS: 0.15,
+  L 91 (ind=12):             QualityDimension.VALIDITY: 0.15,
+  L 92 (ind= 8):         }
+  L 93 (ind= 4):     )
+  L 95 (ind= 4):     def __post_init__(self) -> None:
+  L 96 (ind= 8):         if self.weighted_score == 0.0:
+  L 97 (ind=12):             self.weighted_score = self._compute_weighted(self.DEFAULT_WEIGHTS)
+  L 99 (ind= 4):     def _compute_weighted(self, weights: Dict[QualityDimension, float]) -> float
+  L100 (ind= 8):         """Combine dimension scores using *weights* (normalised internally)."""
+  L101 (ind= 8):         total_w = sum(weights.values())
+  L102 (ind= 8):         if total_w == 0:
+  L103 (ind=12):             return self.overall_score
+  L104 (ind= 8):         return sum(self.dimension_scores.get(d, 0.0) * w
+  L105 (ind=19):                    for d, w in weights.items()) / total_w
+  L108 (ind= 0): # ---------------------------------------------------------------------------
+  L109 (ind= 0): # Bayesian Scoring (Beta-Bernoulli conjugate model)
+  L110 (ind= 0): # ---------------------------------------------------------------------------
+  L113 (ind= 0): class BayesianScorer:
+  L114 (ind= 4):     """Bayesian quality scorer using a Beta-Bernoulli conjugate model.
+  L116 (ind= 4):     Each observation is a Boolean (pass / fail).  The posterior is
+  L117 (ind= 4):     Beta(alpha + successes, beta + failures) whose expected value
+  L118 (ind= 4):     serves as the quality score.  Uses Lentz continued-fraction expansion
+  L119 (ind= 4):     for the regularised incomplete Beta function -- no scipy required.
+  L121 (ind= 4):     Parameters:
+  L122 (ind= 8):         prior_alpha: Shape parameter of the Beta prior (default 1 = uniform).
+  L123 (ind= 8):         prior_beta:  Shape parameter of the Beta prior (default 1 = uniform).
+  L124 (ind= 4):     """
+  L126 (ind= 4):     def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0) -> Non
+  L127 (ind= 8):         if prior_alpha <= 0 or prior_beta <= 0:
+  L128 (ind=12):             raise ValueError("Prior parameters must be positive.")
+  L129 (ind= 8):         self._alpha: float = float(prior_alpha)
+  L130 (ind= 8):         self._beta: float = float(prior_beta)
+  L131 (ind= 8):         self._alpha0: float = self._alpha
+  L132 (ind= 8):         self._beta0: float = self._beta
+  L134 (ind= 4):     def update(self, observation: bool) -> None:
+  L135 (ind= 8):         """Incorporate a single Boolean observation into the posterior.
+  L137 (ind= 8):         Args:
+  L138 (ind=12):             observation: True for pass, False for fail.
+  L139 (ind= 8):         """
+  L140 (ind= 8):         if observation:
+  L141 (ind=12):             self._alpha += 1.0
+  L142 (ind= 8):         else:
+  L143 (ind=12):             self._beta += 1.0
+  L145 (ind= 4):     def batch_update(self, observations: Sequence[bool]) -> None:
+  L146 (ind= 8):         """Incorporate a batch of Boolean observations at once.
+  L148 (ind= 8):         Args:
+  L149 (ind=12):             observations: Iterable of pass/fail values.
+  L150 (ind= 8):         """
+  L151 (ind= 8):         obs_list = list(observations)
+  L152 (ind= 8):         successes = sum(1 for o in obs_list if o)
+  L153 (ind= 8):         self._alpha += float(successes)
+  L154 (ind= 8):         self._beta += float(len(obs_list) - successes)
+  L156 (ind= 4):     def reset(self) -> None:
+  L157 (ind= 8):         """Reset the posterior back to the original prior."""
+  L158 (ind= 8):         self._alpha = self._alpha0
+  L159 (ind= 8):         self._beta = self._beta0
+  L161 (ind= 4):     def get_score(self) -> float:
+  L162 (ind= 8):         """Posterior expected value E[theta] = alpha/(alpha+beta) in [0, 1]."""
+  L163 (ind= 8):         return self._alpha / (self._alpha + self._beta)
+  L165 (ind= 4):     def get_confidence(self) -> float:
+  L166 (ind= 8):         """Confidence in [0, 1] derived from posterior variance.
+  L168 (ind= 8):         Defined as 1 - sqrt(Var) where Var = a*b / ((a+b)^2*(a+b+1)).
+  L169 (ind= 8):         Approaches 1.0 as evidence accumulates.
+  L170 (ind= 8):         """
+  L171 (ind= 8):         a, b = self._alpha, self._beta
+  L172 (ind= 8):         variance = (a * b) / ((a + b) ** 2 * (a + b + 1))
+  L173 (ind= 8):         return float(np.clip(1.0 - math.sqrt(variance), 0.0, 1.0))
+  L175 (ind= 4):     def get_credible_interval(self, ci: float = 0.95) -> Tuple[float, float]:
+  L176 (ind= 8):         """Equal-tailed credible interval for the posterior Beta distribution.
+  L178 (ind= 8):         Uses numerical inverse-CDF via Lentz continued-fraction expansion
+  L179 (ind= 8):         of the regularised incomplete Beta function.
+  L181 (ind= 8):         Args:
+  L182 (ind=12):             ci: Desired credible level (default 0.95).
+  L184 (ind= 8):         Returns:
+  L185 (ind=12):             (lower_bound, upper_bound) tuple.
+  L186 (ind= 8):         """
+  L187 (ind= 8):         a, b = self._alpha, self._beta
+  L188 (ind= 8):         tail = (1.0 - ci) / 2.0
+  L189 (ind= 8):         lbeta = math.lgamma(a) + math.lgamma(b) - math.lgamma(a + b)
+  L191 (ind= 8):         def _beta_cdf(x: float) -> float:
+  L192 (ind=12):             if x <= 0.0:
+  L193 (ind=16):                 return 0.0
+  L194 (ind=12):             if x >= 1.0:
+  L195 (ind=16):                 return 1.0
+  L196 (ind=12):             prefix = math.exp(a * math.log(x) + b * math.log(1.0 - x) - lbeta)
+  L197 (ind=12):             if x < (a + 1.0) / (a + b + 2.0):
+  L198 (ind=16):                 return prefix * self._betacf(a, b, x) / a
+  L199 (ind=12):             return 1.0 - prefix * self._betacf(b, a, 1.0 - x) / b
+  L201 (ind= 8):         lo = self._binsearch(_beta_cdf, tail, 0.0, 1.0)
+  L202 (ind= 8):         hi = self._binsearch(_beta_cdf, 1.0 - tail, 0.0, 1.0)
+  L203 (ind= 8):         return (lo, hi)
+  L205 (ind= 4):     @staticmethod
+  L206 (ind= 4):     def _betacf(a: float, b: float, x: float,
+  L207 (ind=16):                 max_iter: int = 200, eps: float = 3e-12) -> float:
+  L208 (ind= 8):         """Evaluate continued fraction for the incomplete Beta (Lentz)."""
+  L209 (ind= 8):         qab, qap, qam = a + b, a + 1.0, a - 1.0
+  L210 (ind= 8):         c, d = 1.0, 1.0 - qab * x / qap
+  L211 (ind= 8):         d = 1.0 / (d if abs(d) > 1e-30 else 1e-30)
+  L212 (ind= 8):         h = d
+  L213 (ind= 8):         for m in range(1, max_iter + 1):
+  L214 (ind=12):             m2 = 2 * m
+  L215 (ind=12):             aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+  L216 (ind=12):             d = 1.0 / (1.0 + aa * d) if abs(1.0 + aa * d) > 1e-30 else 1e30
+  L217 (ind=12):             c = 1.0 + aa / c if abs(c) > 1e-30 else 1e30
+  L218 (ind=12):             h *= d * c
+  L219 (ind=12):             aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+  L220 (ind=12):             d = 1.0 / (1.0 + aa * d) if abs(1.0 + aa * d) > 1e-30 else 1e30
+  L221 (ind=12):             c = 1.0 + aa / c if abs(c) > 1e-30 else 1e30
+  L222 (ind=12):             h *= d * c
+  L223 (ind=12):             if abs(d * c - 1.0) < eps:
+  L224 (ind=16):                 break
+  L225 (ind= 8):         return h
+  L227 (ind= 4):     @staticmethod
+  L228 (ind= 4):     def _binsearch(fn: Callable[[float], float],
+  L229 (ind=19):                    target: float, lo: float, hi: float) -> float:
+  L230 (ind= 8):         """Binary search for x where fn(x) ~ target (60 bisections)."""
+  L231 (ind= 8):         for _ in range(60):
+  L232 (ind=12):             mid = (lo + hi) / 2.0
+  L233 (ind=12):             if fn(mid) < target:
+  L234 (ind=16):                 lo = mid
+  L235 (ind=12):             else:
+  L236 (ind=16):                 hi = mid
+  L237 (ind= 8):         return (lo + hi) / 2.0
+  L240 (ind= 0): # ---------------------------------------------------------------------------
+  L241 (ind= 0): # Information-Theory Metrics
+  L242 (ind= 0): # ---------------------------------------------------------------------------
+  L245 (ind= 0): class InformationTheoryMetrics:
+  L246 (ind= 4):     """Information-theoretic measures over discrete value sequences.
+  L248 (ind= 4):     All methods use NumPy internally.  Entropies are in **nats** (ln base).
+  L249 (ind= 4):     """
+  L251 (ind= 4):     _EPS: float = 1e-12
+  L253 (ind= 4):     @staticmethod
+  L254 (ind= 4):     def shannon_entropy(values: Sequence[Any]) -> float:
+  L255 (ind= 8):         """Shannon entropy H(X) = -Sum p(x) ln p(x) in nats.
+  L257 (ind= 8):         Args:
+  L258 (ind=12):             values: Sequence of hashable items.
+  L260 (ind= 8):         Returns:
+  L261 (ind=12):             Entropy (>= 0).  Returns 0.0 for empty or single-value input.
+  L262 (ind= 8):         """
+  L263 (ind= 8):         if not values:
+  L264 (ind=12):             return 0.0
+  L265 (ind= 8):         arr = np.array(values, dtype=object)
+  L266 (ind= 8):         _, counts = np.unique(arr, return_counts=True)
+  L267 (ind= 8):         probs = counts.astype(float) / counts.sum()
+  L268 (ind= 8):         return float(-np.sum(probs * np.log(probs + InformationTheoryMetrics._EP
+  L270 (ind= 4):     @staticmethod
+  L271 (ind= 4):     def conditional_entropy(x: Sequence[Any], y: Sequence[Any]) -> float:
+  L272 (ind= 8):         """Conditional entropy H(X|Y) = Sum p(y) H(X|Y=y) in nats.
+  L274 (ind= 8):         Args:
+  L275 (ind=12):             x: Target variable.  y: Conditioning variable (same length).
+  L277 (ind= 8):         Raises:
+  L278 (ind=12):             ValueError: If x and y differ in length.
+  L279 (ind= 8):         """
+  L280 (ind= 8):         if len(x) != len(y):
+  L281 (ind=12):             raise ValueError("x and y must have the same length.")
+  L282 (ind= 8):         x_arr, y_arr = np.array(x, dtype=object), np.array(y, dtype=object)
+  L283 (ind= 8):         h, n = 0.0, len(x_arr)
+  L284 (ind= 8):         for y_val in np.unique(y_arr):
+  L285 (ind=12):             mask = y_arr == y_val
+  L286 (ind=12):             h += (mask.sum() / n) * InformationTheoryMetrics.shannon_entropy(x_a
+  L287 (ind= 8):         return h
+  L289 (ind= 4):     @staticmethod
+  L290 (ind= 4):     def mutual_information(x: Sequence[Any], y: Sequence[Any]) -> float:
+  L291 (ind= 8):         """Mutual information I(X; Y) = H(X) - H(X|Y) in nats.
+  L293 (ind= 8):         Measures reduction in uncertainty about x given y.  Returns 0.0
+  L294 (ind= 8):         if sequences are independent or empty.
+  L295 (ind= 8):         """
+  L296 (ind= 8):         if not x or not y:
+  L297 (ind=12):             return 0.0
+  L298 (ind= 8):         return max(0.0, InformationTheoryMetrics.shannon_entropy(x)
+  L299 (ind=15):                - InformationTheoryMetrics.conditional_entropy(x, y))
+  L301 (ind= 4):     @staticmethod
+  L302 (ind= 4):     def kl_divergence(p: Sequence[float], q: Sequence[float]) -> float:
+  L303 (ind= 8):         """KL divergence D_KL(P || Q) in nats.  Both normalised to sum 1.
+  L305 (ind= 8):         Raises:
+  L306 (ind=12):             ValueError: If p and q differ in length.
+  L307 (ind= 8):         """
+  L308 (ind= 8):         if len(p) != len(q):
+  L309 (ind=12):             raise ValueError("p and q must have the same length.")
+  L310 (ind= 8):         pa = np.clip(np.asarray(p, dtype=float), InformationTheoryMetrics._EPS, 
+  L311 (ind= 8):         qa = np.clip(np.asarray(q, dtype=float), InformationTheoryMetrics._EPS, 
+  L312 (ind= 8):         pa, qa = pa / pa.sum(), qa / qa.sum()
+  L313 (ind= 8):         return float(np.sum(pa * np.log(pa / qa)))
+  L315 (ind= 4):     @staticmethod
+  L316 (ind= 4):     def data_complexity_score(data: List[Dict[str, Any]]) -> float:
+  L317 (ind= 8):         """Composite complexity score in [0, 1].
+  L319 (ind= 8):         Combines normalised average entropy, cardinality ratio, and
+  L320 (ind= 8):         non-sparsity fraction.  Higher = more information-rich.
+  L321 (ind= 8):         """
+  L322 (ind= 8):         if not data:
+  L323 (ind=12):             return 0.0
+  L324 (ind= 8):         n = len(data)
+  L325 (ind= 8):         fields = [k for k in data[0] if isinstance(data[0], dict)]
+  L326 (ind= 8):         if not fields:
+  L327 (ind=12):             return 0.0
+  L328 (ind= 8):         ln_n = math.log(max(n, 2))
+  L329 (ind= 8):         ent_scores, card_scores, missing_t, total_c = [], [], 0, 0
+  L331 (ind= 8):         for f in fields:
+  L332 (ind=12):             col = [row.get(f) for row in data]
+  L333 (ind=12):             non_empty = [v for v in col if v is not None and v != ""]
+  L334 (ind=12):             missing_t += n - len(non_empty)
+  L335 (ind=12):             total_c += n
+  L336 (ind=12):             if non_empty:
+  L337 (ind=16):                 ent = InformationTheoryMetrics.shannon_entropy(non_empty)
+  L338 (ind=16):                 ent_scores.append(min(ent / ln_n, 1.0))
+  L339 (ind=16):                 card_scores.append(min(len(set(non_empty)) / n, 1.0))
+  L341 (ind= 8):         avg_ent = float(np.mean(ent_scores)) if ent_scores else 0.0
+  L342 (ind= 8):         avg_card = float(np.mean(card_scores)) if card_scores else 0.0
+  L343 (ind= 8):         density = 1.0 - missing_t / max(total_c, 1)
+  L344 (ind= 8):         return float(np.clip(0.4 * avg_ent + 0.35 * avg_card + 0.25 * density, 0
+  L346 (ind= 4):     @staticmethod
+  L347 (ind= 4):     def redundancy_ratio(data: List[Dict[str, Any]]) -> float:
+  L348 (ind= 8):         """Fraction of near-duplicate records in [0, 1] via SHA-256 hashing.
+  L350 (ind= 8):         redundancy = 1 - unique_hashes / n.
+  L351 (ind= 8):         """
+  L352 (ind= 8):         if not data:
+  L353 (ind=12):             return 0.0
+  L354 (ind= 8):         seen: set[str] = set()
+  L355 (ind= 8):         dupes = 0
+  L356 (ind= 8):         for row in data:
+  L357 (ind=12):             norm = "|".join(f"{k}={row.get(k, '')}" for k in sorted(row))
+  L358 (ind=12):             h = hashlib.sha256(norm.encode("utf-8", errors="replace")).hexdigest
+  L359 (ind=12):             if h in seen:
+  L360 (ind=16):                 dupes += 1
+  L361 (ind=12):             else:
+  L362 (ind=16):                 seen.add(h)
+  L363 (ind= 8):         return dupes / len(data)
+  L366 (ind= 0): # ---------------------------------------------------------------------------
+  L367 (ind= 0): # Validation patterns
+  L368 (ind= 0): # ---------------------------------------------------------------------------
+  L370 (ind= 0): _PAT_URL = re.compile(r"^https?://\S+$", re.IGNORECASE)
+  L371 (ind= 0): _PAT_EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+  L372 (ind= 0): _PAT_DATE = re.compile(r"^\d{4}[-/]\d{2}[-/]\d{2}(?:[ T]\d{2}:\d{2}(:\d{2})?)?")
+  L373 (ind= 0): _PAT_NUM = re.compile(r"^-?\d+(?:\.\d+)?$")
+  L374 (ind= 0): _TS_KW = ("date", "time", "created", "updated", "published", "timestamp")
+  L375 (ind= 0): _NUM_KW = ("price", "amount", "count", "rating", "score", "age")
+  L378 (ind= 0): # ---------------------------------------------------------------------------
+  L379 (ind= 0): # Data Quality Assessor
+  L380 (ind= 0): # ---------------------------------------------------------------------------
+  L383 (ind= 0): class DataQualityAssessor:
+  L384 (ind= 4):     """Main entry point for assessing quality of scraped records.
+  L386 (ind= 4):     Runs six quality dimensions and aggregates into a QualityReport.
+  L387 (ind= 4):     Maintains Bayesian scorers per dimension and a report history.
+  L389 (ind= 4):     Parameters:
+  L390 (ind= 8):         rules:          Callables returning str on violation, None on pass.
+  L391 (ind= 8):         reference_data: {field: set_of_valid_values} for accuracy checking.
+  L392 (ind= 8):         field_weights:  Optional per-dimension weight overrides.
+  L393 (ind= 4):     """
+  L395 (ind= 4):     def __init__(
+  L396 (ind= 8):         self,
+  L397 (ind= 8):         rules: Optional[List[Callable[[Dict[str, Any]], Optional[str]]]] = None,
+  L398 (ind= 8):         reference_data: Optional[Dict[str, set]] = None,
+  L399 (ind= 8):         field_weights: Optional[Dict[QualityDimension, float]] = None,
+  L400 (ind= 4):     ) -> None:
+  L401 (ind= 8):         self._rules = rules or []
+  L402 (ind= 8):         self._reference = reference_data or {}
+  L403 (ind= 8):         self._custom_weights = field_weights
+  L404 (ind= 8):         self._history: List[QualityReport] = []
+  L405 (ind= 8):         self._bayesian: Dict[QualityDimension, BayesianScorer] = {
+  L406 (ind=12):             d: BayesianScorer() for d in QualityDimension
+  L407 (ind= 8):         }
+  L409 (ind= 4):     def assess(self, data: List[Dict[str, Any]],
+  L410 (ind=15):                rules: Optional[List[Callable]] = None) -> QualityReport:
+  L411 (ind= 8):         """Run a full six-dimension quality assessment.
+  L413 (ind= 8):         Args:
+  L414 (ind=12):             data:  List of record dicts (same keys expected).
+  L415 (ind=12):             rules: Override instance rules for this call only.
+  L417 (ind= 8):         Returns:
+  L418 (ind=12):             QualityReport with scores, issues, and aggregate metrics.
+  L419 (ind= 8):         """
+  L420 (ind= 8):         active_rules = rules if rules is not None else self._rules
+  L421 (ind= 8):         ts = datetime.now(timezone.utc).timestamp()
+  L423 (ind= 8):         if not data:
+  L424 (ind=12):             empty = {d: 0.0 for d in QualityDimension}
+  L425 (ind=12):             report = QualityReport(0.0, empty, [], ts, 0)
+  L426 (ind=12):             self._history.append(report)
+  L427 (ind=12):             return report
+  L429 (ind= 8):         n = len(data)
+  L430 (ind= 8):         fields = list(data[0].keys()) if data[0] else []
+  L431 (ind= 8):         issues: List[QualityIssue] = []
+  L433 (ind= 8):         # --- Completeness -------------------------------------------------
+  L434 (ind= 8):         missing_pf: Dict[str, int] = {f: 0 for f in fields}
+  L435 (ind= 8):         for row in data:
+  L436 (ind=12):             for f in fields:
+  L437 (ind=16):                 val = row.get(f)
+  L438 (ind=16):                 if val is None or (isinstance(val, str) and val.strip() == ""):
+  L439 (ind=20):                     missing_pf[f] += 1
+  L440 (ind= 8):         completeness = float(np.mean([1.0 - c / n for c in missing_pf.values()])
+  L441 (ind= 8):         self._top_issues(missing_pf, n, QualityDimension.COMPLETENESS, issues)
+  L443 (ind= 8):         # --- Consistency --------------------------------------------------
+  L444 (ind= 8):         cons_viol = 0
+  L445 (ind= 8):         for row in data:
+  L446 (ind=12):             for rule_fn in active_rules:
+  L447 (ind=16):                 msg = rule_fn(row)
+  L448 (ind=16):                 if msg is not None:
+  L449 (ind=20):                     cons_viol += 1
+  L450 (ind=20):                     issues.append(QualityIssue(
+  L451 (ind=24):                         QualityDimension.CONSISTENCY, "", msg, "medium", 1))
+  L452 (ind= 8):         consistency = 1.0 - cons_viol / (n * max(len(active_rules), 1))
+  L454 (ind= 8):         # --- Uniqueness ---------------------------------------------------
+  L455 (ind= 8):         redundancy = InformationTheoryMetrics.redundancy_ratio(data)
+  L456 (ind= 8):         uniqueness = 1.0 - redundancy
+  L457 (ind= 8):         dupe_n = int(redundancy * n)
+  L458 (ind= 8):         if dupe_n > 0:
+  L459 (ind=12):             issues.append(QualityIssue(
+  L460 (ind=16):                 QualityDimension.UNIQUENESS, "",
+  L461 (ind=16):                 f"{dupe_n} near-duplicate record(s) detected.",
+  L462 (ind=16):                 "high" if dupe_n > n * 0.1 else "medium", dupe_n))
+  L464 (ind= 8):         # --- Validity -----------------------------------------------------
+  L465 (ind= 8):         val_total = val_pass = 0
+  L466 (ind= 8):         invalid_pf: Dict[str, int] = {}
+  L467 (ind= 8):         for f in fields:
+  L468 (ind=12):             fi = 0
+  L469 (ind=12):             for row in data:
+  L470 (ind=16):                 val = row.get(f)
+  L471 (ind=16):                 if val is None or val == "":
+  L472 (ind=20):                     continue
+  L473 (ind=16):                 val_total += 1
+  L474 (ind=16):                 if self._is_valid(f, val):
+  L475 (ind=20):                     val_pass += 1
+  L476 (ind=16):                 else:
+  L477 (ind=20):                     fi += 1
+  L478 (ind=12):             if fi:
+  L479 (ind=16):                 invalid_pf[f] = fi
+  L480 (ind= 8):         validity = val_pass / max(val_total, 1)
+  L481 (ind= 8):         self._top_issues(invalid_pf, n, QualityDimension.VALIDITY, issues, 2)
+  L483 (ind= 8):         # --- Timeliness ---------------------------------------------------
+  L484 (ind= 8):         timeliness, ts_issues = self._assess_timeliness(data, fields)
+  L485 (ind= 8):         issues.extend(ts_issues)
+  L487 (ind= 8):         # --- Accuracy -----------------------------------------------------
+  L488 (ind= 8):         accuracy, acc_issues = self._assess_accuracy(data)
+  L489 (ind= 8):         issues.extend(acc_issues)
+  L491 (ind= 8):         dim_scores: Dict[QualityDimension, float] = {
+  L492 (ind=12):             QualityDimension.COMPLETENESS: completeness,
+  L493 (ind=12):             QualityDimension.CONSISTENCY: consistency,
+  L494 (ind=12):             QualityDimension.UNIQUENESS: uniqueness,
+  L495 (ind=12):             QualityDimension.VALIDITY: validity,
+  L496 (ind=12):             QualityDimension.TIMELINESS: timeliness,
+  L497 (ind=12):             QualityDimension.ACCURACY: accuracy,
+  L498 (ind= 8):         }
+  L500 (ind= 8):         for dim, score in dim_scores.items():
+  L501 (ind=12):             self._bayesian[dim].update(score >= 0.8)
+  L503 (ind= 8):         overall = float(np.mean(list(dim_scores.values())))
+  L504 (ind= 8):         report = QualityReport(overall, dim_scores, issues, ts, n)
+  L505 (ind= 8):         if self._custom_weights:
+  L506 (ind=12):             report.weighted_score = report._compute_weighted(self._custom_weight
+  L507 (ind= 8):         self._history.append(report)
+  L508 (ind= 8):         return report
+  L510 (ind= 4):     # -- trend & suggestions -----------------------------------------------
+  L512 (ind= 4):     def track_quality_over_time(self) -> List[QualityReport]:
+  L513 (ind= 8):         """Return all historical reports from successive assess() calls."""
+  L514 (ind= 8):         return list(self._history)
+  L516 (ind= 4):     def get_quality_trend(self) -> List[float]:
+  L517 (ind= 8):         """Return overall scores from every historical report, in order."""
+  L518 (ind= 8):         return [r.overall_score for r in self._history]
+  L520 (ind= 4):     def get_improvement_suggestions(
+  L521 (ind=12):             self) -> List[Tuple[QualityDimension, str, str]]:
+  L522 (ind= 8):         """Analyse the latest report and return (dimension, suggestion, severity
+  L523 (ind= 8):         if not self._history:
+  L524 (ind=12):             return []
+  L525 (ind= 8):         s = self._history[-1].dimension_scores
+  L526 (ind= 8):         suggestions: List[Tuple[QualityDimension, str, str]] = []
+  L528 (ind= 8):         if s.get(QualityDimension.COMPLETENESS, 1.0) < 0.9:
+  L529 (ind=12):             suggestions.append((QualityDimension.COMPLETENESS,
+  L530 (ind=16):                 "Increase selector specificity or add fallback extraction to red
+  L531 (ind=16):                 "high" if s[QualityDimension.COMPLETENESS] < 0.7 else "medium"))
+  L532 (ind= 8):         if s.get(QualityDimension.CONSISTENCY, 1.0) < 0.9:
+  L533 (ind=12):             suggestions.append((QualityDimension.CONSISTENCY,
+  L534 (ind=16):                 "Add post-processing validation rules to catch cross-field contr
+  L535 (ind=16):                 "medium"))
+  L536 (ind= 8):         if s.get(QualityDimension.UNIQUENESS, 1.0) < 0.95:
+  L537 (ind=12):             suggestions.append((QualityDimension.UNIQUENESS,
+  L538 (ind=16):                 "Implement deduplication with fuzzy matching before storing reco
+  L539 (ind=16):                 "high" if s[QualityDimension.UNIQUENESS] < 0.85 else "low"))
+  L540 (ind= 8):         if s.get(QualityDimension.VALIDITY, 1.0) < 0.9:
+  L541 (ind=12):             suggestions.append((QualityDimension.VALIDITY,
+  L542 (ind=16):                 "Add regex / schema validation during parsing to reject malforme
+  L543 (ind=16):                 "medium"))
+  L544 (ind= 8):         if s.get(QualityDimension.TIMELINESS, 1.0) < 0.8:
+  L545 (ind=12):             suggestions.append((QualityDimension.TIMELINESS,
+  L546 (ind=16):                 "Reduce scrape intervals or add caching headers for fresher data
+  L547 (ind=16):                 "low"))
+  L548 (ind= 8):         if s.get(QualityDimension.ACCURACY, 1.0) < 0.9:
+  L549 (ind=12):             suggestions.append((QualityDimension.ACCURACY,
+  L550 (ind=16):                 "Cross-reference extracted values against authoritative sources.
+  L551 (ind=16):                 "high"))
+  L552 (ind= 8):         return suggestions
+  L554 (ind= 4):     # -- internal helpers --------------------------------------------------
+  L556 (ind= 4):     @staticmethod
+  L557 (ind= 4):     def _is_valid(field_name: str, value: Any) -> bool:
+  L558 (ind= 8):         """Heuristic format validator based on field-name keywords.
+  L560 (ind= 8):         Checks URLs, emails, dates, and numeric fields by name pattern.
+  L561 (ind= 8):         Non-string values pass automatically.
+  L562 (ind= 8):         """
+  L563 (ind= 8):         if not isinstance(value, str):
+  L564 (ind=12):             return True
+  L565 (ind= 8):         fl = field_name.lower()
+  L566 (ind= 8):         if any(kw in fl for kw in ("url", "link", "href")):
+  L567 (ind=12):             return bool(_PAT_URL.match(value))
+  L568 (ind= 8):         if "email" in fl or "mail" in fl:
+  L569 (ind=12):             return bool(_PAT_EMAIL.match(value))
+  L570 (ind= 8):         if any(kw in fl for kw in _TS_KW):
+  L571 (ind=12):             return bool(_PAT_DATE.match(value))
+  L572 (ind= 8):         if any(kw in fl for kw in _NUM_KW):
+  L573 (ind=12):             return bool(_PAT_NUM.match(value))
+  L574 (ind= 8):         return True
+  L576 (ind= 4):     @staticmethod
+  L577 (ind= 4):     def _assess_timeliness(
+  L578 (ind=12):             data: List[Dict[str, Any]], fields: List[str],
+  L579 (ind= 4):     ) -> Tuple[float, List[QualityIssue]]:
+  L580 (ind= 8):         """Score recency of timestamp-like fields (30-day exponential decay)."""
+  L581 (ind= 8):         ts_fields = [f for f in fields if any(kw in f.lower() for kw in _TS_KW)]
+  L582 (ind= 8):         issues: List[QualityIssue] = []
+  L583 (ind= 8):         if not ts_fields:
+  L584 (ind=12):             return 1.0, issues
+  L585 (ind= 8):         now = datetime.now(timezone.utc)
+  L586 (ind= 8):         total_delta, count = 0.0, 0
+  L587 (ind= 8):         for f in ts_fields:
+  L588 (ind=12):             for row in data:
+  L589 (ind=16):                 val = row.get(f)
+  L590 (ind=16):                 if not isinstance(val, str):
+  L591 (ind=20):                     continue
+  L592 (ind=16):                 parsed = DataQualityAssessor._parse_ts(val)
+  L593 (ind=16):                 if parsed is None:
+  L594 (ind=20):                     continue
+  L595 (ind=16):                 total_delta += (now - parsed).total_seconds() / 86400.0
+  L596 (ind=16):                 count += 1
+  L597 (ind= 8):         if count == 0:
+  L598 (ind=12):             return 1.0, issues
+  L599 (ind= 8):         avg_days = total_delta / count
+  L600 (ind= 8):         score = float(np.clip(math.exp(-math.log(2) * avg_days / 30.0), 0, 1))
+  L601 (ind= 8):         if score < 0.8:
+  L602 (ind=12):             issues.append(QualityIssue(
+  L603 (ind=16):                 QualityDimension.TIMELINESS, ts_fields[0],
+  L604 (ind=16):                 f"Average data age is {avg_days:.1f} days.", "low", count))
+  L605 (ind= 8):         return score, issues
+  L607 (ind= 4):     def _assess_accuracy(
+  L608 (ind=12):             self, data: List[Dict[str, Any]],
+  L609 (ind= 4):     ) -> Tuple[float, List[QualityIssue]]:
+  L610 (ind= 8):         """Cross-reference values against reference_data."""
+  L611 (ind= 8):         issues: List[QualityIssue] = []
+  L612 (ind= 8):         if not self._reference:
+  L613 (ind=12):             return 1.0, issues
+  L614 (ind= 8):         total = matched = 0
+  L615 (ind= 8):         for kf, valid_set in self._reference.items():
+  L616 (ind=12):             for row in data:
+  L617 (ind=16):                 val = row.get(kf)
+  L618 (ind=16):                 if val is None:
+  L619 (ind=20):                     continue
+  L620 (ind=16):                 total += 1
+  L621 (ind=16):                 if val in valid_set:
+  L622 (ind=20):                     matched += 1
+  L623 (ind=16):                 else:
+  L624 (ind=20):                     issues.append(QualityIssue(
+  L625 (ind=24):                         QualityDimension.ACCURACY, kf,
+  L626 (ind=24):                         f"Value '{val}' not found in reference set.",
+  L627 (ind=24):                         "high", 1))
+  L628 (ind= 8):         return (matched / total, issues) if total else (1.0, issues)
+  L630 (ind= 4):     @staticmethod
+  L631 (ind= 4):     def _top_issues(
+  L632 (ind=12):             counts: Dict[str, int], n: int, dim: QualityDimension,
+  L633 (ind=12):             issues: List[QualityIssue], top_n: int = 3,
+  L634 (ind= 4):     ) -> None:
+  L635 (ind= 8):         """Append issues for fields with the highest missing/invalid counts."""
+  L636 (ind= 8):         for fld, cnt in sorted(counts.items(), key=lambda kv: kv[1], reverse=Tru
+  L637 (ind=12):             if cnt == 0:
+  L638 (ind=16):                 continue
+  L639 (ind=12):             ratio = cnt / n
+  L640 (ind=12):             sev = "critical" if ratio > 0.5 else "high" if ratio > 0.25 else "me
+  L641 (ind=12):             issues.append(QualityIssue(
+  L642 (ind=16):                 dim, fld, f"{cnt}/{n} records missing or invalid for '{fld}'.", 
+  L644 (ind= 4):     @staticmethod
+  L645 (ind= 4):     def _parse_ts(s: str) -> Optional[datetime]:
+  L646 (ind= 8):         """Best-effort ISO-8601 timestamp parser. Returns None on failure."""
+  L647 (ind= 8):         for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S",
+  L648 (ind=20):                     "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+  L649 (ind=12):             try:
+  L650 (ind=16):                 return datetime.strptime(s, fmt)
+  L651 (ind=12):             except (ValueError, TypeError):
+  L652 (ind=16):                 continue
+  L653 (ind= 8):         return None

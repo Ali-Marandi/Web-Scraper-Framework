@@ -1,0 +1,937 @@
+     1→     1→"""WebScraper Pro - Analytics Panel
+     2→     2→
+     3→     3→Integrates quantitative analysis modules: Fuzzy Logic, Content Intelligence,
+     4→     4→Anomaly Detection, Data Quality (Bayesian), and Graph Theory.
+     5→     5→v1.3.0: New panel providing advanced data analysis capabilities.
+     6→     6→"""
+     7→     7→
+     8→     8→import threading
+     9→     9→import customtkinter as ctk
+    10→    10→from tkinter import filedialog, messagebox
+    11→    11→
+    12→    12→from ui.styles import theme, Typography, Spacing, Radius
+    13→    13→
+    14→    14→
+    15→    15→class AnalyticsPanel(ctk.CTkFrame):
+    16→    16→    """Advanced analytics panel with tabs for each quantitative module."""
+    17→    17→
+    18→    18→    TAB_VALUES = [
+    19→    19→        "Fuzzy Matching",
+    20→    20→        "Content Analysis",
+    21→    21→        "Anomaly Detection",
+    22→    22→        "Data Quality",
+    23→    23→        "Graph Analysis",
+    24→    24→    ]
+    25→    25→
+    26→    26→    def __init__(self, master, **kwargs):
+    27→    27→        super().__init__(master, fg_color="transparent", **kwargs)
+    28→    28→        self.grid_rowconfigure(1, weight=1)
+    29→    29→        self.grid_columnconfigure(0, weight=1)
+    30→    30→        self._build_tabs()
+    31→    31→
+    32→    32→    def _build_tabs(self):
+    33→    33→        self._tab_seg = ctk.CTkSegmentedButton(
+    34→    34→            self, values=self.TAB_VALUES,
+    35→    35→            font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    36→    36→            selected_color=theme.colors.BRAND_PRIMARY,
+    37→    37→            selected_hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+    38→    38→            command=self._switch_tab,
+    39→    39→        )
+    40→    40→        self._tab_seg.set(self.TAB_VALUES[0])
+    41→    41→        self._tab_seg.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.MD, 0))
+    42→    42→
+    43→    43→        self._frames = {}
+    44→    44→        for tab_name in self.TAB_VALUES:
+    45→    45→            frame = ctk.CTkFrame(self, fg_color="transparent")
+    46→    46→            frame.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+    47→    47→            frame.grid_rowconfigure(1, weight=1)
+    48→    48→            frame.grid_columnconfigure(0, weight=1)
+    49→    49→            self._frames[tab_name] = frame
+    50→    50→
+    51→    51→        self._build_fuzzy_tab(self._frames["Fuzzy Matching"])
+    52→    52→        self._build_content_tab(self._frames["Content Analysis"])
+    53→    53→        self._build_anomaly_tab(self._frames["Anomaly Detection"])
+    54→    54→        self._build_quality_tab(self._frames["Data Quality"])
+    55→    55→        self._build_graph_tab(self._frames["Graph Analysis"])
+    56→    56→        self._switch_tab(self.TAB_VALUES[0])
+    57→    57→
+    58→    58→    def _switch_tab(self, value):
+    59→    59→        for name, frame in self._frames.items():
+    60→    60→            if name == value:
+    61→    61→                frame.grid()
+    62→    62→            else:
+    63→    63→                frame.grid_remove()
+    64→    64→
+    65→    65→    # ==================================================================
+    66→    66→    # Fuzzy Matching Tab
+    67→    67→    # ==================================================================
+    68→    68→
+    69→    69→    def _build_fuzzy_tab(self, parent):
+    70→    70→        top = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+    71→    71→        top.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+    72→    72→        top.grid_columnconfigure(1, weight=1)
+    73→    73→        top.grid_columnconfigure(3, weight=1)
+    74→    74→
+    75→    75→        ctk.CTkLabel(top, text="String 1", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    76→    76→                      text_color=theme.colors.TEXT_SECONDARY
+    77→    77→                      ).grid(row=0, column=0, padx=(Spacing.MD, Spacing.XS), pady=Spacing.SM, sticky="w")
+    78→    78→        self._fuzzy_s1 = ctk.CTkEntry(
+    79→    79→            top, placeholder_text="First string...",
+    80→    80→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+    81→    81→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+    82→    82→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=32,
+    83→    83→        )
+    84→    84→        self._fuzzy_s1.grid(row=0, column=1, sticky="ew", padx=Spacing.XS, pady=Spacing.SM)
+    85→    85→
+    86→    86→        ctk.CTkLabel(top, text="String 2", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    87→    87→                      text_color=theme.colors.TEXT_SECONDARY
+    88→    88→                      ).grid(row=0, column=2, padx=(Spacing.MD, Spacing.XS), pady=Spacing.SM, sticky="w")
+    89→    89→        self._fuzzy_s2 = ctk.CTkEntry(
+    90→    90→            top, placeholder_text="Second string...",
+    91→    91→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+    92→    92→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+    93→    93→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=32,
+    94→    94→        )
+    95→    95→        self._fuzzy_s2.grid(row=0, column=3, sticky="ew", padx=(Spacing.XS, Spacing.MD), pady=Spacing.SM)
+    96→    96→
+    97→    97→        ctk.CTkButton(top, text="Compare", width=80, height=28,
+    98→    98→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+    99→    99→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   100→   100→                       corner_radius=Radius.MD, command=self._run_fuzzy_compare
+   101→   101→                       ).grid(row=1, column=0, columnspan=4, sticky="e", padx=Spacing.MD, pady=(0, Spacing.SM))
+   102→   102→
+   103→   103→        # Results area
+   104→   104→        res = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   105→   105→        res.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   106→   106→        res.grid_rowconfigure(0, weight=1)
+   107→   107→        res.grid_columnconfigure(0, weight=1)
+   108→   108→
+   109→   109→        self._fuzzy_results = ctk.CTkTextbox(
+   110→   110→            res, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   111→   111→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   112→   112→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   113→   113→            state="disabled",
+   114→   114→        )
+   115→   115→        self._fuzzy_results.grid(row=0, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+   116→   116→
+   117→   117→        # Dedup section
+   118→   118→        dedup_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   119→   119→        dedup_card.grid(row=2, column=0, sticky="nsew", pady=Spacing.SM)
+   120→   120→        dedup_card.grid_rowconfigure(1, weight=1)
+   121→   121→        dedup_card.grid_columnconfigure(0, weight=1)
+   122→   122→
+   123→   123→        header = ctk.CTkFrame(dedup_card, fg_color="transparent")
+   124→   124→        header.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   125→   125→        header.grid_columnconfigure(0, weight=1)
+   126→   126→
+   127→   127→        ctk.CTkLabel(header, text="Fuzzy Deduplication (one item per line)",
+   128→   128→                      font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   129→   129→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   130→   130→
+   131→   131→        threshold_frame = ctk.CTkFrame(header, fg_color="transparent")
+   132→   132→        threshold_frame.grid(row=0, column=1, padx=Spacing.SM)
+   133→   133→        ctk.CTkLabel(threshold_frame, text="Threshold:", font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   134→   134→                      text_color=theme.colors.TEXT_SECONDARY).pack(side="left")
+   135→   135→        self._dedup_threshold = ctk.CTkEntry(threshold_frame, width=50, height=24,
+   136→   136→                                               font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   137→   137→                                               fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   138→   138→                                               border_width=1, corner_radius=Radius.MD,
+   139→   139→                                               text_color=theme.colors.TEXT_PRIMARY)
+   140→   140→        self._dedup_threshold.insert("0", "0.85")
+   141→   141→        self._dedup_threshold.pack(side="left", padx=Spacing.XS)
+   142→   142→
+   143→   143→        ctk.CTkButton(threshold_frame, text="Deduplicate", width=100, height=24,
+   144→   144→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   145→   145→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   146→   146→                       corner_radius=Radius.MD, command=self._run_fuzzy_dedup
+   147→   147→                       ).pack(side="left", padx=Spacing.XS)
+   148→   148→
+   149→   149→        self._dedup_input = ctk.CTkTextbox(
+   150→   150→            dedup_card, height=100, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   151→   151→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   152→   152→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   153→   153→        )
+   154→   154→        self._dedup_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   155→   155→
+   156→   156→    def _run_fuzzy_compare(self):
+   157→   157→        s1 = self._fuzzy_s1.get().strip()
+   158→   158→        s2 = self._fuzzy_s2.get().strip()
+   159→   159→        if not s1 or not s2:
+   160→   160→            return
+   161→   161→        from core.fuzzy_engine import FuzzyMatcher
+   162→   162→        m = FuzzyMatcher()
+   163→   163→        fe = m.fuzzy_equal(s1, s2)
+   164→   164→        jw = m.jaro_winkler(s1, s2)
+   165→   165→        lev = m.levenshtein(s1, s2)
+   166→   166→        fc = m.fuzzy_contains(s1, s2)
+   167→   167→
+   168→   168→        self._fuzzy_results.configure(state="normal")
+   169→   169→        self._fuzzy_results.delete("0.0", "end")
+   170→   170→        self._fuzzy_results.insert("end", f"  Fuzzy Equal Score:  {fe:.4f}
+   171→   171→"
+   172→   172→        self._fuzzy_results.insert("end", f"  Jaro-Winkler:       {jw:.4f}
+   173→   173→"
+   174→   174→        self._fuzzy_results.insert("end", f"  Levenshtein Dist:   {lev}
+   175→   175→"
+   176→   176→        self._fuzzy_results.insert("end", f"  Fuzzy Contains:     {fc:.4f}
+   177→   177→"
+   178→   178→        self._fuzzy_results.insert("end", f"  Max Length:         {max(len(s1), len(s2))}
+   179→   179→"
+   180→   180→        self._fuzzy_results.insert("end", f"  Normalized Lev Sim: {1.0 - (lev / max(len(s1), len(s2), 1)):.4f}
+   181→   181→"
+   182→   182→        self._fuzzy_results.configure(state="disabled")
+   183→   183→
+   184→   184→    def _run_fuzzy_dedup(self):
+   185→   185→        text = self._dedup_input.get("0.0", "end").strip()
+   186→   186→        if not text:
+   187→   187→            return
+   188→   188→        items = [line.strip() for line in text.split("
+   189→   189→") if line.strip()]
+   190→   190→        try:
+   191→   191→            threshold = float(self._dedup_threshold.get().strip())
+   192→   192→        except ValueError:
+   193→   193→            threshold = 0.85
+   194→   194→        from core.fuzzy_engine import FuzzyMatcher
+   195→   195→        m = FuzzyMatcher()
+   196→   196→        unique = m.deduplicate(items, threshold)
+   197→   197→        removed = len(items) - len(unique)
+   198→   198→
+   199→   199→        self._fuzzy_results.configure(state="normal")
+   200→   200→        self._fuzzy_results.delete("0.0", "end")
+   201→   201→        self._fuzzy_results.insert("end", f"  Input items:   {len(items)}
+   202→   202→"
+   203→   203→        self._fuzzy_results.insert("end", f"  Unique items:  {len(unique)}
+   204→   204→"
+   205→   205→        self._fuzzy_results.insert("end", f"  Duplicates:    {removed}
+   206→   206→"
+   207→   207→        self._fuzzy_results.insert("end", f"  Threshold:     {threshold:.2f}
+   208→   208→"
+   209→   209→        self._fuzzy_results.insert("end", f"
+   210→   210→  --- Unique Items ---
+   211→   211→")
+   212→   212→        for item in unique:
+   213→   213→            self._fuzzy_results.insert("end", f"  {item}
+   214→   214→"
+   215→   215→        self._fuzzy_results.configure(state="disabled")
+   216→   216→
+   217→   217→    # ==================================================================
+   218→   218→    # Content Analysis Tab
+   219→   219→    # ==================================================================
+   220→   220→
+   221→   221→    def _build_content_tab(self, parent):
+   222→   222→        top = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   223→   223→        top.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+   224→   224→        top.grid_columnconfigure(0, weight=1)
+   225→   225→
+   226→   226→        bar = ctk.CTkFrame(top, fg_color="transparent")
+   227→   227→        bar.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+   228→   228→        bar.grid_columnconfigure(0, weight=1)
+   229→   229→
+   230→   230→        ctk.CTkLabel(bar, text="URL (optional - fetch content)",
+   231→   231→                      font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   232→   232→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, sticky="w")
+   233→   233→
+   234→   234→        self._content_url = ctk.CTkEntry(
+   235→   235→            bar, placeholder_text="https://example.com (leave empty to use text below)",
+   236→   236→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+   237→   237→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   238→   238→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=30,
+   239→   239→        )
+   240→   240→        self._content_url.grid(row=1, column=0, sticky="ew", pady=(Spacing.XS, 0))
+   241→   241→
+   242→   242→        ctk.CTkButton(bar, text="Analyze", width=80, height=28,
+   243→   243→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   244→   244→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   245→   245→                       corner_radius=Radius.MD, command=self._run_content_analysis
+   246→   246→                       ).grid(row=1, column=1, padx=(Spacing.SM, 0))
+   247→   247→
+   248→   248→        # Text input
+   249→   249→        mid = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   250→   250→        mid.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   251→   251→        mid.grid_rowconfigure(1, weight=1)
+   252→   252→        mid.grid_columnconfigure(0, weight=1)
+   253→   253→
+   254→   254→        ctk.CTkLabel(mid, text="Text Content (or paste HTML)",
+   255→   255→                      font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   256→   256→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   257→   257→
+   258→   258→        self._content_input = ctk.CTkTextbox(
+   259→   259→            mid, height=120, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   260→   260→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   261→   261→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   262→   262→        )
+   263→   263→        self._content_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   264→   264→
+   265→   265→        # Results
+   266→   266→        res = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   267→   267→        res.grid(row=2, column=0, sticky="nsew", pady=Spacing.SM)
+   268→   268→        res.grid_rowconfigure(0, weight=1)
+   269→   269→        res.grid_columnconfigure(0, weight=1)
+   270→   270→
+   271→   271→        self._content_results = ctk.CTkTextbox(
+   272→   272→            res, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   273→   273→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   274→   274→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   275→   275→            state="disabled",
+   276→   276→        )
+   277→   277→        self._content_results.grid(row=0, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+   278→   278→
+   279→   279→    def _run_content_analysis(self):
+   280→   280→        url = self._content_url.get().strip()
+   281→   281→        text = self._content_input.get("0.0", "end").strip()
+   282→   282→
+   283→   283→        if url and not text:
+   284→   284→            def _fetch():
+   285→   285→                try:
+   286→   286→                    import requests
+   287→   287→                    from bs4 import BeautifulSoup
+   288→   288→                    resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+   289→   289→                    soup = BeautifulSoup(resp.text, "lxml")
+   290→   290→                    for tag in soup(["script", "style", "nav", "footer", "header"]):
+   291→   291→                        tag.decompose()
+   292→   292→                    fetched = soup.get_text(separator=" ", strip=True)
+   293→   293→                    self.after(0, lambda: self._content_input.insert("0.0", fetched))
+   294→   294→                    self.after(0, lambda: self._analyze_content(fetched))
+   295→   295→                except Exception as e:
+   296→   296→                    self.after(0, lambda: self._show_content_error(str(e)))
+   297→   297→            threading.Thread(target=_fetch, daemon=True).start()
+   298→   298→        elif text:
+   299→   299→            self._analyze_content(text)
+   300→   300→
+   301→   301→    def _analyze_content(self, text: str):
+   302→   302→        from core.content_analyzer import ContentAnalyzer, TextStatistics, SentimentAnalyzer, KeywordExtractor
+   303→   303→        self._content_results.configure(state="normal")
+   304→   304→        self._content_results.delete("0.0", "end")
+   305→   305→
+   306→   306→        try:
+   307→   307→            stats = TextStatistics()
+   308→   308→            readability = stats.compute_readability(text)
+   309→   309→            freq = stats.compute_word_frequency(text, top_n=15)
+   310→   310→            entropy = stats.compute_entropy(text)
+   311→   311→            diversity = stats.compute_lexical_diversity(text)
+   312→   312→            lang = stats.language_detect(text)
+   313→   313→
+   314→   314→            self._content_results.insert("end", "=== Text Statistics ===
+   315→   315→"
+   316→   316→            self._content_results.insert("end", f"  Words:           {readability['word_count']}
+   317→   317→"
+   318→   318→            self._content_results.insert("end", f"  Sentences:       {readability['sentence_count']}
+   319→   319→"
+   320→   320→            self._content_results.insert("end", f"  Avg Sentence:    {readability['avg_sentence_length']:.1f} words
+   321→   321→"
+   322→   322→            self._content_results.insert("end", f"  Avg Word Len:    {readability['avg_word_length']:.2f} chars
+   323→   323→"
+   324→   324→            self._content_results.insert("end", f"  Flesch-Kincaid:  {readability['flesch_kincaid']:.1f}
+   325→   325→"
+   326→   326→            self._content_results.insert("end", f"  Shannon Entropy: {entropy:.4f}
+   327→   327→"
+   328→   328→            self._content_results.insert("end", f"  Lexical Div:     {diversity:.4f}
+   329→   329→"
+   330→   330→            self._content_results.insert("end", f"  Detected Lang:   {lang}
+   331→   331→"
+   332→   332→
+   333→   333→            sa = SentimentAnalyzer()
+   334→   334→            sent = sa.analyze(text)
+   335→   335→            self._content_results.insert("end", f"
+   336→   336→=== Sentiment Analysis ===
+   337→   337→")
+   338→   338→            self._content_results.insert("end", f"  Polarity:    {sent['polarity_score']:.3f} [-1, 1]
+   339→   339→"
+   340→   340→            self._content_results.insert("end", f"  Subjectivity: {sent['subjectivity']:.3f} [0, 1]
+   341→   341→"
+   342→   342→            self._content_results.insert("end", f"  Label:       {sent['label']}
+   343→   343→"
+   344→   344→
+   345→   345→            ke = KeywordExtractor()
+   346→   346→            keywords = ke.extract_keywords_rake(text, top_n=10)
+   347→   347→            self._content_results.insert("end", f"
+   348→   348→=== Top Keywords (RAKE) ===
+   349→   349→")
+   350→   350→            for kw, score in keywords:
+   351→   351→                self._content_results.insert("end", f"  {score:.3f}  {kw}
+   352→   352→"
+   353→   353→
+   354→   354→            entities = ke.extract_named_entities_basic(text)
+   355→   355→            if entities:
+   356→   356→                self._content_results.insert("end", f"
+   357→   357→=== Named Entities ===
+   358→   358→")
+   359→   359→                for ent, etype in entities[:20]:
+   360→   360→                    self._content_results.insert("end", f"  [{etype}] {ent}
+   361→   361→"
+   362→   362→
+   363→   363→            from core.content_analyzer import ContentFingerprinter
+   364→   364→            cf = ContentFingerprinter()
+   365→   365→            summary = ContentAnalyzer().generate_summary(text, max_sentences=3)
+   366→   366→            if summary:
+   367→   367→                self._content_results.insert("end", f"
+   368→   368→=== Extractive Summary ===
+   369→   369→")
+   370→   370→                self._content_results.insert("end", f"  {summary}
+   371→   371→"
+   372→   372→
+   373→   373→        except Exception as e:
+   374→   374→            self._content_results.insert("end", f"Error: {e}
+   375→   375→"
+   376→   376→
+   377→   377→        self._content_results.configure(state="disabled")
+   378→   378→
+   379→   379→    def _show_content_error(self, msg: str):
+   380→   380→        self._content_results.configure(state="normal")
+   381→   381→        self._content_results.delete("0.0", "end")
+   382→   382→        self._content_results.insert("end", f"  Fetch error: {msg}
+   383→   383→"
+   384→   384→        self._content_results.configure(state="disabled")
+   385→   385→
+   386→   386→    # ==================================================================
+   387→   387→    # Anomaly Detection Tab
+   388→   388→    # ==================================================================
+   389→   389→
+   390→   390→    def _build_anomaly_tab(self, parent):
+   391→   391→        input_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   392→   392→        input_card.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+   393→   393→        input_card.grid_columnconfigure(0, weight=1)
+   394→   394→
+   395→   395→        bar = ctk.CTkFrame(input_card, fg_color="transparent")
+   396→   396→        bar.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+   397→   397→        bar.grid_columnconfigure(0, weight=1)
+   398→   398→
+   399→   399→        ctk.CTkLabel(bar, text="Numeric Data (one value per line - e.g. response times, data sizes)",
+   400→   400→                      font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   401→   401→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, sticky="w")
+   402→   402→
+   403→   403→        opts = ctk.CTkFrame(bar, fg_color="transparent")
+   404→   404→        opts.grid(row=0, column=1, padx=Spacing.SM)
+   405→   405→
+   406→   406→        ctk.CTkLabel(opts, text="Z-Score Threshold:", font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   407→   407→                      text_color=theme.colors.TEXT_SECONDARY).pack(side="left")
+   408→   408→        self._anomaly_threshold = ctk.CTkEntry(opts, width=50, height=24,
+   409→   409→                                                font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   410→   410→                                                fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   411→   411→                                                border_width=1, corner_radius=Radius.MD,
+   412→   412→                                                text_color=theme.colors.TEXT_PRIMARY)
+   413→   413→        self._anomaly_threshold.insert("0", "2.5")
+   414→   414→        self._anomaly_threshold.pack(side="left", padx=Spacing.XS)
+   415→   415→
+   416→   416→        ctk.CTkButton(opts, text="Detect Anomalies", width=120, height=24,
+   417→   417→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   418→   418→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   419→   419→                       corner_radius=Radius.MD, command=self._run_anomaly_detection
+   420→   420→                       ).pack(side="left", padx=Spacing.XS)
+   421→   421→
+   422→   422→        ctk.CTkButton(opts, text="Generate Sample", width=110, height=24,
+   423→   423→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   424→   424→                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   425→   425→                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+   426→   426→                       border_width=1, border_color=theme.colors.BORDER,
+   427→   427→                       command=self._generate_anomaly_sample
+   428→   428→                       ).pack(side="left", padx=Spacing.XS)
+   429→   429→
+   430→   430→        self._anomaly_input = ctk.CTkTextbox(
+   431→   431→            input_card, height=80, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   432→   432→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   433→   433→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   434→   434→        )
+   435→   435→        self._anomaly_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   436→   436→
+   437→   437→        # Results
+   438→   438→        res = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   439→   439→        res.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   440→   440→        res.grid_rowconfigure(0, weight=1)
+   441→   441→        res.grid_columnconfigure(0, weight=1)
+   442→   442→
+   443→   443→        self._anomaly_results = ctk.CTkTextbox(
+   444→   444→            res, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   445→   445→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   446→   446→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   447→   447→            state="disabled",
+   448→   448→        )
+   449→   449→        self._anomaly_results.grid(row=0, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+   450→   450→
+   451→   451→    def _generate_anomaly_sample(self):
+   452→   452→        import random
+   453→   453→        random.seed(42)
+   454→   454→        values = [random.gauss(100, 15) for _ in range(45)]
+   455→   455→        values[10] = 250.0
+   456→   456→        values[25] = 5.0
+   457→   457→        values[38] = 300.0
+   458→   458→        text = "
+   459→   459→".join(f"{v:.1f}" for v in values)
+   460→   460→        self._anomaly_input.delete("0.0", "end")
+   461→   461→        self._anomaly_input.insert("0.0", text)
+   462→   462→
+   463→   463→    def _run_anomaly_detection(self):
+   464→   464→        text = self._anomaly_input.get("0.0", "end").strip()
+   465→   465→        if not text:
+   466→   466→            return
+   467→   467→        try:
+   468→   468→            threshold = float(self._anomaly_threshold.get().strip())
+   469→   469→        except ValueError:
+   470→   470→            threshold = 2.5
+   471→   471→
+   472→   472→        values = []
+   473→   473→        for line in text.split("
+   474→   474→"):
+   475→   475→            line = line.strip()
+   476→   476→            if line:
+   477→   477→                try:
+   478→   478→                    values.append(float(line))
+   479→   479→                except ValueError:
+   480→   480→                    continue
+   481→   481→
+   482→   482→        if len(values) < 5:
+   483→   483→            self._anomaly_results.configure(state="normal")
+   484→   484→            self._anomaly_results.delete("0.0", "end")
+   485→   485→            self._anomaly_results.insert("end", "  Need at least 5 numeric values.
+   486→   486→"
+   487→   487→            self._anomaly_results.configure(state="disabled")
+   488→   488→            return
+   489→   489→
+   490→   490→        from core.anomaly_detector import StatisticalAnomalyDetector, ChangePointDetector
+   491→   491→        import numpy as np
+   492→   492→
+   493→   493→        sd = StatisticalAnomalyDetector()
+   494→   494→        self._anomaly_results.configure(state="normal")
+   495→   495→        self._anomaly_results.delete("0.0", "end")
+   496→   496→
+   497→   497→        self._anomaly_results.insert("end", f"=== Data Overview ({len(values)} values) ===
+   498→   498→"
+   499→   499→        arr = np.array(values)
+   500→   500→        self._anomaly_results.insert("end", f"  Mean:   {np.mean(arr):.3f}
+   501→   501→"
+   502→   502→        self._anomaly_results.insert("end", f"  Std:    {np.std(arr):.3f}
+   503→   503→"
+   504→   504→        self._anomaly_results.insert("end", f"  Median: {np.median(arr):.3f}
+   505→   505→"
+   506→   506→        self._anomaly_results.insert("end", f"  Min:    {np.min(arr):.3f}
+   507→   507→"
+   508→   508→        self._anomaly_results.insert("end", f"  Max:    {np.max(arr):.3f}
+   509→   509→"
+   510→   510→
+   511→   511→        zscore_outliers = sd.zscore_detect(values, threshold=threshold)
+   512→   512→        self._anomaly_results.insert("end", f"
+   513→   513→=== Z-Score Detection (threshold={threshold}) ===
+   514→   514→")
+   515→   515→        self._anomaly_results.insert("end", f"  Anomalies found: {len(zscore_outliers)}
+   516→   516→"
+   517→   517→        for idx, val, score in zscore_outliers:
+   518→   518→            self._anomaly_results.insert("end", f"  [{idx}] value={val:.3f}  z-score={score:.3f}
+   519→   519→"
+   520→   520→
+   521→   521→        iqr_outliers = sd.iqr_detect(values)
+   522→   522→        self._anomaly_results.insert("end", f"
+   523→   523→=== IQR Detection (k=1.5) ===
+   524→   524→")
+   525→   525→        self._anomaly_results.insert("end", f"  Anomalies found: {len(iqr_outliers)}
+   526→   526→"
+   527→   527→        for idx, val, is_out in iqr_outliers:
+   528→   528→            if is_out:
+   529→   529→                self._anomaly_results.insert("end", f"  [{idx}] value={val:.3f}
+   530→   530→"
+   531→   531→
+   532→   532→        mod_z_outliers = sd.modified_zscore_detect(values, threshold=threshold)
+   533→   533→        self._anomaly_results.insert("end", f"
+   534→   534→=== Modified Z-Score (MAD) ===
+   535→   535→")
+   536→   536→        self._anomaly_results.insert("end", f"  Anomalies found: {len(mod_z_outliers)}
+   537→   537→"
+   538→   538→        for idx, val, score in mod_z_outliers:
+   539→   539→            self._anomaly_results.insert("end", f"  [{idx}] value={val:.3f}  modified-z={score:.3f}
+   540→   540→"
+   541→   541→
+   542→   542→        ensemble = sd.ensemble_detect(values)
+   543→   543→        self._anomaly_results.insert("end", f"
+   544→   544→=== Ensemble Voting ===
+   545→   545→")
+   546→   546→        anomaly_count = sum(1 for _, is_a, _ in ensemble if is_a)
+   547→   547→        self._anomaly_results.insert("end", f"  Total anomalies (ensemble): {anomaly_count}/{len(values)}
+   548→   548→"
+   549→   549→        for idx, is_a, conf in ensemble:
+   550→   550→            if is_a:
+   551→   551→                self._anomaly_results.insert("end", f"  [{idx}] value={values[idx]:.3f}  confidence={conf:.2f}
+   552→   552→"
+   553→   553→
+   554→   554→        if len(values) >= 10:
+   555→   555→            cpd = ChangePointDetector()
+   556→   556→            cps = cpd.detect_cusum(values)
+   557→   557→            self._anomaly_results.insert("end", f"
+   558→   558→=== Change Points (CUSUM) ===
+   559→   559→")
+   560→   560→            self._anomaly_results.insert("end", f"  Change points: {len(cps)}
+   561→   561→"
+   562→   562→            for cp in cps:
+   563→   563→                self._anomaly_results.insert("end", f"  At index {cp}, value={values[cp]:.3f}
+   564→   564→"
+   565→   565→
+   566→   566→        self._anomaly_results.configure(state="disabled")
+   567→   567→
+   568→   568→    # ==================================================================
+   569→   569→    # Data Quality Tab
+   570→   570→    # ==================================================================
+   571→   571→
+   572→   572→    def _build_quality_tab(self, parent):
+   573→   573→        input_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   574→   574→        input_card.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+   575→   575→        input_card.grid_rowconfigure(0, weight=1)
+   576→   576→        input_card.grid_columnconfigure(0, weight=1)
+   577→   577→
+   578→   578→        header = ctk.CTkFrame(input_card, fg_color="transparent")
+   579→   579→        header.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   580→   580→
+   581→   581→        ctk.CTkLabel(header, text="JSON Data (list of objects)",
+   582→   582→                      font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   583→   583→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   584→   584→
+   585→   585→        ctk.CTkButton(header, text="Assess Quality", width=110, height=26,
+   586→   586→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   587→   587→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   588→   588→                       corner_radius=Radius.MD, command=self._run_quality_check
+   589→   589→                       ).grid(row=0, column=1, padx=Spacing.SM)
+   590→   590→
+   591→   591→        ctk.CTkButton(header, text="Load Sample", width=100, height=26,
+   592→   592→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   593→   593→                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   594→   594→                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+   595→   595→                       border_width=1, border_color=theme.colors.BORDER,
+   596→   596→                       command=self._load_quality_sample
+   597→   597→                       ).grid(row=0, column=2, padx=Spacing.SM)
+   598→   598→
+   599→   599→        self._quality_input = ctk.CTkTextbox(
+   600→   600→            input_card, height=150, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   601→   601→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   602→   602→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   603→   603→        )
+   604→   604→        self._quality_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   605→   605→
+   606→   606→        # Results
+   607→   607→        res = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   608→   608→        res.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   609→   609→        res.grid_rowconfigure(0, weight=1)
+   610→   610→        res.grid_columnconfigure(0, weight=1)
+   611→   611→
+   612→   612→        self._quality_results = ctk.CTkTextbox(
+   613→   613→            res, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   614→   614→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   615→   615→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   616→   616→            state="disabled",
+   617→   617→        )
+   618→   618→        self._quality_results.grid(row=0, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+   619→   619→
+   620→   620→    def _load_quality_sample(self):
+   621→   621→        import json
+   622→   622→        sample = [
+   623→   623→            {"name": "Product A", "price": 29.99, "url": "https://example.com/a", "category": "Electronics"},
+   624→   624→            {"name": "Product B", "price": "", "url": "https://example.com/b", "category": "Electronics"},
+   625→   625→            {"name": "", "price": 15.50, "url": "invalid-url", "category": "Electronics"},
+   626→   626→            {"name": "Product D", "price": 45.00, "url": "https://example.com/d", "category": ""},
+   627→   627→            {"name": "Product E", "price": 89.99, "url": "https://example.com/e", "category": "Books"},
+   628→   628→            {"name": "Product F", "price": 12.00, "url": "https://example.com/f", "category": "Books"},
+   629→   629→            {"name": "Product G", "price": -5.00, "url": "https://example.com/g", "category": "Electronics"},
+   630→   630→            {"name": "Product H", "price": 199.99, "url": "https://example.com/h", "category": "Electronics"},
+   631→   631→        ]
+   632→   632→        self._quality_input.delete("0.0", "end")
+   633→   633→        self._quality_input.insert("0.0", json.dumps(sample, indent=2))
+   634→   634→
+   635→   635→    def _run_quality_check(self):
+   636→   636→        text = self._quality_input.get("0.0", "end").strip()
+   637→   637→        if not text:
+   638→   638→            return
+   639→   639→        import json
+   640→   640→        try:
+   641→   641→            data = json.loads(text)
+   642→   642→            if not isinstance(data, list):
+   643→   643→                raise ValueError("Expected a list of objects")
+   644→   644→        except (json.JSONDecodeError, ValueError) as e:
+   645→   645→            self._quality_results.configure(state="normal")
+   646→   646→            self._quality_results.delete("0.0", "end")
+   647→   647→            self._quality_results.insert("end", f"  Invalid JSON: {e}
+   648→   648→"
+   649→   649→            self._quality_results.configure(state="disabled")
+   650→   650→            return
+   651→   651→
+   652→   652→        from core.data_quality import DataQualityAssessor, BayesianScorer, InformationTheoryMetrics
+   653→   653→        import numpy as np
+   654→   654→
+   655→   655→        self._quality_results.configure(state="normal")
+   656→   656→        self._quality_results.delete("0.0", "end")
+   657→   657→
+   658→   658→        try:
+   659→   659→            assessor = DataQualityAssessor()
+   660→   660→            report = assessor.assess(data)
+   661→   661→
+   662→   662→            self._quality_results.insert("end", f"=== Data Quality Report ===
+   663→   663→"
+   664→   664→            self._quality_results.insert("end", f"  Records analyzed:  {report.record_count}
+   665→   665→"
+   666→   666→            self._quality_results.insert("end", f"  Overall Score:     {report.overall_score:.3f} / 1.0
+   667→   667→"
+   668→   668→            self._quality_results.insert("end", f"  Weighted Score:    {report.weighted_score:.3f} / 1.0
+   669→   669→"
+   670→   670→            self._quality_results.insert("end", f"
+   671→   671→=== Dimension Scores ===
+   672→   672→")
+   673→   673→
+   674→   674→            from core.data_quality import QualityDimension
+   675→   675→            dim_labels = {
+   676→   676→                QualityDimension.COMPLETENESS: "Completeness",
+   677→   677→                QualityDimension.CONSISTENCY: "Consistency",
+   678→   678→                QualityDimension.ACCURACY: "Accuracy",
+   679→   679→                QualityDimension.TIMELINESS: "Timeliness",
+   680→   680→                QualityDimension.UNIQUENESS: "Uniqueness",
+   681→   681→                QualityDimension.VALIDITY: "Validity",
+   682→   682→            }
+   683→   683→            for dim, score in report.dimension_scores.items():
+   684→   684→                label = dim_labels.get(dim, str(dim))
+   685→   685→                bar_len = int(score * 20)
+   686→   686→                bar_char = "#" * bar_len + "-" * (20 - bar_len)
+   687→   687→                color_tag = "OK" if score >= 0.8 else ("WARN" if score >= 0.6 else "BAD")
+   688→   688→                self._quality_results.insert("end", f"  {label:<14} {bar_char} {score:.3f}  [{color_tag}]
+   689→   689→"
+   690→   690→
+   691→   691→            if report.issues:
+   692→   692→                self._quality_results.insert("end", f"
+   693→   693→=== Issues ({len(report.issues)}) ===
+   694→   694→")
+   695→   695→                for issue in report.issues:
+   696→   696→                    sev_icon = {"critical": "!!", "high": "!", "medium": "*", "low": "."}.get(issue.severity, "?")
+   697→   697→                    self._quality_results.insert("end",
+   698→   698→                        f"  {sev_icon} [{issue.severity.upper()}] {issue.dimension.value}: {issue.description} ({issue.affected_count} records)
+   699→   699→"
+   700→   700→
+   701→   701→            suggestions = assessor.get_improvement_suggestions()
+   702→   702→            if suggestions:
+   703→   703→                self._quality_results.insert("end", f"
+   704→   704→=== Improvement Suggestions ===
+   705→   705→")
+   706→   706→                for dim, suggestion, severity in suggestions:
+   707→   707→                    self._quality_results.insert("end", f"  [{severity}] {suggestion}
+   708→   708→"
+   709→   709→
+   710→   710→            # Bayesian scoring demo
+   711→   711→            self._quality_results.insert("end", f"
+   712→   712→=== Bayesian Quality Tracker ===
+   713→   713→")
+   714→   714→            bs = BayesianScorer()
+   715→   715→            for record in data:
+   716→   716→                is_good = all(v is not None and str(v).strip() for v in record.values())
+   717→   717→                bs.update(is_good)
+   718→   718→            self._quality_results.insert("end", f"  Posterior Score:  {bs.get_score():.3f}
+   719→   719→"
+   720→   720→            self._quality_results.insert("end", f"  Confidence:       {bs.get_confidence():.3f}
+   721→   721→"
+   722→   722→            ci = bs.get_credible_interval(0.95)
+   723→   723→            self._quality_results.insert("end", f"  95% CI:          [{ci[0]:.3f}, {ci[1]:.3f}]
+   724→   724→"
+   725→   725→
+   726→   726→            # Information Theory metrics
+   727→   727→            self._quality_results.insert("end", f"
+   728→   728→=== Information Theory Metrics ===
+   729→   729→")
+   730→   730→            itm = InformationTheoryMetrics()
+   731→   731→            for key in data[0].keys() if data else []:
+   732→   732→                col_values = [str(r.get(key, "")) for r in data]
+   733→   733→                ent = itm.shannon_entropy(col_values)
+   734→   734→                self._quality_results.insert("end", f"  {key:<14} entropy = {ent:.4f}
+   735→   735→"
+   736→   736→
+   737→   737→        except Exception as e:
+   738→   738→            self._quality_results.insert("end", f"Error: {e}
+   739→   739→"
+   740→   740→
+   741→   741→        self._quality_results.configure(state="disabled")
+   742→   742→
+   743→   743→    # ==================================================================
+   744→   744→    # Graph Analysis Tab
+   745→   745→    # ==================================================================
+   746→   746→
+   747→   747→    def _build_graph_tab(self, parent):
+   748→   748→        card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   749→   749→        card.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+   750→   750→        card.grid_columnconfigure(0, weight=1)
+   751→   751→
+   752→   752→        bar = ctk.CTkFrame(card, fg_color="transparent")
+   753→   753→        bar.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+   754→   754→        bar.grid_columnconfigure(0, weight=1)
+   755→   755→
+   756→   756→        ctk.CTkLabel(bar, text="Enter URLs (one per line) to build a link graph, or use Explorer results",
+   757→   757→                      font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   758→   758→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, sticky="w")
+   759→   759→
+   760→   760→        ctk.CTkButton(bar, text="Analyze Graph", width=100, height=24,
+   761→   761→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   762→   762→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   763→   763→                       corner_radius=Radius.MD, command=self._run_graph_analysis
+   764→   764→                       ).grid(row=0, column=1, padx=Spacing.SM)
+   765→   765→
+   766→   766→        ctk.CTkButton(bar, text="Load from Explorer", width=130, height=24,
+   767→   767→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   768→   768→                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   769→   769→                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+   770→   770→                       border_width=1, border_color=theme.colors.BORDER,
+   771→   771→                       command=self._load_graph_from_explorer
+   772→   772→                       ).grid(row=0, column=2, padx=Spacing.SM)
+   773→   773→
+   774→   774→        self._graph_input = ctk.CTkTextbox(
+   775→   775→            card, height=100, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   776→   776→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   777→   777→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   778→   778→        )
+   779→   779→        self._graph_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   780→   780→
+   781→   781→        # Results
+   782→   782→        res = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   783→   783→        res.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   784→   784→        res.grid_rowconfigure(0, weight=1)
+   785→   785→        res.grid_columnconfigure(0, weight=1)
+   786→   786→
+   787→   787→        self._graph_results = ctk.CTkTextbox(
+   788→   788→            res, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   789→   789→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   790→   790→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   791→   791→            state="disabled",
+   792→   792→        )
+   793→   793→        self._graph_results.grid(row=0, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+   794→   794→
+   795→   795→    def _load_graph_from_explorer(self):
+   796→   796→        app = self.winfo_toplevel()
+   797→   797→        if not hasattr(app, '_panels') or 'explorer' not in app._panels:
+   798→   798→            messagebox.showinfo("Graph", "Explorer panel not found.")
+   799→   799→            return
+   800→   800→        explorer = app._panels['explorer']
+   801→   801→        if not explorer._result or not explorer._result.links:
+   802→   802→            messagebox.showinfo("Graph", "No Explorer results. Explore a URL first.")
+   803→   803→            return
+   804→   804→        from core.url_explorer import LinkCategory
+   805→   805→        links = [l.url for l in explorer._result.links
+   806→   806→                 if l.category in (LinkCategory.INTERNAL, LinkCategory.EXTERNAL) and not l.is_broken]
+   807→   807→        self._graph_input.delete("0.0", "end")
+   808→   808→        self._graph_input.insert("0.0", "
+   809→   809→".join(links[:200]))
+   810→   810→        app._log_panel.add_log(f"Loaded {len(links[:200])} links from Explorer to Graph Analysis", "success")
+   811→   811→
+   812→   812→    def _run_graph_analysis(self):
+   813→   813→        text = self._graph_input.get("0.0", "end").strip()
+   814→   814→        if not text:
+   815→   815→            return
+   816→   816→
+   817→   817→        urls = [line.strip() for line in text.split("
+   818→   818→") if line.strip()]
+   819→   819→        if len(urls) < 2:
+   820→   820→            self._graph_results.configure(state="normal")
+   821→   821→            self._graph_results.delete("0.0", "end")
+   822→   822→            self._graph_results.insert("end", "  Need at least 2 URLs to build a graph.
+   823→   823→"
+   824→   824→            self._graph_results.configure(state="disabled")
+   825→   825→            return
+   826→   826→
+   827→   827→        from core.graph_analyzer import DiGraph, CentralityAnalyzer, CommunityDetector
+   828→   828→        from urllib.parse import urlparse
+   829→   829→        import numpy as np
+   830→   830→
+   831→   831→        self._graph_results.configure(state="normal")
+   832→   832→        self._graph_results.delete("0.0", "end")
+   833→   833→
+   834→   834→        try:
+   835→   835→            g = DiGraph()
+   836→   836→            domains = set()
+   837→   837→            for url in urls:
+   838→   838→                parsed = urlparse(url)
+   839→   839→                domain = parsed.netloc or url
+   840→   840→                domains.add(domain)
+   841→   841→                g.add_node(url)
+   842→   842→            for url in urls:
+   843→   843→                parsed = urlparse(url)
+   844→   844→                domain = parsed.netloc
+   845→   845→                for other in urls:
+   846→   846→                    if other == url:
+   847→   847→                        continue
+   848→   848→                    other_domain = urlparse(other).netloc
+   849→   849→                    if domain == other_domain or not domain or not other_domain:
+   850→   850→                        g.add_edge(url, other)
+   851→   851→
+   852→   852→            nodes = g.get_all_nodes()
+   853→   853→            edges = g.get_all_edges()
+   854→   854→
+   855→   855→            self._graph_results.insert("end", f"=== Graph Structure ===
+   856→   856→"
+   857→   857→            self._graph_results.insert("end", f"  Nodes:         {len(nodes)}
+   858→   858→"
+   859→   859→            self._graph_results.insert("end", f"  Edges:         {len(edges)}
+   860→   860→"
+   861→   861→            self._graph_results.insert("end", f"  Domains:       {len(domains)}
+   862→   862→"
+   863→   863→
+   864→   864→            density = g.density()
+   865→   865→            self._graph_results.insert("end", f"  Density:       {density:.4f}
+   866→   866→"
+   867→   867→
+   868→   868→            if len(nodes) > 0:
+   869→   869→                ca = CentralityAnalyzer()
+   870→   870→                pr = ca.pagerank(nodes, edges)
+   871→   871→                top_pr = sorted(pr.items(), key=lambda x: x[1], reverse=True)[:10]
+   872→   872→                self._graph_results.insert("end", f"
+   873→   873→=== PageRank (Top 10) ===
+   874→   874→")
+   875→   875→                for url, score in top_pr:
+   876→   876→                    short = url[:60] + "..." if len(url) > 60 else url
+   877→   877→                    self._graph_results.insert("end", f"  {score:.4f}  {short}
+   878→   878→"
+   879→   879→
+   880→   880→                dc = ca.degree_centrality(nodes, edges)
+   881→   881→                top_dc = sorted(dc.items(), key=lambda x: x[1], reverse=True)[:5]
+   882→   882→                self._graph_results.insert("end", f"
+   883→   883→=== Degree Centrality (Top 5) ===
+   884→   884→")
+   885→   885→                for url, score in top_dc:
+   886→   886→                    short = url[:55] + "..." if len(url) > 55 else url
+   887→   887→                    self._graph_results.insert("end", f"  {score:.4f}  {short}
+   888→   888→"
+   889→   889→
+   890→   890→                cc = ca.closeness_centrality(nodes, edges)
+   891→   891→                top_cc = sorted(cc.items(), key=lambda x: x[1], reverse=True)[:5]
+   892→   892→                self._graph_results.insert("end", f"
+   893→   893→=== Closeness Centrality (Top 5) ===
+   894→   894→")
+   895→   895→                for url, score in top_cc:
+   896→   896→                    short = url[:55] + "..." if len(url) > 55 else url
+   897→   897→                    self._graph_results.insert("end", f"  {score:.4f}  {short}
+   898→   898→"
+   899→   899→
+   900→   900→            cd = CommunityDetector()
+   901→   901→            components = cd.connected_components(nodes, edges)
+   902→   902→            self._graph_results.insert("end", f"
+   903→   903→=== Connected Components ===
+   904→   904→")
+   905→   905→            self._graph_results.insert("end", f"  Components: {len(components)}
+   906→   906→"
+   907→   907→            for i, comp in enumerate(components[:5]):
+   908→   908→                self._graph_results.insert("end", f"  Component {i+1}: {len(comp)} nodes
+   909→   909→"
+   910→   910→
+   911→   911→            if len(nodes) >= 3 and len(edges) >= 2:
+   912→   912→                bridges = cd.find_bridges(nodes, edges)
+   913→   913→                self._graph_results.insert("end", f"
+   914→   914→=== Bridge Links ===
+   915→   915→")
+   916→   916→                self._graph_results.insert("end", f"  Bridge edges: {len(bridges)}
+   917→   917→"
+   918→   918→                for src, dst in bridges[:10]:
+   919→   919→                    s = src[:40] + "..." if len(src) > 40 else src
+   920→   920→                    self._graph_results.insert("end", f"  {s} ->
+   921→   921→"
+   922→   922→
+   923→   923→        except Exception as e:
+   924→   924→            self._graph_results.insert("end", f"Error: {e}
+   925→   925→"
+   926→   926→            import traceback
+   927→   927→            self._graph_results.insert("end", traceback.format_exc())
+   928→   928→
+   929→   929→        self._graph_results.configure(state="disabled")
+   930→   930→
+   931→   931→    # ------------------------------------------------------------------
+   932→   932→    # Public API
+   933→   933→    # ------------------------------------------------------------------
+   934→   934→
+   935→   935→    def update_ui(self, engine):
+   936→   936→        pass
+   937→   937→

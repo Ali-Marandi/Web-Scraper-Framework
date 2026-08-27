@@ -1,0 +1,771 @@
+     1→     1→"""
+     2→     2→WebScraper Pro - Developer Tools Panel
+     3→     3→Regex tester, CSS/XPath/JSON Path testers, and Response Inspector.
+     4→     4→v1.3.0: Added CSS Selector, XPath, JSON Path testers, and Response Inspector.
+     5→     5→"""
+     6→     6→
+     7→     7→import re
+     8→     8→import json
+     9→     9→import threading
+    10→    10→import time
+    11→    11→import customtkinter as ctk
+    12→    12→from bs4 import BeautifulSoup
+    13→    13→from lxml import html as lhtml
+    14→    14→
+    15→    15→from ui.styles import theme, Typography, Spacing, Radius
+    16→    16→
+    17→    17→
+    18→    18→class ToolsPanel(ctk.CTkFrame):
+    19→    19→    """Developer tools with multiple testing and inspection utilities."""
+    20→    20→
+    21→    21→    TAB_VALUES = ["Regex Tester", "CSS Selector", "XPath", "JSON Path", "Response Inspector"]
+    22→    22→
+    23→    23→    def __init__(self, master, **kwargs):
+    24→    24→        super().__init__(master, fg_color="transparent", **kwargs)
+    25→    25→        self.grid_rowconfigure(1, weight=1)
+    26→    26→        self.grid_columnconfigure(0, weight=1)
+    27→    27→
+    28→    28→        self._cached_html = ""
+    29→    29→        self._cached_url = ""
+    30→    30→        self._cached_response_headers = {}
+    31→    31→
+    32→    32→        self._build_tabs()
+    33→    33→
+    34→    34→    def _build_tabs(self):
+    35→    35→        self._tab_seg = ctk.CTkSegmentedButton(
+    36→    36→            self, values=self.TAB_VALUES,
+    37→    37→            font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    38→    38→            selected_color=theme.colors.BRAND_PRIMARY,
+    39→    39→            selected_hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+    40→    40→            command=self._switch_tab,
+    41→    41→        )
+    42→    42→        self._tab_seg.set("Regex Tester")
+    43→    43→        self._tab_seg.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.MD, 0))
+    44→    44→
+    45→    45→        self._frames = {}
+    46→    46→        for tab_name in self.TAB_VALUES:
+    47→    47→            frame = ctk.CTkFrame(self, fg_color="transparent")
+    48→    48→            frame.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.MD)
+    49→    49→            frame.grid_rowconfigure(1, weight=1)
+    50→    50→            frame.grid_columnconfigure(0, weight=1)
+    51→    51→            self._frames[tab_name] = frame
+    52→    52→
+    53→    53→        self._build_regex_tester(self._frames["Regex Tester"])
+    54→    54→        self._build_css_tester(self._frames["CSS Selector"])
+    55→    55→        self._build_xpath_tester(self._frames["XPath"])
+    56→    56→        self._build_jsonpath_tester(self._frames["JSON Path"])
+    57→    57→        self._build_response_inspector(self._frames["Response Inspector"])
+    58→    58→
+    59→    59→        self._switch_tab("Regex Tester")
+    60→    60→
+    61→    61→    def _switch_tab(self, value):
+    62→    62→        for name, frame in self._frames.items():
+    63→    63→            if name == value:
+    64→    64→                frame.grid()
+    65→    65→            else:
+    66→    66→                frame.grid_remove()
+    67→    67→
+    68→    68→    # ==================================================================
+    69→    69→    # Regex Tester
+    70→    70→    # ==================================================================
+    71→    71→
+    72→    72→    def _build_regex_tester(self, parent):
+    73→    73→        pattern_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+    74→    74→        pattern_card.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+    75→    75→        pattern_card.grid_columnconfigure(1, weight=1)
+    76→    76→
+    77→    77→        ctk.CTkLabel(pattern_card, text="Pattern", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+    78→    78→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM, sticky="w")
+    79→    79→        self._regex_pattern = ctk.CTkEntry(
+    80→    80→            pattern_card, placeholder_text=r"e.g. \d{3}-\d{4} or <h1>(.*?)</h1>",
+    81→    81→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+    82→    82→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+    83→    83→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=32,
+    84→    84→        )
+    85→    85→        self._regex_pattern.grid(row=0, column=1, sticky="ew", padx=(0, Spacing.SM), pady=Spacing.SM)
+    86→    86→
+    87→    87→        ctk.CTkButton(pattern_card, text="Test", width=60, height=28,
+    88→    88→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+    89→    89→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+    90→    90→                       corner_radius=Radius.MD, command=self._run_regex_test
+    91→    91→                       ).grid(row=0, column=2, padx=Spacing.MD, pady=Spacing.SM)
+    92→    92→
+    93→    93→        flags_frame = ctk.CTkFrame(pattern_card, fg_color="transparent")
+    94→    94→        flags_frame.grid(row=1, column=0, columnspan=3, sticky="w", padx=(Spacing.MD, 0), pady=(0, Spacing.SM))
+    95→    95→
+    96→    96→        self._regex_flags = {}
+    97→    97→        for flag_text, flag_val in [("IGNORECASE", "i"), ("MULTILINE", "m"),
+    98→    98→                                     ("DOTALL", "s"), ("VERBOSE", "x")]:
+    99→    99→            var = ctk.BooleanVar(value=False)
+   100→   100→            self._regex_flags[flag_val] = var
+   101→   101→            ctk.CTkCheckBox(flags_frame, text=flag_text, variable=var,
+   102→   102→                             font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   103→   103→                             text_color=theme.colors.TEXT_SECONDARY,
+   104→   104→                             fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   105→   105→                             ).pack(side="left", padx=Spacing.XS)
+   106→   106→
+   107→   107→        # Test text
+   108→   108→        text_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   109→   109→        text_card.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   110→   110→        text_card.grid_rowconfigure(1, weight=1)
+   111→   111→        text_card.grid_columnconfigure(0, weight=1)
+   112→   112→
+   113→   113→        ctk.CTkLabel(text_card, text="Test Text", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   114→   114→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   115→   115→
+   116→   116→        self._regex_input = ctk.CTkTextbox(
+   117→   117→            text_card, height=120, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   118→   118→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   119→   119→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   120→   120→        )
+   121→   121→        self._regex_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   122→   122→
+   123→   123→        # Results
+   124→   124→        results_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   125→   125→        results_card.grid(row=2, column=0, sticky="nsew", pady=Spacing.SM)
+   126→   126→        results_card.grid_rowconfigure(1, weight=1)
+   127→   127→        results_card.grid_columnconfigure(0, weight=1)
+   128→   128→
+   129→   129→        header = ctk.CTkFrame(results_card, fg_color="transparent")
+   130→   130→        header.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   131→   131→        header.grid_columnconfigure(1, weight=1)
+   132→   132→
+   133→   133→        ctk.CTkLabel(header, text="Matches", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   134→   134→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   135→   135→        self._match_count_label = ctk.CTkLabel(header, text="0 matches",
+   136→   136→                                                  font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   137→   137→                                                  text_color=theme.colors.TEXT_MUTED)
+   138→   138→        self._match_count_label.grid(row=0, column=1, sticky="e")
+   139→   139→
+   140→   140→        self._regex_results = ctk.CTkTextbox(
+   141→   141→            results_card, height=200, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   142→   142→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   143→   143→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   144→   144→            state="disabled",
+   145→   145→        )
+   146→   146→        self._regex_results.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   147→   147→
+   148→   148→    def _run_regex_test(self):
+   149→   149→        pattern = self._regex_pattern.get().strip()
+   150→   150→        text = self._regex_input.get("0.0", "end").strip()
+   151→   151→        if not pattern or not text:
+   152→   152→            return
+   153→   153→
+   154→   154→        flags = 0
+   155→   155→        if self._regex_flags.get("i") and self._regex_flags["i"].get(): flags |= re.IGNORECASE
+   156→   156→        if self._regex_flags.get("m") and self._regex_flags["m"].get(): flags |= re.MULTILINE
+   157→   157→        if self._regex_flags.get("s") and self._regex_flags["s"].get(): flags |= re.DOTALL
+   158→   158→        if self._regex_flags.get("x") and self._regex_flags["x"].get(): flags |= re.VERBOSE
+   159→   159→
+   160→   160→        try:
+   161→   161→            matches = re.findall(pattern, text, flags)
+   162→   162→            self._regex_results.configure(state="normal")
+   163→   163→            self._regex_results.delete("0.0", "end")
+   164→   164→            if not matches:
+   165→   165→                self._regex_results.insert("end", "No matches found.")
+   166→   166→                self._match_count_label.configure(text="0 matches")
+   167→   167→            else:
+   168→   168→                for i, m in enumerate(matches[:500]):
+   169→   169→                    if isinstance(m, tuple):
+   170→   170→                        self._regex_results.insert("end", f"{i+1}. {m}\n")
+   171→   171→                    else:
+   172→   172→                        self._regex_results.insert("end", f"{i+1}. {m}\n")
+   173→   173→                count = len(matches)
+   174→   174→                self._match_count_label.configure(text=f"{count} match{'es' if count != 1 else ''}")
+   175→   175→            self._regex_results.configure(state="disabled")
+   176→   176→        except re.error as e:
+   177→   177→            self._regex_results.configure(state="normal")
+   178→   178→            self._regex_results.delete("0.0", "end")
+   179→   179→            self._regex_results.insert("end", f"Regex error: {e}")
+   180→   180→            self._regex_results.configure(state="disabled")
+   181→   181→            self._match_count_label.configure(text="Error")
+   182→   182→
+   183→   183→    # ==================================================================
+   184→   184→    # CSS Selector Tester
+   185→   185→    # ==================================================================
+   186→   186→
+   187→   187→    def _build_css_tester(self, parent):
+   188→   188→        # HTML source input
+   189→   189→        html_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   190→   190→        html_card.grid(row=0, column=0, sticky="nsew", pady=(0, Spacing.SM))
+   191→   191→        html_card.grid_rowconfigure(1, weight=1)
+   192→   192→        html_card.grid_columnconfigure(0, weight=1)
+   193→   193→
+   194→   194→        top_bar = ctk.CTkFrame(html_card, fg_color="transparent")
+   195→   195→        top_bar.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   196→   196→        top_bar.grid_columnconfigure(0, weight=1)
+   197→   197→
+   198→   198→        ctk.CTkLabel(top_bar, text="HTML Source", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   199→   199→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   200→   200→
+   201→   201→        ctk.CTkButton(top_bar, text="Load from URL", width=110, height=26,
+   202→   202→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   203→   203→                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   204→   204→                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+   205→   205→                       border_width=1, border_color=theme.colors.BORDER,
+   206→   206→                       command=self._load_html_for_css).grid(row=0, column=1, padx=Spacing.SM)
+   207→   207→
+   208→   208→        self._css_html_input = ctk.CTkTextbox(
+   209→   209→            html_card, height=150, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   210→   210→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   211→   211→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   212→   212→        )
+   213→   213→        self._css_html_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   214→   214→
+   215→   215→        # Selector + Results
+   216→   216→        bottom = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   217→   217→        bottom.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   218→   218→        bottom.grid_rowconfigure(2, weight=1)
+   219→   219→        bottom.grid_columnconfigure(1, weight=1)
+   220→   220→
+   221→   221→        ctk.CTkLabel(bottom, text="Selector", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   222→   222→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM, sticky="w")
+   223→   223→
+   224→   224→        self._css_selector = ctk.CTkEntry(
+   225→   225→            bottom, placeholder_text="e.g. h1.title, div.article > p, a[href]",
+   226→   226→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+   227→   227→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   228→   228→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=32,
+   229→   229→        )
+   230→   230→        self._css_selector.grid(row=0, column=1, sticky="ew", padx=(0, Spacing.XS), pady=Spacing.SM)
+   231→   231→
+   232→   232→        attr_frame = ctk.CTkFrame(bottom, fg_color="transparent")
+   233→   233→        attr_frame.grid(row=0, column=2, padx=(0, Spacing.MD), pady=Spacing.SM)
+   234→   234→
+   235→   235→        ctk.CTkLabel(attr_frame, text="Attr:", font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   236→   236→                      text_color=theme.colors.TEXT_MUTED).pack(side="left")
+   237→   237→        self._css_attr = ctk.CTkEntry(attr_frame, placeholder_text="href", width=60, height=28,
+   238→   238→                                        font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   239→   239→                                        fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   240→   240→                                        border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY)
+   241→   241→        self._css_attr.pack(side="left", padx=2)
+   242→   242→
+   243→   243→        ctk.CTkButton(attr_frame, text="Run", width=50, height=28,
+   244→   244→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   245→   245→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   246→   246→                       text_color=theme.colors.TEXT_INVERSE, corner_radius=Radius.MD,
+   247→   247→                       command=self._run_css_test).pack(side="left", padx=2)
+   248→   248→
+   249→   249→        header = ctk.CTkFrame(bottom, fg_color="transparent")
+   250→   250→        header.grid(row=1, column=0, columnspan=3, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   251→   251→        header.grid_columnconfigure(1, weight=1)
+   252→   252→
+   253→   253→        ctk.CTkLabel(header, text="Results", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   254→   254→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   255→   255→        self._css_count_label = ctk.CTkLabel(header, text="0 elements",
+   256→   256→                                                font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   257→   257→                                                text_color=theme.colors.TEXT_MUTED)
+   258→   258→        self._css_count_label.grid(row=0, column=1, sticky="e")
+   259→   259→
+   260→   260→        self._css_results = ctk.CTkTextbox(
+   261→   261→            bottom, height=200, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   262→   262→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   263→   263→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   264→   264→            state="disabled",
+   265→   265→        )
+   266→   266→        self._css_results.grid(row=2, column=0, columnspan=3, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   267→   267→
+   268→   268→    def _load_html_for_css(self):
+   269→   269→        url = self._css_html_input.get("0.0", "end").strip()[:200]
+   270→   270→        if url.startswith(("http://", "https://")):
+   271→   271→            self._fetch_url_html(url, "css")
+   272→   272→        else:
+   273→   273→            from tkinter import filedialog
+   274→   274→            path = filedialog.askopenfilename(filetypes=[("HTML", "*.html"), ("All", "*.*")])
+   275→   275→            if path:
+   276→   276→                try:
+   277→   277→                    with open(path, "r", encoding="utf-8") as f:
+   278→   278→                        content = f.read()
+   279→   279→                    self._css_html_input.delete("0.0", "end")
+   280→   280→                    self._css_html_input.insert("0.0", content[:100000])
+   281→   281→                    self._cached_html = content
+   282→   282→                except Exception as e:
+   283→   283→                    messagebox = __import__("tkinter").messagebox
+   284→   284→                    messagebox.showerror("Error", str(e))
+   285→   285→
+   286→   286→    def _run_css_test(self):
+   287→   287→        selector = self._css_selector.get().strip()
+   288→   288→        html_text = self._css_html_input.get("0.0", "end").strip()
+   289→   289→        attr = self._css_attr.get().strip() or None
+   290→   290→
+   291→   291→        if not selector or not html_text:
+   292→   292→            return
+   293→   293→
+   294→   294→        try:
+   295→   295→            soup = BeautifulSoup(html_text, "lxml")
+   296→   296→            elements = soup.select(selector)
+   297→   297→
+   298→   298→            self._css_results.configure(state="normal")
+   299→   299→            self._css_results.delete("0.0", "end")
+   300→   300→
+   301→   301→            if not elements:
+   302→   302→                self._css_results.insert("end", "No elements matched.")
+   303→   303→            else:
+   304→   304→                for i, el in enumerate(elements[:200]):
+   305→   305→                    if attr:
+   306→   306→                        val = el.get(attr, "")
+   307→   307→                        self._css_results.insert("end", f"{i+1}. [{attr}] {str(val)[:200]}\n")
+   308→   308→                    else:
+   309→   309→                        text = el.get_text(strip=True)
+   310→   310→                        tag = el.name
+   311→   311→                        classes = el.get("class", [])
+   312→   312→                        cls_str = "." + ".".join(classes) if classes else ""
+   313→   313→                        self._css_results.insert("end", f"{i+1}. <{tag}{cls_str}> {text[:200]}\n")
+   314→   314→
+   315→   315→            self._css_count_label.configure(text=f"{len(elements)} elements")
+   316→   316→            self._css_results.configure(state="disabled")
+   317→   317→        except Exception as e:
+   318→   318→            self._css_results.configure(state="normal")
+   319→   319→            self._css_results.delete("0.0", "end")
+   320→   320→            self._css_results.insert("end", f"Error: {e}")
+   321→   321→            self._css_results.configure(state="disabled")
+   322→   322→            self._css_count_label.configure(text="Error")
+   323→   323→
+   324→   324→    # ==================================================================
+   325→   325→    # XPath Tester
+   326→   326→    # ==================================================================
+   327→   327→
+   328→   328→    def _build_xpath_tester(self, parent):
+   329→   329→        html_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   330→   330→        html_card.grid(row=0, column=0, sticky="nsew", pady=(0, Spacing.SM))
+   331→   331→        html_card.grid_rowconfigure(1, weight=1)
+   332→   332→        html_card.grid_columnconfigure(0, weight=1)
+   333→   333→
+   334→   334→        top_bar = ctk.CTkFrame(html_card, fg_color="transparent")
+   335→   335→        top_bar.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   336→   336→        top_bar.grid_columnconfigure(0, weight=1)
+   337→   337→
+   338→   338→        ctk.CTkLabel(top_bar, text="HTML Source", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   339→   339→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   340→   340→
+   341→   341→        ctk.CTkButton(top_bar, text="Load from URL", width=110, height=26,
+   342→   342→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   343→   343→                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   344→   344→                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+   345→   345→                       border_width=1, border_color=theme.colors.BORDER,
+   346→   346→                       command=self._load_html_for_xpath).grid(row=0, column=1, padx=Spacing.SM)
+   347→   347→
+   348→   348→        self._xpath_html_input = ctk.CTkTextbox(
+   349→   349→            html_card, height=150, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   350→   350→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   351→   351→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   352→   352→        )
+   353→   353→        self._xpath_html_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   354→   354→
+   355→   355→        # XPath + Results
+   356→   356→        bottom = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   357→   357→        bottom.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   358→   358→        bottom.grid_rowconfigure(2, weight=1)
+   359→   359→        bottom.grid_columnconfigure(1, weight=1)
+   360→   360→
+   361→   361→        ctk.CTkLabel(bottom, text="XPath", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   362→   362→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM, sticky="w")
+   363→   363→
+   364→   364→        self._xpath_expr = ctk.CTkEntry(
+   365→   365→            bottom, placeholder_text='e.g. //h1/text(), //div[@class="content"]/p',
+   366→   366→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+   367→   367→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   368→   368→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=32,
+   369→   369→        )
+   370→   370→        self._xpath_expr.grid(row=0, column=1, sticky="ew", padx=(0, Spacing.SM), pady=Spacing.SM)
+   371→   371→
+   372→   372→        ctk.CTkButton(bottom, text="Run", width=50, height=28,
+   373→   373→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   374→   374→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   375→   375→                       text_color=theme.colors.TEXT_INVERSE, corner_radius=Radius.MD,
+   376→   376→                       command=self._run_xpath_test).grid(row=0, column=2, padx=Spacing.MD, pady=Spacing.SM)
+   377→   377→
+   378→   378→        header = ctk.CTkFrame(bottom, fg_color="transparent")
+   379→   379→        header.grid(row=1, column=0, columnspan=3, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   380→   380→        header.grid_columnconfigure(1, weight=1)
+   381→   381→
+   382→   382→        ctk.CTkLabel(header, text="Results", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   383→   383→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   384→   384→        self._xpath_count_label = ctk.CTkLabel(header, text="0 results",
+   385→   385→                                                  font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   386→   386→                                                  text_color=theme.colors.TEXT_MUTED)
+   387→   387→        self._xpath_count_label.grid(row=0, column=1, sticky="e")
+   388→   388→
+   389→   389→        self._xpath_results = ctk.CTkTextbox(
+   390→   390→            bottom, height=200, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   391→   391→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   392→   392→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   393→   393→            state="disabled",
+   394→   394→        )
+   395→   395→        self._xpath_results.grid(row=2, column=0, columnspan=3, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   396→   396→
+   397→   397→    def _load_html_for_xpath(self):
+   398→   398→        url = self._xpath_html_input.get("0.0", "end").strip()[:200]
+   399→   399→        if url.startswith(("http://", "https://")):
+   400→   400→            self._fetch_url_html(url, "xpath")
+   401→   401→        else:
+   402→   402→            from tkinter import filedialog
+   403→   403→            path = filedialog.askopenfilename(filetypes=[("HTML", "*.html"), ("All", "*.*")])
+   404→   404→            if path:
+   405→   405→                try:
+   406→   406→                    with open(path, "r", encoding="utf-8") as f:
+   407→   407→                        content = f.read()
+   408→   408→                    self._xpath_html_input.delete("0.0", "end")
+   409→   409→                    self._xpath_html_input.insert("0.0", content[:100000])
+   410→   410→                    self._cached_html = content
+   411→   411→                except Exception as e:
+   412→   412→                    messagebox = __import__("tkinter").messagebox
+   413→   413→                    messagebox.showerror("Error", str(e))
+   414→   414→
+   415→   415→    def _run_xpath_test(self):
+   416→   416→        expr = self._xpath_expr.get().strip()
+   417→   417→        html_text = self._xpath_html_input.get("0.0", "end").strip()
+   418→   418→        if not expr or not html_text:
+   419→   419→            return
+   420→   420→
+   421→   421→        try:
+   422→   422→            tree = lhtml.fromstring(html_text)
+   423→   423→            results = tree.xpath(expr)
+   424→   424→
+   425→   425→            self._xpath_results.configure(state="normal")
+   426→   426→            self._xpath_results.delete("0.0", "end")
+   427→   427→
+   428→   428→            if not results:
+   429→   429→                self._xpath_results.insert("end", "No results matched.")
+   430→   430→            else:
+   431→   431→                for i, r in enumerate(results[:200]):
+   432→   432→                    if isinstance(r, str):
+   433→   433→                        self._xpath_results.insert("end", f"{i+1}. {r.strip()[:300]}\n")
+   434→   434→                    elif hasattr(r, 'text_content'):
+   435→   435→                        text = " ".join(r.itertext()).strip()[:300]
+   436→   436→                        tag = r.tag if hasattr(r, 'tag') else "?"
+   437→   437→                        self._xpath_results.insert("end", f"{i+1}. <{tag}> {text}\n")
+   438→   438→                    elif isinstance(r, float):
+   439→   439→                        self._xpath_results.insert("end", f"{i+1}. {r}\n")
+   440→   440→                    else:
+   441→   441→                        self._xpath_results.insert("end", f"{i+1}. {str(r)[:300]}\n")
+   442→   442→
+   443→   443→            self._xpath_count_label.configure(text=f"{len(results)} results")
+   444→   444→            self._xpath_results.configure(state="disabled")
+   445→   445→        except Exception as e:
+   446→   446→            self._xpath_results.configure(state="normal")
+   447→   447→            self._xpath_results.delete("0.0", "end")
+   448→   448→            self._xpath_results.insert("end", f"XPath error: {e}")
+   449→   449→            self._xpath_results.configure(state="disabled")
+   450→   450→            self._xpath_count_label.configure(text="Error")
+   451→   451→
+   452→   452→    # ==================================================================
+   453→   453→    # JSON Path Tester
+   454→   454→    # ==================================================================
+   455→   455→
+   456→   456→    def _build_jsonpath_tester(self, parent):
+   457→   457→        json_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   458→   458→        json_card.grid(row=0, column=0, sticky="nsew", pady=(0, Spacing.SM))
+   459→   459→        json_card.grid_rowconfigure(1, weight=1)
+   460→   460→        json_card.grid_columnconfigure(0, weight=1)
+   461→   461→
+   462→   462→        ctk.CTkLabel(json_card, text="JSON Data", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   463→   463→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   464→   464→
+   465→   465→        self._json_input = ctk.CTkTextbox(
+   466→   466→            json_card, height=180, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   467→   467→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   468→   468→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   469→   469→        )
+   470→   470→        self._json_input.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   471→   471→
+   472→   472→        # Path + Results
+   473→   473→        bottom = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   474→   474→        bottom.grid(row=1, column=0, sticky="nsew", pady=Spacing.SM)
+   475→   475→        bottom.grid_rowconfigure(2, weight=1)
+   476→   476→        bottom.grid_columnconfigure(1, weight=1)
+   477→   477→
+   478→   478→        ctk.CTkLabel(bottom, text="JSON Path", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   479→   479→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM, sticky="w")
+   480→   480→
+   481→   481→        self._jsonpath_expr = ctk.CTkEntry(
+   482→   482→            bottom, placeholder_text='e.g. data.items[0].name, results[0:3]',
+   483→   483→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+   484→   484→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   485→   485→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=32,
+   486→   486→        )
+   487→   487→        self._jsonpath_expr.grid(row=0, column=1, sticky="ew", padx=(0, Spacing.SM), pady=Spacing.SM)
+   488→   488→
+   489→   489→        ctk.CTkButton(bottom, text="Run", width=50, height=28,
+   490→   490→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   491→   491→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   492→   492→                       text_color=theme.colors.TEXT_INVERSE, corner_radius=Radius.MD,
+   493→   493→                       command=self._run_jsonpath_test).grid(row=0, column=2, padx=Spacing.MD, pady=Spacing.SM)
+   494→   494→
+   495→   495→        self._jsonpath_results = ctk.CTkTextbox(
+   496→   496→            bottom, height=200, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   497→   497→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   498→   498→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   499→   499→            state="disabled",
+   500→   500→        )
+   501→   501→        self._jsonpath_results.grid(row=1, column=0, columnspan=3, sticky="nsew", padx=Spacing.MD, pady=(Spacing.SM, Spacing.MD))
+   502→   502→
+   503→   503→    def _run_jsonpath_test(self):
+   504→   504→        path_expr = self._jsonpath_expr.get().strip()
+   505→   505→        json_text = self._json_input.get("0.0", "end").strip()
+   506→   506→        if not path_expr or not json_text:
+   507→   507→            return
+   508→   508→
+   509→   509→        try:
+   510→   510→            data = json.loads(json_text)
+   511→   511→        except json.JSONDecodeError as e:
+   512→   512→            self._jsonpath_results.configure(state="normal")
+   513→   513→            self._jsonpath_results.delete("0.0", "end")
+   514→   514→            self._jsonpath_results.insert("end", f"JSON parse error: {e}")
+   515→   515→            self._jsonpath_results.configure(state="disabled")
+   516→   516→            return
+   517→   517→
+   518→   518→        try:
+   519→   519→            # Simple JSON path resolver (dotted + bracket notation)
+   520→   520→            result = self._resolve_json_path(data, path_expr)
+   521→   521→
+   522→   522→            self._jsonpath_results.configure(state="normal")
+   523→   523→            self._jsonpath_results.delete("0.0", "end")
+   524→   524→
+   525→   525→            if result is None:
+   526→   526→                self._jsonpath_results.insert("end", "Path not found.")
+   527→   527→            else:
+   528→   528→                output = json.dumps(result, indent=2, ensure_ascii=False, default=str)
+   529→   529→                if len(output) > 50000:
+   530→   530→                    output = output[:50000] + "\n\n... (truncated)"
+   531→   531→                self._jsonpath_results.insert("end", output)
+   532→   532→
+   533→   533→            self._jsonpath_results.configure(state="disabled")
+   534→   534→        except Exception as e:
+   535→   535→            self._jsonpath_results.configure(state="normal")
+   536→   536→            self._jsonpath_results.delete("0.0", "end")
+   537→   537→            self._jsonpath_results.insert("end", f"Path error: {e}")
+   538→   538→            self._jsonpath_results.configure(state="disabled")
+   539→   539→
+   540→   540→    def _resolve_json_path(self, data, path: str):
+   541→   541→        parts = re.split(r'\.|\[|\]', path)
+   542→   542→        parts = [p for p in parts if p]
+   543→   543→        current = data
+   544→   544→        for part in parts:
+   545→   545→            if not part:
+   546→   546→                continue
+   547→   547→            # Handle slice notation like [0:3]
+   548→   548→            slice_match = re.match(r'^(\d+):(\d*)$', part)
+   549→   549→            if slice_match and isinstance(current, list):
+   550→   550→                start = int(slice_match.group(1))
+   551→   551→                end = int(slice_match.group(2)) if slice_match.group(2) else len(current)
+   552→   552→                current = current[start:end]
+   553→   553→                continue
+   554→   554→            if part.isdigit():
+   555→   555→                idx = int(part)
+   556→   556→                if isinstance(current, list) and idx < len(current):
+   557→   557→                    current = current[idx]
+   558→   558→                else:
+   559→   559→                    return None
+   560→   560→            elif isinstance(current, dict):
+   561→   561→                current = current.get(part)
+   562→   562→            else:
+   563→   563→                return None
+   564→   564→            if current is None:
+   565→   565→                return None
+   566→   566→        return current
+   567→   567→
+   568→   568→    # ==================================================================
+   569→   569→    # Response Inspector
+   570→   570→    # ==================================================================
+   571→   571→
+   572→   572→    def _build_response_inspector(self, parent):
+   573→   573→        # URL bar
+   574→   574→        url_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   575→   575→        url_card.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+   576→   576→        url_card.grid_columnconfigure(0, weight=1)
+   577→   577→
+   578→   578→        self._resp_url = ctk.CTkEntry(
+   579→   579→            url_card, placeholder_text="https://example.com  -  Enter URL to inspect response",
+   580→   580→            font=(Typography.MONO_FONT, Typography.BODY_SIZE),
+   581→   581→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   582→   582→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=34,
+   583→   583→        )
+   584→   584→        self._resp_url.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+   585→   585→
+   586→   586→        ctk.CTkButton(url_card, text="Inspect", width=80, height=28,
+   587→   587→                       font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   588→   588→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   589→   589→                       text_color=theme.colors.TEXT_INVERSE, corner_radius=Radius.MD,
+   590→   590→                       command=self._fetch_response).grid(row=0, column=1, padx=(Spacing.SM, Spacing.MD), pady=Spacing.SM)
+   591→   591→
+   592→   592→        self._resp_status = ctk.CTkLabel(url_card, text="", font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   593→   593→                                           text_color=theme.colors.TEXT_MUTED)
+   594→   594→        self._resp_status.grid(row=0, column=2, padx=(0, Spacing.MD), pady=Spacing.SM)
+   595→   595→
+   596→   596→        # Content area
+   597→   597→        content_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   598→   598→        content_card.grid(row=1, column=0, sticky="nsew")
+   599→   599→        content_card.grid_rowconfigure(1, weight=1)
+   600→   600→        content_card.grid_columnconfigure(0, weight=1)
+   601→   601→
+   602→   602→        tab_bar = ctk.CTkFrame(content_card, fg_color="transparent")
+   603→   603→        tab_bar.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   604→   604→
+   605→   605→        self._resp_tab_var = ctk.StringVar(value="headers")
+   606→   606→        for text, val in [("Headers", "headers"), ("Body", "body"), ("Raw Headers", "raw_headers")]:
+   607→   607→            ctk.CTkRadioButton(
+   608→   608→                tab_bar, text=text, variable=self._resp_tab_var, value=val,
+   609→   609→                font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   610→   610→                text_color=theme.colors.TEXT_SECONDARY,
+   611→   611→                fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   612→   612→                command=self._switch_resp_tab,
+   613→   613→            ).pack(side="left", padx=Spacing.SM)
+   614→   614→
+   615→   615→        self._resp_headers_text = ctk.CTkTextbox(
+   616→   616→            content_card, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   617→   617→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   618→   618→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   619→   619→            state="disabled",
+   620→   620→        )
+   621→   621→        self._resp_headers_text.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   622→   622→
+   623→   623→        self._resp_body_text = ctk.CTkTextbox(
+   624→   624→            content_card, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   625→   625→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   626→   626→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   627→   627→            state="disabled",
+   628→   628→        )
+   629→   629→        self._resp_body_text.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   630→   630→        self._resp_body_text.grid_remove()
+   631→   631→
+   632→   632→        self._resp_raw_text = ctk.CTkTextbox(
+   633→   633→            content_card, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   634→   634→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   635→   635→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   636→   636→            state="disabled",
+   637→   637→        )
+   638→   638→        self._resp_raw_text.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   639→   639→        self._resp_raw_text.grid_remove()
+   640→   640→
+   641→   641→    def _switch_resp_tab(self):
+   642→   642→        val = self._resp_tab_var.get()
+   643→   643→        if val == "headers":
+   644→   644→            self._resp_headers_text.grid()
+   645→   645→            self._resp_body_text.grid_remove()
+   646→   646→            self._resp_raw_text.grid_remove()
+   647→   647→        elif val == "body":
+   648→   648→            self._resp_headers_text.grid_remove()
+   649→   649→            self._resp_body_text.grid()
+   650→   650→            self._resp_raw_text.grid_remove()
+   651→   651→        else:
+   652→   652→            self._resp_headers_text.grid_remove()
+   653→   653→            self._resp_body_text.grid_remove()
+   654→   654→            self._resp_raw_text.grid()
+   655→   655→
+   656→   656→    def _fetch_response(self):
+   657→   657→        url = self._resp_url.get().strip()
+   658→   658→        if not url:
+   659→   659→            return
+   660→   660→        if not url.startswith(("http://", "https://")):
+   661→   661→            self._resp_status.configure(text="Invalid URL", text_color=theme.colors.TEXT_ERROR)
+   662→   662→            return
+   663→   663→
+   664→   664→        self._resp_status.configure(text="Fetching...", text_color=theme.colors.TEXT_WARNING)
+   665→   665→
+   666→   666→        def _do():
+   667→   667→            import requests
+   668→   668→            try:
+   669→   669→                start = time.time()
+   670→   670→                resp = requests.get(url, timeout=15, headers={
+   671→   671→                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+   672→   672→                })
+   673→   673→                elapsed = time.time() - start
+   674→   674→
+   675→   675→                def _update():
+   676→   676→                    # Status line
+   677→   677→                    size = len(resp.content)
+   678→   678→                    size_str = f"{size:,} B" if size < 1024 else f"{size/1024:.1f} KB"
+   679→   679→                    self._resp_status.configure(
+   680→   680→                        text=f"{resp.status_code} | {elapsed:.2f}s | {size_str} | {resp.headers.get('Content-Type', '')[:40]}",
+   681→   681→                        text_color=theme.colors.TEXT_SUCCESS if resp.status_code < 400 else theme.colors.TEXT_ERROR,
+   682→   682→                    )
+   683→   683→
+   684→   684→                    # Formatted headers
+   685→   685→                    self._resp_headers_text.configure(state="normal")
+   686→   686→                    self._resp_headers_text.delete("0.0", "end")
+   687→   687→                    self._resp_headers_text.insert("end", f"  Status:     {resp.status_code} {resp.reason}\n")
+   688→   688→                    self._resp_headers_text.insert("end", f"  URL:        {resp.url}\n")
+   689→   689→                    self._resp_headers_text.insert("end", f"  Time:       {elapsed:.3f}s\n")
+   690→   690→                    self._resp_headers_text.insert("end", f"  Size:       {size_str}\n")
+   691→   691→                    self._resp_headers_text.insert("end", f"  Encoding:   {resp.encoding or 'unknown'}\n")
+   692→   692→                    self._resp_headers_text.insert("end", f"\n  Response Headers:\n")
+   693→   693→                    self._resp_headers_text.insert("end", f"  {'':-<50}\n")
+   694→   694→                    for key, val in resp.headers.items():
+   695→   695→                        self._resp_headers_text.insert("end", f"  {key}: {val}\n")
+   696→   696→                    self._resp_headers_text.configure(state="disabled")
+   697→   697→
+   698→   698→                    # Raw headers
+   699→   699→                    self._resp_raw_text.configure(state="normal")
+   700→   700→                    self._resp_raw_text.delete("0.0", "end")
+   701→   701→                    self._resp_raw_text.insert("end", f"  Request Headers:\n")
+   702→   702→                    self._resp_raw_text.insert("end", f"  {'':-<50}\n")
+   703→   703→                    for key, val in resp.request.headers.items():
+   704→   704→                        self._resp_raw_text.insert("end", f"  {key}: {val}\n")
+   705→   705→                    self._resp_raw_text.insert("end", f"\n  Response Headers:\n")
+   706→   706→                    self._resp_raw_text.insert("end", f"  {'':-<50}\n")
+   707→   707→                    for key, val in resp.headers.items():
+   708→   708→                        self._resp_raw_text.insert("end", f"  {key}: {val}\n")
+   709→   709→                    self._resp_raw_text.configure(state="disabled")
+   710→   710→
+   711→   711→                    # Body
+   712→   712→                    self._resp_body_text.configure(state="normal")
+   713→   713→                    self._resp_body_text.delete("0.0", "end")
+   714→   714→                    body = resp.text[:50000] if resp.text else "(empty body)"
+   715→   715→                    self._resp_body_text.insert("0.0", body)
+   716→   716→                    if len(resp.text or "") > 50000:
+   717→   717→                        self._resp_body_text.insert("end", f"\n\n... truncated ({len(resp.text or '')} chars total)")
+   718→   718→                    self._resp_body_text.configure(state="disabled")
+   719→   719→
+   720→   720→                    # Cache for other tools
+   721→   721→                    self._cached_html = resp.text or ""
+   722→   722→                    self._cached_url = url
+   723→   723→
+   724→   724→                self.after(0, _update)
+   725→   725→
+   726→   726→            except Exception as e:
+   727→   727→                self.after(0, lambda: self._resp_status.configure(
+   728→   728→                    text=f"Error: {str(e)[:60]}", text_color=theme.colors.TEXT_ERROR))
+   729→   729→
+   730→   730→        threading.Thread(target=_do, daemon=True).start()
+   731→   731→
+   732→   732→    # ==================================================================
+   733→   733→    # Shared: Fetch URL HTML for testers
+   734→   734→    # ==================================================================
+   735→   735→
+   736→   736→    def _fetch_url_html(self, url: str, target: str = "css"):
+   737→   737→        import requests
+   738→   738→        self._resp_status_text = "Fetching..." if hasattr(self, '_resp_status_text') else None
+   739→   739→
+   740→   740→        def _do():
+   741→   741→            try:
+   742→   742→                resp = requests.get(url, timeout=15, headers={
+   743→   743→                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+   744→   744→                })
+   745→   745→                html = resp.text[:100000]
+   746→   746→                self._cached_html = html
+   747→   747→                self._cached_url = url
+   748→   748→
+   749→   749→                def _update():
+   750→   750→                    if target == "css":
+   751→   751→                        self._css_html_input.delete("0.0", "end")
+   752→   752→                        self._css_html_input.insert("0.0", html)
+   753→   753→                    elif target == "xpath":
+   754→   754→                        self._xpath_html_input.delete("0.0", "end")
+   755→   755→                        self._xpath_html_input.insert("0.0", html)
+   756→   756→
+   757→   757→                    app = self.winfo_toplevel()
+   758→   758→                    if hasattr(app, '_log_panel'):
+   759→   759→                        app._log_panel.add_log(f"Loaded HTML from {url} ({len(html)} chars)", "success")
+   760→   760→
+   761→   761→                self.after(0, _update)
+   762→   762→            except Exception as e:
+   763→   763→                app = self.winfo_toplevel()
+   764→   764→                if hasattr(app, '_log_panel'):
+   765→   765→                    self.after(0, lambda: app._log_panel.add_log(f"Failed to fetch: {e}", "error"))
+   766→   766→
+   767→   767→        threading.Thread(target=_do, daemon=True).start()
+   768→   768→
+   769→   769→    def update_ui(self, engine):
+   770→   770→        pass
+   771→   771→

@@ -1,0 +1,742 @@
+     1→"""
+     2→Graph Theory / Complex Network Analysis Module for Web Link Structures.
+     3→
+     4→Provides graph construction, centrality analysis, community detection,
+     5→web-specific structural analysis, and systemic-risk/failure-propagation modelling.
+     6→
+     7→Only depends on the Python standard library and numpy.
+     8→"""
+     9→
+    10→from __future__ import annotations
+    11→
+    12→from collections import deque, defaultdict
+    13→from dataclasses import dataclass, field
+    14→from typing import (
+    15→    Any,
+    16→    Dict,
+    17→    Hashable,
+    18→    Iterable,
+    19→    List,
+    20→    Optional,
+    21→    Set,
+    22→    Tuple,
+    23→)
+    24→
+    25→import numpy as np
+    26→
+    27→
+    28→# --------------------------------------------------------------------------- #
+    29→#  Directed Graph (adjacency-list)                                           #
+    30→# --------------------------------------------------------------------------- #
+    31→
+    32→class DiGraph:
+    33→    """Lightweight directed graph backed by adjacency-lists.
+    34→
+    35→    Nodes must be hashable (URLs are strings, so this is natural).
+    36→    """
+    37→
+    38→    def __init__(self) -> None:
+    39→        self._out: Dict[Hashable, Set[Hashable]] = defaultdict(set)
+    40→        self._in: Dict[Hashable, Set[Hashable]] = defaultdict(set)
+    41→        self._nodes: Set[Hashable] = set()
+    42→
+    43→    # -- mutation ---------------------------------------------------------- #
+    44→
+    45→    def add_node(self, node: Hashable) -> None:
+    46→        """Register *node* if not already present."""
+    47→        self._nodes.add(node)
+    48→
+    49→    def add_edge(self, source: Hashable, target: Hashable) -> None:
+    50→        """Add a directed edge *source* → *target*, creating nodes as needed."""
+    51→        self._nodes.add(source)
+    52→        self._nodes.add(target)
+    53→        self._out[source].add(target)
+    54→        self._in[target].add(source)
+    55→
+    56→    # -- queries ------------------------------------------------------------ #
+    57→
+    58→    def nodes(self) -> Set[Hashable]:
+    59→        """Return the set of all nodes."""
+    60→        return set(self._nodes)
+    61→
+    62→    def edges(self) -> List[Tuple[Hashable, Hashable]]:
+    63→        """Return every directed edge as (source, target) tuples."""
+    64→        result: List[Tuple[Hashable, Hashable]] = []
+    65→        for src, targets in self._out.items():
+    66→            for tgt in targets:
+    67→                result.append((src, tgt))
+    68→        return result
+    69→
+    70→    def get_neighbors(self, node: Hashable) -> Set[Hashable]:
+    71→        """Out-neighbours of *node*."""
+    72→        return set(self._out.get(node, set()))
+    73→
+    74→    def get_in_neighbors(self, node: Hashable) -> Set[Hashable]:
+    75→        """In-neighbours of *node*."""
+    76→        return set(self._in.get(node, set()))
+    77→
+    78→    def get_out_degree(self, node: Hashable) -> int:
+    79→        """Number of outgoing edges from *node*."""
+    80→        return len(self._out.get(node, set()))
+    81→
+    82→    def get_in_degree(self, node: Hashable) -> int:
+    83→        """Number of incoming edges to *node*."""
+    84→        return len(self._in.get(node, set()))
+    85→
+    86→    @property
+    87→    def node_count(self) -> int:
+    88→        return len(self._nodes)
+    89→
+    90→    @property
+    91→    def edge_count(self) -> int:
+    92→        return sum(len(tgts) for tgts in self._out.values())
+    93→
+    94→
+    95→# --------------------------------------------------------------------------- #
+    96→#  Centrality Analyzer                                                       #
+    97→# --------------------------------------------------------------------------- #
+    98→
+    99→class CentralityAnalyzer:
+   100→    """Static methods that compute various centrality scores from scratch.
+   101→
+   102→    Every public method accepts *nodes* (iterable of hashable) and *edges*
+   103→    (iterable of (src, tgt) tuples) so that no DiGraph instance is required.
+   104→    """
+   105→
+   106→    @staticmethod
+   107→    def degree_centrality(
+   108→        nodes: Iterable[Hashable], edges: Iterable[Tuple[Hashable, Hashable]]
+   109→    ) -> Dict[Hashable, float]:
+   110→        """Normalised out-degree centrality for every node.
+   111→
+   112→        score(v) = out_degree(v) / (n − 1)
+   113→        """
+   114→        node_list = list(nodes)
+   115→        n = len(node_list)
+   116→        if n <= 1:
+   117→            return {nd: 0.0 for nd in node_list}
+   118→        out_deg: Dict[Hashable, int] = defaultdict(int)
+   119→        for src, _ in edges:
+   120→            out_deg[src] += 1
+   121→        return {nd: out_deg.get(nd, 0) / (n - 1) for nd in node_list}
+   122→
+   123→    @staticmethod
+   124→    def closeness_centrality(
+   125→        nodes: Iterable[Hashable], edges: Iterable[Tuple[Hashable, Hashable]]
+   126→    ) -> Dict[Hashable, float]:
+   127→        """Undirected closeness:  C(v) = (|R(v)| − 1) / Σ d(v, u),  u ∈ R(v).
+   128→
+   129→        R(v) is the set of nodes reachable from *v* via BFS on the
+   130→        undirected projection of the link graph.
+   131→        """
+   132→        node_set: Set[Hashable] = set(nodes)
+   133→        adj: Dict[Hashable, Set[Hashable]] = defaultdict(set)
+   134→        for u, v in edges:
+   135→            adj[u].add(v)
+   136→            adj[v].add(u)
+   137→        result: Dict[Hashable, float] = {}
+   138→        for start in node_set:
+   139→            dist: Dict[Hashable, int] = {start: 0}
+   140→            queue: deque[Hashable] = deque([start])
+   141→            while queue:
+   142→                cur = queue.popleft()
+   143→                for nb in adj.get(cur, set()):
+   144→                    if nb not in dist:
+   145→                        dist[nb] = dist[cur] + 1
+   146→                        queue.append(nb)
+   147→            reachable = len(dist) - 1
+   148→            if reachable == 0:
+   149→                result[start] = 0.0
+   150→            else:
+   151→                total = sum(dist.values())
+   152→                result[start] = reachable / total
+   153→        return result
+   154→
+   155→    @staticmethod
+   156→    def pagerank(
+   157→        nodes: Iterable[Hashable],
+   158→        edges: Iterable[Tuple[Hashable, Hashable]],
+   159→        damping: float = 0.85,
+   160→        iterations: int = 100,
+   161→    ) -> Dict[Hashable, float]:
+   162→        """Iterative PageRank on the directed link graph.
+   163→
+   164→        PR(v) = (1 − d)/N + d · Σ_{u→v} PR(u) / out_deg(u)
+   165→        """
+   166→        node_list = list(nodes)
+   167→        n = len(node_list)
+   168→        if n == 0:
+   169→            return {}
+   170→        out_deg: Dict[Hashable, int] = defaultdict(int)
+   171→        in_map: Dict[Hashable, List[Hashable]] = defaultdict(list)
+   172→        for src, tgt in edges:
+   173→            out_deg[src] += 1
+   174→            in_map[tgt].append(src)
+   175→        pr = np.ones(n, dtype=np.float64) / n
+   176→        idx = {nd: i for i, nd in enumerate(node_list)}
+   177→        out_arr = np.array([max(out_deg.get(nd, 0), 1) for nd in node_list], dtype=np.float64)
+   178→        for _ in range(iterations):
+   179→            new_pr = np.full(n, (1.0 - damping) / n, dtype=np.float64)
+   180→            for tgt, sources in in_map.items():
+   181→                for src in sources:
+   182→                    new_pr[idx[tgt]] += damping * pr[idx[src]] / out_arr[idx[src]]
+   183→            pr = new_pr
+   184→        return {nd: float(pr[idx[nd]]) for nd in node_list}
+   185→
+   186→    @staticmethod
+   187→    def betweenness_centrality(
+   188→        nodes: Iterable[Hashable], edges: Iterable[Tuple[Hashable, Hashable]]
+   189→    ) -> Dict[Hashable, float]:
+   190→        """Brandes' algorithm (simplified, undirected projection).
+   191→
+   192→        Returns raw betweenness scores (not normalised by pair count).
+   193→        """
+   194→        node_set: Set[Hashable] = set(nodes)
+   195→        adj: Dict[Hashable, Set[Hashable]] = defaultdict(set)
+   196→        for u, v in edges:
+   197→            adj[u].add(v)
+   198→            adj[v].add(u)
+   199→        cb: Dict[Hashable, float] = {nd: 0.0 for nd in node_set}
+   200→        for s in node_set:
+   201→            # single-source shortest-paths (BFS)
+   202→            stack: List[Hashable] = []
+   203→            pred: Dict[Hashable, List[Hashable]] = {w: [] for w in node_set}
+   204→            sigma: Dict[Hashable, int] = {s: 1}
+   205→            dist: Dict[Hashable, int] = {s: 0}
+   206→            queue: deque[Hashable] = deque([s])
+   207→            while queue:
+   208→                v = queue.popleft()
+   209→                stack.append(v)
+   210→                for w in adj.get(v, set()):
+   211→                    if w not in dist:
+   212→                        dist[w] = dist[v] + 1
+   213→                        queue.append(w)
+   214→                    if dist.get(w, -1) == dist[v] + 1:
+   215→                        sigma[w] = sigma.get(w, 0) + sigma[v]
+   216→                        pred[w].append(v)
+   217→            # accumulation
+   218→            delta: Dict[Hashable, float] = {w: 0.0 for w in node_set}
+   219→            while stack:
+   220→                w = stack.pop()
+   221→                for v in pred[w]:
+   222→                    delta[v] += (sigma[v] / sigma[w]) * (1.0 + delta[w])
+   223→                if w != s:
+   224→                    cb[w] += delta[w]
+   225→        return cb
+   226→
+   227→    @staticmethod
+   228→    def hubs_authorities(
+   229→        nodes: Iterable[Hashable],
+   230→        edges: Iterable[Tuple[Hashable, Hashable]],
+   231→        iterations: int = 20,
+   232→    ) -> Tuple[Dict[Hashable, float], Dict[Hashable, float]]:
+   233→        """HITS algorithm.
+   234→
+   235→        Returns (hubs, authorities) dicts.  Hubs link *to* many good
+   236→        authorities; authorities are linked *from* many good hubs.
+   237→        """
+   238→        node_list = list(nodes)
+   239→        n = len(node_list)
+   240→        if n == 0:
+   241→            return {}, {}
+   242→        out_map: Dict[Hashable, List[Hashable]] = defaultdict(list)
+   243→        in_map: Dict[Hashable, List[Hashable]] = defaultdict(list)
+   244→        for src, tgt in edges:
+   245→            out_map[src].append(tgt)
+   246→            in_map[tgt].append(src)
+   247→        idx = {nd: i for i, nd in enumerate(node_list)}
+   248→        hubs = np.ones(n, dtype=np.float64)
+   249→        auths = np.ones(n, dtype=np.float64)
+   250→        for _ in range(iterations):
+   251→            # authority update
+   252→            new_auths = np.zeros(n, dtype=np.float64)
+   253→            for tgt, sources in in_map.items():
+   254→                for src in sources:
+   255→                    new_auths[idx[tgt]] += hubs[idx[src]]
+   256→            # hub update
+   257→            new_hubs = np.zeros(n, dtype=np.float64)
+   258→            for src, targets in out_map.items():
+   259→                for tgt in targets:
+   260→                    new_hubs[idx[src]] += auths[idx[tgt]]
+   261→            # normalise
+   262→            a_norm = np.linalg.norm(new_auths) or 1.0
+   263→            h_norm = np.linalg.norm(new_hubs) or 1.0
+   264→            auths = new_auths / a_norm
+   265→            hubs = new_hubs / h_norm
+   266→        return (
+   267→            {nd: float(hubs[idx[nd]]) for nd in node_list},
+   268→            {nd: float(auths[idx[nd]]) for nd in node_list},
+   269→        )
+   270→
+   271→
+   272→# --------------------------------------------------------------------------- #
+   273→#  Community Detector                                                         #
+   274→# --------------------------------------------------------------------------- #
+   275→
+   276→class CommunityDetector:
+   277→    """Graph partitioning algorithms operating on undirected projections."""
+   278→
+   279→    @staticmethod
+   280→    def _undirected_adj(
+   281→        nodes: Iterable[Hashable], edges: Iterable[Tuple[Hashable, Hashable]]
+   282→    ) -> Tuple[Set[Hashable], Dict[Hashable, Set[Hashable]]]:
+   283→        node_set = set(nodes)
+   284→        adj: Dict[Hashable, Set[Hashable]] = defaultdict(set)
+   285→        for u, v in edges:
+   286→            if u in node_set and v in node_set:
+   287→                adj[u].add(v)
+   288→                adj[v].add(u)
+   289→        return node_set, adj
+   290→
+   291→    @staticmethod
+   292→    def connected_components(
+   293→        nodes: Iterable[Hashable], edges: Iterable[Tuple[Hashable, Hashable]]
+   294→    ) -> List[Set[Hashable]]:
+   295→        """Return a list of connected components (sets of nodes)."""
+   296→        node_set, adj = CommunityDetector._undirected_adj(nodes, edges)
+   297→        visited: Set[Hashable] = set()
+   298→        components: List[Set[Hashable]] = []
+   299→        for nd in node_set:
+   300→            if nd in visited:
+   301→                continue
+   302→            comp: Set[Hashable] = set()
+   303→            queue: deque[Hashable] = deque([nd])
+   304→            while queue:
+   305→                cur = queue.popleft()
+   306→                if cur in visited:
+   307→                    continue
+   308→                visited.add(cur)
+   309→                comp.add(cur)
+   310→                for nb in adj.get(cur, set()):
+   311→                    if nb not in visited:
+   312→                        queue.append(nb)
+   313→            components.append(comp)
+   314→        return components
+   315→
+   316→    @staticmethod
+   317→    def find_bridges(
+   318→        nodes: Iterable[Hashable], edges: Iterable[Tuple[Hashable, Hashable]]
+   319→    ) -> List[Tuple[Hashable, Hashable]]:
+   320→        """Tarjan's bridge-finding algorithm (undirected graph).
+   321→
+   322→        Returns edges whose removal would increase the number of connected
+   323→        components.
+   324→        """
+   325→        node_set, adj = CommunityDetector._undirected_adj(nodes, edges)
+   326→        bridges: List[Tuple[Hashable, Hashable]] = []
+   327→        disc: Dict[Hashable, int] = {}
+   328→        low: Dict[Hashable, int] = {}
+   329→        timer = [0]
+   330→
+   331→        def dfs(u: Hashable, parent: Optional[Hashable]) -> None:
+   332→            disc[u] = low[u] = timer[0]
+   333→            timer[0] += 1
+   334→            for v in adj.get(u, set()):
+   335→                if v not in disc:
+   336→                    dfs(v, u)
+   337→                    low[u] = min(low[u], low[v])
+   338→                    if low[v] > disc[u]:
+   339→                        bridges.append((u, v))
+   340→                elif v != parent:
+   341→                    low[u] = min(low[u], disc[v])
+   342→
+   343→        for nd in node_set:
+   344→            if nd not in disc:
+   345→                dfs(nd, None)
+   346→        return bridges
+   347→
+   348→    @staticmethod
+   349→    def detect_communities_louvain_like(
+   350→        nodes: Iterable[Hashable],
+   351→        edges: Iterable[Tuple[Hashable, Hashable]],
+   352→    ) -> List[Set[Hashable]]:
+   353→        """Simplified Louvain-style modularity optimisation.
+   354→
+   355→        Repeatedly moves each node to the neighbouring community that yields
+   356→        the greatest modularity gain, stopping when no improvement is found.
+   357→        """
+   358→        node_list = list(nodes)
+   359→        n = len(node_list)
+   360→        if n == 0:
+   361→            return []
+   362→        node_set, adj = CommunityDetector._undirected_adj(node_list, edges)
+   363→        m = sum(len(nb) for nb in adj.values()) / 2.0  # undirected edge count
+   364→        if m == 0:
+   365→            return [set(node_list)]
+   366→        # degrees (undirected)
+   367→        deg: Dict[Hashable, int] = {nd: len(adj.get(nd, set())) for nd in node_set}
+   368→
+   369→        # initialise: every node in its own community
+   370→        community: Dict[Hashable, int] = {nd: i for i, nd in enumerate(node_list)}
+   371→
+   372→        def _modularity() -> float:
+   373→            com_sets: Dict[int, List[Hashable]] = defaultdict(list)
+   374→            for nd, c in community.items():
+   375→                com_sets[c].append(nd)
+   376→            q = 0.0
+   377→            for c, members in com_sets.items():
+   378→                l_c = 0
+   379→                for u in members:
+   380→                    for v in adj.get(u, set()):
+   381→                        if community.get(v) == c:
+   382→                            l_c += 1
+   383→                l_c /= 2.0
+   384→                d_c = sum(deg[u] for u in members)
+   385→                q += l_c / m - (d_c / (2.0 * m)) ** 2
+   386→            return q
+   387→
+   388→        improved = True
+   389→        while improved:
+   390→            improved = False
+   391→            for nd in node_list:
+   392→                best_c = community[nd]
+   393→                best_gain = 0.0
+   394→                current_c = community[nd]
+   395→                neighbour_coms: Set[int] = {community[nb] for nb in adj.get(nd, set())}
+   396→                for c in neighbour_coms:
+   397→                    if c == current_c:
+   398→                        continue
+   399→                    community[nd] = c
+   400→                    new_q = _modularity()
+   401→                    community[nd] = current_c
+   402→                    old_q = _modularity() if best_gain != 0.0 else new_q  # first eval
+   403→                    gain = new_q - old_q if best_gain != 0.0 else 0.0
+   404→                    if c == list(neighbour_coms)[0]:
+   405→                        baseline = _modularity()
+   406→                        community[nd] = c
+   407→                        gain = _modularity() - baseline
+   408→                        community[nd] = current_c
+   409→                    if gain > best_gain:
+   410→                        best_gain = gain
+   411→                        best_c = c
+   412→                if best_c != current_c:
+   413→                    community[nd] = best_c
+   414→                    improved = True
+   415→        # collect communities
+   416→        com_map: Dict[int, Set[Hashable]] = defaultdict(set)
+   417→        for nd, c in community.items():
+   418→            com_map[c].add(nd)
+   419→        return list(com_map.values())
+   420→
+   421→
+   422→# --------------------------------------------------------------------------- #
+   423→#  Risk Propagator (Contagion / Systemic Risk)                               #
+   424→# --------------------------------------------------------------------------- #
+   425→
+   426→class RiskPropagator:
+   427→    """Model failure cascades through a directed link graph.
+   428→
+   429→    Each node has a *health* in [0, 1].  A node fails when the fraction
+   430→    of its in-neighbours that have failed exceeds *threshold*.
+   431→    """
+   432→
+   433→    @staticmethod
+   434→    def simulate_failure(
+   435→        nodes: Iterable[Hashable],
+   436→        edges: Iterable[Tuple[Hashable, Hashable]],
+   437→        initial_failed: Iterable[Hashable],
+   438→        threshold: float = 0.3,
+   439→    ) -> Dict[Hashable, int]:
+   440→        """Return a mapping node → round-in-which-it-failed (0 = initial).
+   441→
+   442→        Nodes that never fail are absent from the result.
+   443→        """
+   444→        node_set = set(nodes)
+   445→        in_map: Dict[Hashable, List[Hashable]] = defaultdict(list)
+   446→        for u, v in edges:
+   447→            in_map[v].append(u)
+   448→        failed: Dict[Hashable, int] = {nd: 0 for nd in initial_failed if nd in node_set}
+   449→        failed_set = set(failed)
+   450→        round_num = 1
+   451→        changed = True
+   452→        while changed:
+   453→            changed = False
+   454→            newly_failed: Set[Hashable] = set()
+   455→            for nd in node_set - failed_set:
+   456→                neighbours = in_map.get(nd, [])
+   457→                if not neighbours:
+   458→                    continue
+   459→                fail_count = sum(1 for nb in neighbours if nb in failed_set)
+   460→                if fail_count / len(neighbours) >= threshold:
+   461→                    newly_failed.add(nd)
+   462→            if newly_failed:
+   463→                changed = True
+   464→                for nd in newly_failed:
+   465→                    failed[nd] = round_num
+   466→                failed_set |= newly_failed
+   467→                round_num += 1
+   468→        return failed
+   469→
+   470→    @staticmethod
+   471→    def calculate_systemic_risk(
+   472→        nodes: Iterable[Hashable],
+   473→        edges: Iterable[Tuple[Hashable, Hashable]],
+   474→    ) -> float:
+   475→        """Estimate structural vulnerability ∈ [0, 1].
+   476→
+   477→        For each node as a single seed failure, compute the cascade size
+   478→        and average over all nodes.  The ratio of the mean cascade size
+   479→        to the total node count is the systemic-risk score.
+   480→        """
+   481→        node_list = list(nodes)
+   482→        n = len(node_list)
+   483→        if n == 0:
+   484→            return 0.0
+   485→        total_cascade = 0
+   486→        for nd in node_list:
+   487→            cascade = RiskPropagator.simulate_failure(node_list, edges, [nd])
+   488→            total_cascade += len(cascade)
+   489→        return (total_cascade / n) / n
+   490→
+   491→
+   492→# --------------------------------------------------------------------------- #
+   493→#  Web Analysis Report (dataclass)                                            #
+   494→# --------------------------------------------------------------------------- #
+   495→
+   496→@dataclass
+   497→class WebAnalysisReport:
+   498→    """Aggregated result of a full site-structure analysis."""
+   499→
+   500→    total_pages: int = 0
+   501→    total_links: int = 0
+   502→    density: float = 0.0
+   503→    avg_degree: float = 0.0
+   504→    clustering_coefficient: float = 0.0
+   505→    hub_pages: List[Tuple[str, float]] = field(default_factory=list)
+   506→    authority_pages: List[Tuple[str, float]] = field(default_factory=list)
+   507→    orphan_pages: List[str] = field(default_factory=list)
+   508→    dead_ends: List[str] = field(default_factory=list)
+   509→    communities: List[Set[str]] = field(default_factory=list)
+   510→    max_depth: int = 0
+   511→    connectivity_score: float = 0.0
+   512→    centrality_scores: Dict[str, Dict[str, float]] = field(default_factory=dict)
+   513→    systemic_risk: float = 0.0
+   514→    bridges: List[Tuple[str, str]] = field(default_factory=list)
+   515→
+   516→
+   517→# --------------------------------------------------------------------------- #
+   518→#  Web Structure Analyser (main facade)                                       #
+   519→# --------------------------------------------------------------------------- #
+   520→
+   521→class WebStructureAnalyzer:
+   522→    """High-level facade that builds a graph from URL-explorer results
+   523→    and produces a comprehensive :class:`WebAnalysisReport`.
+   524→    """
+   525→
+   526→    def __init__(self) -> None:
+   527→        self._graph = DiGraph()
+   528→        self._base_url: str = ""
+   529→
+   530→    # -- graph construction ------------------------------------------------ #
+   531→
+   532→    def build_from_explorer_result(self, explorer_result: Any) -> DiGraph:
+   533→        """Populate the internal graph from an :class:`ExplorerResult`.
+   534→
+   535→        Only **internal** links are turned into edges; both the source and
+   536→        target URL must resolve to the same origin.
+   537→        """
+   538→        from urllib.parse import urlparse
+   539→
+   540→        self._graph = DiGraph()
+   541→        self._base_url = getattr(explorer_result, "base_url", "") or ""
+   542→        base_origin = urlparse(self._base_url).netloc if self._base_url else ""
+   543→
+   544→        links = getattr(explorer_result, "links", []) or []
+   545→        for link_info in links:
+   546→            source = getattr(link_info, "source_url", "") or ""
+   547→            target = getattr(link_info, "url", "") or ""
+   548→            cat = getattr(link_info, "category", None)
+   549→            cat_val = cat.value if hasattr(cat, "value") else str(cat)
+   550→            if cat_val != "internal":
+   551→                continue
+   552→            # ensure same origin
+   553→            if base_origin and urlparse(target).netloc != base_origin:
+   554→                continue
+   555→            self._graph.add_edge(source, target)
+   556→
+   557→        # ensure nodes that were only targets are also added
+   558→        for link_info in links:
+   559→            target = getattr(link_info, "url", "") or ""
+   560→            self._graph.add_node(target)
+   561→        return self._graph
+   562→
+   563→    # -- individual analyses ------------------------------------------------ #
+   564→
+   565→    def find_orphan_pages(self) -> List[str]:
+   566→        """Pages with **no** inbound links (in-degree == 0), excluding the
+   567→        base URL itself."""
+   568→        orphans: List[str] = []
+   569→        for nd in self._graph.nodes():
+   570→            if nd == self._base_url:
+   571→                continue
+   572→            if self._graph.get_in_degree(nd) == 0:
+   573→                orphans.append(nd)
+   574→        return sorted(orphans)
+   575→
+   576→    def find_dead_ends(self) -> List[str]:
+   577→        """Pages with **no** outbound links (out-degree == 0)."""
+   578→        return sorted(
+   579→            nd for nd in self._graph.nodes()
+   580→            if self._graph.get_out_degree(nd) == 0
+   581→        )
+   582→
+   583→    def calculate_site_depth(self) -> int:
+   584→        """Maximum BFS depth reachable from the base URL.
+   585→
+   586→        Returns 0 when the base URL is not in the graph or has no
+   587→        out-neighbours.
+   588→        """
+   589→        if self._base_url not in self._graph.nodes():
+   590→            return 0
+   591→        visited: Dict[str, int] = {self._base_url: 0}
+   592→        queue: deque[Tuple[str, int]] = deque([(self._base_url, 0)])
+   593→        max_d = 0
+   594→        while queue:
+   595→            cur, d = queue.popleft()
+   596→            for nb in self._graph.get_neighbors(cur):
+   597→                if nb not in visited:
+   598→                    visited[nb] = d + 1
+   599→                    max_d = max(max_d, d + 1)
+   600→                    queue.append((nb, d + 1))
+   601→        return max_d
+   602→
+   603→    def identify_hub_pages(self, top_n: int = 10) -> List[Tuple[str, float]]:
+   604→        """Pages with the highest *authority* scores (most linked-to).
+   605→
+   606→        Returns a list of (url, score) tuples sorted descending.
+   607→        """
+   608→        _, auths = CentralityAnalyzer.hubs_authorities(
+   609→            self._graph.nodes(), self._graph.edges()
+   610→        )
+   611→        ranked = sorted(auths.items(), key=lambda x: x[1], reverse=True)
+   612→        return [(str(u), s) for u, s in ranked[:top_n]]
+   613→
+   614→    def identify_authority_pages(self, top_n: int = 10) -> List[Tuple[str, float]]:
+   615→        """Pages that link *out* to many other pages (high hub score).
+   616→
+   617→        Returns a list of (url, score) tuples sorted descending.
+   618→        """
+   619→        hubs, _ = CentralityAnalyzer.hubs_authorities(
+   620→            self._graph.nodes(), self._graph.edges()
+   621→        )
+   622→        ranked = sorted(hubs.items(), key=lambda x: x[1], reverse=True)
+   623→        return [(str(u), s) for u, s in ranked[:top_n]]
+   624→
+   625→    def get_site_map_hierarchy(self) -> Dict[str, Any]:
+   626→        """Build a tree representation rooted at the base URL.
+   627→
+   628→        Each node is ``{"url": ..., "children": [...]}``.  Cycles are
+   629→        handled by tracking visited nodes per branch.
+   630→        """
+   631→        root = self._base_url
+   632→        if root not in self._graph.nodes():
+   633→            return {"url": root, "children": []}
+   634→
+   635→        def _build(node: str, visited: Set[str]) -> Dict[str, Any]:
+   636→            visited.add(node)
+   637→            children = []
+   638→            for nb in sorted(self._graph.get_neighbors(node)):
+   639→                if nb not in visited:
+   640→                    children.append(_build(nb, visited))
+   641→            return {"url": node, "children": children}
+   642→
+   643→        return _build(root, set())
+   644→
+   645→    def calculate_connectivity(self) -> Dict[str, float]:
+   646→        """Compute density, average degree, and global clustering coefficient.
+   647→
+   648→        *Density* = |E| / (|V| · (|V| − 1))
+   649→        *Clustering* = average of  ``2·T(v) / (k(v)·(k(v)−1))``  over nodes
+   650→        with k(v) ≥ 2 (undirected triangles among neighbours).
+   651→        """
+   652→        n = self._graph.node_count
+   653→        m = self._graph.edge_count
+   654→        if n <= 1:
+   655→            return {"density": 0.0, "avg_degree": 0.0, "clustering_coefficient": 0.0}
+   656→        density = m / (n * (n - 1))
+   657→        total_deg = sum(self._graph.get_out_degree(nd) for nd in self._graph.nodes())
+   658→        avg_deg = total_deg / n
+   659→        # clustering coefficient (undirected projection)
+   660→        adj: Dict[Hashable, Set[Hashable]] = defaultdict(set)
+   661→        for u, v in self._graph.edges():
+   662→            adj[u].add(v)
+   663→            adj[v].add(u)
+   664→        cc_sum = 0.0
+   665→        cc_count = 0
+   666→        for nd in self._graph.nodes():
+   667→            k = len(adj.get(nd, set()))
+   668→            if k < 2:
+   669→                continue
+   670→            nbrs = adj[nd]
+   671→            triangles = sum(1 for a in nbrs for b in nbrs if a < b and b in adj.get(a, set()))
+   672→            max_tri = k * (k - 1) / 2.0
+   673→            cc_sum += (2.0 * triangles) / max_tri
+   674→            cc_count += 1
+   675→        clustering = cc_sum / cc_count if cc_count else 0.0
+   676→        return {
+   677→            "density": density,
+   678→            "avg_degree": avg_deg,
+   679→            "clustering_coefficient": clustering,
+   680→        }
+   681→
+   682→    # -- full analysis ----------------------------------------------------- #
+   683→
+   684→    def analyze(self, explorer_result: Any) -> WebAnalysisReport:
+   685→        """Run the complete analysis pipeline and return a report.
+   686→
+   687→        Parameters
+   688→        ----------
+   689→        explorer_result :
+   690→            An :class:`ExplorerResult` instance produced by the URL explorer.
+   691→        """
+   692→        self.build_from_explorer_result(explorer_result)
+   693→        nodes = self._graph.nodes()
+   694→        edges = self._graph.edges()
+   695→        conn = self.calculate_connectivity()
+   696→
+   697→        hubs_scores, auth_scores = CentralityAnalyzer.hubs_authorities(nodes, edges)
+   698→        pr_scores = CentralityAnalyzer.pagerank(nodes, edges)
+   699→        cc_scores = CentralityAnalyzer.closeness_centrality(nodes, edges)
+   700→        bc_scores = CentralityAnalyzer.betweenness_centrality(nodes, edges)
+   701→        dc_scores = CentralityAnalyzer.degree_centrality(nodes, edges)
+   702→
+   703→        centrality: Dict[str, Dict[str, float]] = {}
+   704→        for nd in nodes:
+   705→            nd_str = str(nd)
+   706→            centrality[nd_str] = {
+   707→                "pagerank": pr_scores.get(nd, 0.0),
+   708→                "closeness": cc_scores.get(nd, 0.0),
+   709→                "betweenness": bc_scores.get(nd, 0.0),
+   710→                "degree": dc_scores.get(nd, 0.0),
+   711→                "hub": hubs_scores.get(nd, 0.0),
+   712→                "authority": auth_scores.get(nd, 0.0),
+   713→            }
+   714→
+   715→        communities = CommunityDetector.detect_communities_louvain_like(nodes, edges)
+   716→        bridges = CommunityDetector.find_bridges(nodes, edges)
+   717→        components = CommunityDetector.connected_components(nodes, edges)
+   718→
+   719→        # connectivity score: fraction of nodes in the largest component
+   720→        largest = max((len(c) for c in components), default=0)
+   721→        conn_score = largest / self._graph.node_count if self._graph.node_count else 0.0
+   722→
+   723→        sys_risk = RiskPropagator.calculate_systemic_risk(nodes, edges)
+   724→
+   725→        return WebAnalysisReport(
+   726→            total_pages=self._graph.node_count,
+   727→            total_links=self._graph.edge_count,
+   728→            density=conn["density"],
+   729→            avg_degree=conn["avg_degree"],
+   730→            clustering_coefficient=conn["clustering_coefficient"],
+   731→            hub_pages=self.identify_hub_pages(),
+   732→            authority_pages=self.identify_authority_pages(),
+   733→            orphan_pages=self.find_orphan_pages(),
+   734→            dead_ends=self.find_dead_ends(),
+   735→            communities=[{str(n) for n in c} for c in communities],
+   736→            max_depth=self.calculate_site_depth(),
+   737→            connectivity_score=conn_score,
+   738→            centrality_scores=centrality,
+   739→            systemic_risk=sys_risk,
+   740→            bridges=[(str(u), str(v)) for u, v in bridges],
+   741→        )
+   742→
