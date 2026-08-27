@@ -1,0 +1,786 @@
+     1→"""
+     2→WebScraper Pro - Dashboard / Scraper Panel
+     3→Main scraping interface with URL input, extraction rules, page actions, results table, and project management.
+     4→"""
+     5→
+     6→import json
+     7→import customtkinter as ctk
+     8→from tkinter import filedialog, messagebox
+     9→
+    10→from ui.styles import theme, Typography, Spacing, Radius
+    11→from core.data_parser import ExtractionRule, ExtractionMethod
+    12→from core.scraper_engine import ScrapingMode
+    13→from core.templates import TEMPLATES, get_template_names
+    14→from ui.components.table_widget import DataTable
+    15→
+    16→
+    17→class DashboardPanel(ctk.CTkFrame):
+    18→    """Main scraper panel with URL input, rules manager, results table, and project controls."""
+    19→
+    20→    METHOD_OPTIONS = [m.value for m in ExtractionMethod]
+    21→    ACTION_TYPES = ["click", "type", "scroll", "wait", "select", "hover"]
+    22→
+    23→    def __init__(self, master, **kwargs):
+    24→        super().__init__(master, fg_color="transparent", **kwargs)
+    25→        self.grid_rowconfigure(1, weight=1)
+    26→        self.grid_columnconfigure(0, weight=1)
+    27→        self.grid_columnconfigure(1, weight=1)
+    28→
+    29→        self._extraction_rules: list[ExtractionRule] = []
+    30→        self._page_actions: list[dict] = []
+    31→        self._build_toolbar()
+    32→        self._build_main_area()
+    33→
+    34→    # ------------------------------------------------------------------
+    35→    # Layout
+    36→    # ------------------------------------------------------------------
+    37→
+    38→    def _build_toolbar(self):
+    39→        bar = ctk.CTkFrame(self, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+    40→        bar.grid(row=0, column=0, columnspan=2, sticky="ew", padx=Spacing.MD, pady=(Spacing.MD, 0))
+    41→        bar.grid_columnconfigure(3, weight=1)
+    42→
+    43→        ctk.CTkLabel(bar, text="Scraping Mode", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    44→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, padx=(Spacing.MD, Spacing.XS))
+    45→        self._mode_seg = ctk.CTkSegmentedButton(
+    46→            bar, values=[m.value.capitalize() for m in ScrapingMode],
+    47→            command=self._on_mode_change, font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+    48→            selected_color=theme.colors.BRAND_PRIMARY, selected_hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+    49→        )
+    50→        self._mode_seg.set("Static")
+    51→        self._mode_seg.grid(row=0, column=1, padx=Spacing.XS, pady=Spacing.SM, sticky="w")
+    52→
+    53→        self._btn_start = ctk.CTkButton(
+    54→            bar, text=">>  Start", width=100, font=(Typography.FONT_FAMILY, Typography.BODY_SIZE, "bold"),
+    55→            fg_color=theme.colors.SUCCESS, hover_color=theme.colors.SUCCESS, corner_radius=Radius.MD,
+    56→            command=self._on_start,
+    57→        )
+    58→        self._btn_start.grid(row=0, column=2, padx=Spacing.SM, pady=Spacing.SM)
+    59→
+    60→        self._btn_stop = ctk.CTkButton(
+    61→            bar, text="Stop", width=80, font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+    62→            fg_color=theme.colors.ERROR, hover_color=theme.colors.ERROR, corner_radius=Radius.MD,
+    63→            command=self._on_stop, state="disabled",
+    64→        )
+    65→        self._btn_stop.grid(row=0, column=3, padx=Spacing.SM, pady=Spacing.SM)
+    66→
+    67→        # Templates dropdown
+    68→        ctk.CTkLabel(bar, text="Templates", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    69→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=4, padx=(Spacing.LG, Spacing.XS))
+    70→        self._template_menu = ctk.CTkOptionMenu(
+    71→            bar, values=get_template_names(), width=160,
+    72→            font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+    73→            fg_color=theme.colors.BG_INPUT, button_color=theme.colors.BG_ELEVATED,
+    74→            button_hover_color=theme.colors.BG_HOVER,
+    75→            dropdown_fg_color=theme.colors.BG_ELEVATED,
+    76→            text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+    77→            command=self._on_template_selected,
+    78→        )
+    79→        self._template_menu.grid(row=0, column=5, padx=(Spacing.XS, Spacing.MD), pady=Spacing.SM)
+    80→
+    81→    def _build_main_area(self):
+    82→        left = ctk.CTkFrame(self, fg_color="transparent")
+    83→        left.grid(row=1, column=0, sticky="nsew", padx=(Spacing.MD, 4), pady=Spacing.MD)
+    84→        left.grid_rowconfigure(3, weight=1)
+    85→        left.grid_columnconfigure(0, weight=1)
+    86→
+    87→        right = ctk.CTkFrame(self, fg_color="transparent")
+    88→        right.grid(row=1, column=1, sticky="nsew", padx=(4, Spacing.MD), pady=Spacing.MD)
+    89→        right.grid_rowconfigure(2, weight=1)
+    90→        right.grid_columnconfigure(0, weight=1)
+    91→
+    92→        self._build_project_bar(left)
+    93→        self._build_url_section(left)
+    94→        self._build_options_section(left)
+    95→        self._build_rules_section(left)
+    96→        self._build_actions_section(left)
+    97→        self._build_results_section(right)
+    98→        self._build_export_section(right)
+    99→
+   100→    # ------------------------------------------------------------------
+   101→    # Project Bar
+   102→    # ------------------------------------------------------------------
+   103→
+   104→    def _build_project_bar(self, parent):
+   105→        bar = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   106→        bar.grid(row=0, column=0, sticky="ew", pady=(0, Spacing.SM))
+   107→
+   108→        ctk.CTkLabel(bar, text="Project", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   109→                      text_color=theme.colors.TEXT_SECONDARY).pack(side="left", padx=(Spacing.MD, Spacing.XS), pady=Spacing.SM)
+   110→
+   111→        for text, cmd in [("New", self._new_project), ("Save", self._save_project),
+   112→                           ("Load", self._load_project), ("Import Rules", self._import_rules),
+   113→                           ("Export Rules", self._export_rules)]:
+   114→            ctk.CTkButton(bar, text=text, width=80, height=24,
+   115→                           font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   116→                           fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   117→                           text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD,
+   118→                           border_width=1, border_color=theme.colors.BORDER,
+   119→                           command=cmd).pack(side="left", padx=2, pady=Spacing.SM)
+   120→
+   121→    def _new_project(self):
+   122→        app = self.winfo_toplevel()
+   123→        if hasattr(app, 'engine'):
+   124→            app.engine.create_project("New Project")
+   125→            if hasattr(app, '_log_panel'):
+   126→                app._log_panel.add_log("New project created", "info")
+   127→
+   128→    def _save_project(self):
+   129→        app = self.winfo_toplevel()
+   130→        if not hasattr(app, 'engine'):
+   131→            return
+   132→        engine = app.engine
+   133→        # Gather current UI state into the project
+   134→        if not engine.current_project:
+   135→            engine.create_project("Untitled")
+   136→        proj = engine.current_project
+   137→        proj.urls = [u.strip() for u in self._url_text.get("0.0", "end").strip().splitlines() if u.strip()]
+   138→        proj.mode = ScrapingMode(self._mode_seg.get().lower())
+   139→        proj.extraction_rules = [self._rule_to_dict(r) for r in self._extraction_rules]
+   140→        proj.page_actions = self._collect_page_actions()
+   141→        proj.auto_scroll = self._var_auto_scroll.get()
+   142→        proj.follow_links = self._var_follow_links.get()
+   143→        try:
+   144→            proj.max_pages = int(self._max_pages_entry.get().strip() or "100")
+   145→        except ValueError:
+   146→            proj.max_pages = 100
+   147→        try:
+   148→            proj.max_depth = int(self._depth_entry.get().strip() or "1")
+   149→        except ValueError:
+   150→            proj.max_depth = 1
+   151→        engine.save_current_project()
+   152→        if hasattr(app, '_log_panel'):
+   153→            app._log_panel.add_log(f"Project saved: {proj.name}", "success")
+   154→
+   155→    def _load_project(self):
+   156→        app = self.winfo_toplevel()
+   157→        if not hasattr(app, 'engine'):
+   158→            return
+   159→        engine = app.engine
+   160→        projects = engine.projects
+   161→        if not projects:
+   162→            messagebox.showinfo("Projects", "No saved projects found.")
+   163→            return
+   164→
+   165→        dialog = ctk.CTkToplevel(self)
+   166→        dialog.title("Load Project")
+   167→        dialog.geometry("500x350")
+   168→        dialog.configure(fg_color=theme.colors.BG_MAIN)
+   169→        dialog.transient(self.winfo_toplevel())
+   170→        dialog.grab_set()
+   171→
+   172→        listbox = ctk.CTkTextbox(dialog, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   173→                                  fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   174→                                  border_width=1, corner_radius=Radius.MD,
+   175→                                  text_color=theme.colors.TEXT_PRIMARY)
+   176→        listbox.pack(fill="both", expand=True, padx=Spacing.MD, pady=Spacing.MD)
+   177→
+   178→        for p in projects:
+   179→            rules_count = len(p.extraction_rules)
+   180→            listbox.insert("end", f"{p.name}  |  URLs: {len(p.urls)}  |  Rules: {rules_count}  |  Mode: {p.mode.value}  |  Updated: {p.updated_at[:16]}\n")
+   181→
+   182→        def _do_load():
+   183→            content = listbox.get("1.0", "end").strip()
+   184→            if content:
+   185→                # Get first project name
+   186→                first_line = content.split("\n")[0]
+   187→                name = first_line.split("|")[0].strip()
+   188→                for p in projects:
+   189→                    if p.name == name:
+   190→                        engine.load_project(p.id)
+   191→                        self._apply_project_to_ui(p)
+   192→                        if hasattr(app, '_log_panel'):
+   193→                            app._log_panel.add_log(f"Project loaded: {p.name}", "success")
+   194→                        break
+   195→            dialog.destroy()
+   196→
+   197→        ctk.CTkButton(dialog, text="Load Selected", width=140,
+   198→                       font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   199→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   200→                       corner_radius=Radius.MD, command=_do_load).pack(pady=(0, Spacing.MD))
+   201→
+   202→    def _apply_project_to_ui(self, proj):
+   203→        self._url_text.configure(state="normal")
+   204→        self._url_text.delete("0.0", "end")
+   205→        for url in proj.urls:
+   206→            self._url_text.insert("end", url + "\n")
+   207→
+   208→        self._mode_seg.set(proj.mode.value.capitalize())
+   209→        self._var_auto_scroll.set(proj.auto_scroll)
+   210→        self._var_follow_links.set(proj.follow_links)
+   211→        self._max_pages_entry.delete("0", "end")
+   212→        self._max_pages_entry.insert("0", str(proj.max_pages))
+   213→        self._depth_entry.delete("0", "end")
+   214→        self._depth_entry.insert("0", str(proj.max_depth))
+   215→
+   216→        self._extraction_rules.clear()
+   217→        for rd in proj.extraction_rules:
+   218→            self._extraction_rules.append(ExtractionRule(
+   219→                name=rd["name"], method=ExtractionMethod(rd["method"]),
+   220→                selector=rd["selector"], attribute=rd.get("attribute"),
+   221→                default=rd.get("default"), is_list=rd.get("is_list", False),
+   222→            ))
+   223→        self._refresh_rules_list()
+   224→
+   225→    def _import_rules(self):
+   226→        path = filedialog.askopenfilename(
+   227→            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+   228→        )
+   229→        if not path:
+   230→            return
+   231→        try:
+   232→            with open(path, "r", encoding="utf-8") as f:
+   233→                rules_data = json.load(f)
+   234→            count = 0
+   235→            for rd in rules_data if isinstance(rules_data, list) else [rules_data]:
+   236→                if "name" in rd and "method" in rd and "selector" in rd:
+   237→                    self._extraction_rules.append(ExtractionRule(
+   238→                        name=rd["name"], method=ExtractionMethod(rd["method"]),
+   239→                        selector=rd["selector"], attribute=rd.get("attribute"),
+   240→                        default=rd.get("default"), is_list=rd.get("is_list", False),
+   241→                    ))
+   242→                    count += 1
+   243→            self._refresh_rules_list()
+   244→            app = self.winfo_toplevel()
+   245→            if hasattr(app, '_log_panel'):
+   246→                app._log_panel.add_log(f"Imported {count} rules from {path}", "info")
+   247→        except Exception as e:
+   248→            messagebox.showerror("Import Error", str(e))
+   249→
+   250→    def _export_rules(self):
+   251→        if not self._extraction_rules:
+   252→            messagebox.showinfo("Export", "No rules to export.")
+   253→            return
+   254→        path = filedialog.asksaveasfilename(
+   255→            defaultextension=".json",
+   256→            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+   257→        )
+   258→        if not path:
+   259→            return
+   260→        try:
+   261→            data = [self._rule_to_dict(r) for r in self._extraction_rules]
+   262→            with open(path, "w", encoding="utf-8") as f:
+   263→                json.dump(data, f, indent=2, ensure_ascii=False)
+   264→            app = self.winfo_toplevel()
+   265→            if hasattr(app, '_log_panel'):
+   266→                app._log_panel.add_log(f"Exported {len(data)} rules to {path}", "success")
+   267→        except Exception as e:
+   268→            messagebox.showerror("Export Error", str(e))
+   269→
+   270→    def _rule_to_dict(self, rule: ExtractionRule) -> dict:
+   271→        return {
+   272→            "name": rule.name, "method": rule.method.value,
+   273→            "selector": rule.selector, "attribute": rule.attribute,
+   274→            "default": rule.default, "is_list": rule.is_list,
+   275→        }
+   276→
+   277→    # ------------------------------------------------------------------
+   278→    # URL Section
+   279→    # ------------------------------------------------------------------
+   280→
+   281→    def _build_url_section(self, parent):
+   282→        card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   283→        card.grid(row=1, column=0, sticky="ew", pady=Spacing.SM)
+   284→        card.grid_columnconfigure(0, weight=1)
+   285→
+   286→        ctk.CTkLabel(card, text="Target URLs (one per line)",
+   287→                      font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   288→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   289→
+   290→        self._url_text = ctk.CTkTextbox(
+   291→            card, height=70, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   292→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   293→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   294→        )
+   295→        self._url_text.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   296→
+   297→    # ------------------------------------------------------------------
+   298→    # Options Section
+   299→    # ------------------------------------------------------------------
+   300→
+   301→    def _build_options_section(self, parent):
+   302→        card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   303→        card.grid(row=2, column=0, sticky="ew", pady=Spacing.SM)
+   304→        card.grid_columnconfigure(4, weight=1)
+   305→
+   306→        self._var_auto_scroll = ctk.BooleanVar(value=False)
+   307→        self._var_follow_links = ctk.BooleanVar(value=False)
+   308→
+   309→        ctk.CTkCheckBox(card, text="Auto-scroll", variable=self._var_auto_scroll,
+   310→                         font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   311→                         text_color=theme.colors.TEXT_SECONDARY,
+   312→                         fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   313→                         ).grid(row=0, column=0, padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM)
+   314→
+   315→        ctk.CTkCheckBox(card, text="Follow links", variable=self._var_follow_links,
+   316→                         font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   317→                         text_color=theme.colors.TEXT_SECONDARY,
+   318→                         fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   319→                         ).grid(row=0, column=1, padx=Spacing.SM, pady=Spacing.SM)
+   320→
+   321→        ctk.CTkLabel(bar, text="Max Pages", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   322→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=2, padx=Spacing.SM, pady=Spacing.SM, sticky="e")
+   323→        self._max_pages_entry = ctk.CTkEntry(
+   324→            card, width=60, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   325→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   326→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=28,
+   327→        )
+   328→        self._max_pages_entry.insert("0", "100")
+   329→        self._max_pages_entry.grid(row=0, column=3, padx=(Spacing.XS, Spacing.SM), pady=Spacing.SM)
+   330→
+   331→        ctk.CTkLabel(card, text="Depth", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   332→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=4, padx=Spacing.SM, pady=Spacing.SM, sticky="e")
+   333→        self._depth_entry = ctk.CTkEntry(
+   334→            card, width=50, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   335→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   336→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=28,
+   337→        )
+   338→        self._depth_entry.insert("0", "1")
+   339→        self._depth_entry.grid(row=0, column=5, padx=(Spacing.XS, Spacing.SM), pady=Spacing.SM)
+   340→
+   341→        ctk.CTkLabel(card, text="Workers", font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   342→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=6, padx=Spacing.SM, pady=Spacing.SM, sticky="e")
+   343→        self._workers_entry = ctk.CTkEntry(
+   344→            card, width=40, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   345→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   346→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=28,
+   347→        )
+   348→        self._workers_entry.insert("0", "1")
+   349→        self._workers_entry.grid(row=0, column=7, padx=(Spacing.XS, Spacing.MD), pady=Spacing.SM)
+   350→
+   351→    # ------------------------------------------------------------------
+   352→    # Extraction Rules Section
+   353→    # ------------------------------------------------------------------
+   354→
+   355→    def _build_rules_section(self, parent):
+   356→        card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   357→        card.grid(row=3, column=0, sticky="nsew", pady=Spacing.SM)
+   358→        card.grid_rowconfigure(1, weight=1)
+   359→        card.grid_columnconfigure(0, weight=1)
+   360→
+   361→        header = ctk.CTkFrame(card, fg_color="transparent")
+   362→        header.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   363→        header.grid_columnconfigure(0, weight=1)
+   364→
+   365→        ctk.CTkLabel(header, text="Extraction Rules", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   366→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   367→
+   368→        btn_frame = ctk.CTkFrame(header, fg_color="transparent")
+   369→        btn_frame.grid(row=0, column=1)
+   370→
+   371→        for col, (text, cmd) in enumerate([("+ Add", self._add_rule), ("Edit", self._edit_rule),
+   372→                                            ("Remove", self._remove_rule), ("Clear", self._clear_rules)]):
+   373→            ctk.CTkButton(btn_frame, text=text, width=60, height=24,
+   374→                           font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   375→                           fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   376→                           text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD, border_width=1,
+   377→                           border_color=theme.colors.BORDER, command=cmd).grid(row=0, column=col, padx=2)
+   378→
+   379→        self._rules_listbox = ctk.CTkTextbox(
+   380→            card, height=120, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   381→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   382→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   383→            state="disabled",
+   384→        )
+   385→        self._rules_listbox.grid(row=1, column=0, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   386→
+   387→    def _refresh_rules_list(self):
+   388→        self._rules_listbox.configure(state="normal")
+   389→        self._rules_listbox.delete("0.0", "end")
+   390→        for i, rule in enumerate(self._extraction_rules):
+   391→            list_flag = " [LIST]" if rule.is_list else ""
+   392→            attr = f" attr={rule.attribute}" if rule.attribute else ""
+   393→            default = f" default=\"{rule.default}\"" if rule.default else ""
+   394→            line = f"{i + 1}. {rule.name}  |  {rule.method.value}  |  {rule.selector}{attr}{default}{list_flag}\n"
+   395→            self._rules_listbox.insert("end", line)
+   396→        self._rules_listbox.configure(state="disabled")
+   397→
+   398→    def _add_rule(self):
+   399→        self._show_rule_dialog()
+   400→
+   401→    def _edit_rule(self):
+   402→        sel = self._rules_listbox.get("1.0", "end").strip().split("\n")
+   403→        if not sel:
+   404→            return
+   405→        idx = int(self._rules_listbox.index("insert").split(".")[0]) - 1
+   406→        if 0 <= idx < len(self._extraction_rules):
+   407→            self._show_rule_dialog(edit_index=idx)
+   408→
+   409→    def _remove_rule(self):
+   410→        if self._extraction_rules:
+   411→            self._extraction_rules.pop()
+   412→            self._refresh_rules_list()
+   413→
+   414→    def _clear_rules(self):
+   415→        self._extraction_rules.clear()
+   416→        self._refresh_rules_list()
+   417→
+   418→    def _show_rule_dialog(self, edit_index: int = -1):
+   419→        dialog = ctk.CTkToplevel(self)
+   420→        dialog.title("Edit Extraction Rule" if edit_index >= 0 else "Add Extraction Rule")
+   421→        dialog.geometry("480x420")
+   422→        dialog.configure(fg_color=theme.colors.BG_MAIN)
+   423→        dialog.transient(self.winfo_toplevel())
+   424→        dialog.grab_set()
+   425→
+   426→        dialog.grid_columnconfigure(1, weight=1)
+   427→
+   428→        existing = self._extraction_rules[edit_index] if edit_index >= 0 else None
+   429→
+   430→        labels = ["Name", "Method", "Selector", "Attribute", "Default Value"]
+   431→        for row, lbl_text in enumerate(labels):
+   432→            ctk.CTkLabel(dialog, text=lbl_text, font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   433→                          text_color=theme.colors.TEXT_SECONDARY).grid(row=row, column=0, sticky="w",
+   434→                                                                        padx=(Spacing.MD, Spacing.SM), pady=Spacing.SM)
+   435→
+   436→        name_entry = ctk.CTkEntry(dialog, font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   437→                                   fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   438→                                   border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY)
+   439→        name_entry.grid(row=0, column=1, sticky="ew", padx=(0, Spacing.MD), pady=Spacing.SM)
+   440→
+   441→        method_menu = ctk.CTkOptionMenu(dialog, values=self.METHOD_OPTIONS,
+   442→                                         font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   443→                                         fg_color=theme.colors.BG_INPUT, button_color=theme.colors.BG_ELEVATED,
+   444→                                         button_hover_color=theme.colors.BG_HOVER,
+   445→                                         dropdown_fg_color=theme.colors.BG_ELEVATED,
+   446→                                         text_color=theme.colors.TEXT_PRIMARY,
+   447→                                         corner_radius=Radius.MD)
+   448→        method_menu.grid(row=1, column=1, sticky="ew", padx=(0, Spacing.MD), pady=Spacing.SM)
+   449→
+   450→        selector_entry = ctk.CTkEntry(dialog, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   451→                                       fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   452→                                       border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY)
+   453→        selector_entry.grid(row=2, column=1, sticky="ew", padx=(0, Spacing.MD), pady=Spacing.SM)
+   454→
+   455→        attr_entry = ctk.CTkEntry(dialog, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   456→                                   fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   457→                                   border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY)
+   458→        attr_entry.grid(row=3, column=1, sticky="ew", padx=(0, Spacing.MD), pady=Spacing.SM)
+   459→
+   460→        default_entry = ctk.CTkEntry(dialog, font=(Typography.MONO_FONT, Typography.SMALL_SIZE),
+   461→                                      fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   462→                                      border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY)
+   463→        default_entry.grid(row=4, column=1, sticky="ew", padx=(0, Spacing.MD), pady=Spacing.SM)
+   464→
+   465→        var_is_list = ctk.BooleanVar(value=False)
+   466→        ctk.CTkCheckBox(dialog, text="Extract as list", variable=var_is_list,
+   467→                         font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   468→                         text_color=theme.colors.TEXT_SECONDARY,
+   469→                         fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   470→                         ).grid(row=5, column=0, columnspan=2, sticky="w", padx=Spacing.MD, pady=Spacing.SM)
+   471→
+   472→        if existing:
+   473→            name_entry.insert("0", existing.name)
+   474→            method_menu.set(existing.method.value)
+   475→            selector_entry.insert("0", existing.selector)
+   476→            if existing.attribute:
+   477→                attr_entry.insert("0", existing.attribute)
+   478→            if existing.default:
+   479→                default_entry.insert("0", existing.default)
+   480→            var_is_list.set(existing.is_list)
+   481→
+   482→        def _save():
+   483→            name = name_entry.get().strip()
+   484→            selector = selector_entry.get().strip()
+   485→            if not name or not selector:
+   486→                messagebox.showwarning("Validation", "Name and selector are required.", parent=dialog)
+   487→                return
+   488→            rule = ExtractionRule(
+   489→                name=name, method=ExtractionMethod(method_menu.get()), selector=selector,
+   490→                attribute=attr_entry.get().strip() or None,
+   491→                default=default_entry.get().strip() or None,
+   492→                is_list=var_is_list.get(),
+   493→            )
+   494→            if edit_index >= 0:
+   495→                self._extraction_rules[edit_index] = rule
+   496→            else:
+   497→                self._extraction_rules.append(rule)
+   498→            self._refresh_rules_list()
+   499→            dialog.destroy()
+   500→
+   501→        ctk.CTkButton(dialog, text="Save Rule", command=_save, width=140,
+   502→                       font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   503→                       fg_color=theme.colors.BRAND_PRIMARY, hover_color=theme.colors.BRAND_PRIMARY_HOVER,
+   504→                       corner_radius=Radius.MD).grid(row=6, column=0, columnspan=2, pady=Spacing.MD)
+   505→
+   506→    # ------------------------------------------------------------------
+   507→    # Page Actions Section (Dynamic mode)
+   508→    # ------------------------------------------------------------------
+   509→
+   510→    def _build_actions_section(self, parent):
+   511→        self._actions_card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   512→        self._actions_card.grid(row=4, column=0, sticky="ew", pady=Spacing.SM)
+   513→        self._actions_card.grid_columnconfigure(1, weight=1)
+   514→
+   515→        header = ctk.CTkFrame(self._actions_card, fg_color="transparent")
+   516→        header.grid(row=0, column=0, columnspan=4, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   517→        header.grid_columnconfigure(0, weight=1)
+   518→
+   519→        ctk.CTkLabel(header, text="Page Actions (Dynamic Mode)",
+   520→                      font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   521→                      text_color=theme.colors.TEXT_SECONDARY).grid(row=0, column=0, sticky="w")
+   522→
+   523→        ctk.CTkButton(header, text="+ Add Action", width=90, height=24,
+   524→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   525→                       fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   526→                       text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD, border_width=1,
+   527→                       border_color=theme.colors.BORDER, command=self._add_action_row).grid(row=0, column=1)
+   528→
+   529→        self._action_rows_frame = ctk.CTkFrame(self._actions_card, fg_color="transparent")
+   530→        self._action_rows_frame.grid(row=1, column=0, columnspan=4, sticky="ew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   531→
+   532→    def _add_action_row(self):
+   533→        row_frame = ctk.CTkFrame(self._action_rows_frame, fg_color="transparent")
+   534→        row_frame.pack(fill="x", pady=2)
+   535→        row_frame.grid_columnconfigure(1, weight=1)
+   536→        row_frame.grid_columnconfigure(2, weight=1)
+   537→
+   538→        type_menu = ctk.CTkOptionMenu(row_frame, values=self.ACTION_TYPES, width=80,
+   539→                                        font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   540→                                        fg_color=theme.colors.BG_INPUT, button_color=theme.colors.BG_ELEVATED,
+   541→                                        button_hover_color=theme.colors.BG_HOVER,
+   542→                                        dropdown_fg_color=theme.colors.BG_ELEVATED,
+   543→                                        text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD)
+   544→        type_menu.grid(row=0, column=0, padx=(0, Spacing.XS))
+   545→
+   546→        sel_entry = ctk.CTkEntry(row_frame, placeholder_text="Selector", font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   547→                                   fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   548→                                   border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=26)
+   549→        sel_entry.grid(row=0, column=1, padx=Spacing.XS, sticky="ew")
+   550→
+   551→        val_entry = ctk.CTkEntry(row_frame, placeholder_text="Value", font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   552→                                   fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   553→                                   border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY, height=26)
+   554→        val_entry.grid(row=0, column=2, padx=Spacing.XS, sticky="ew")
+   555→
+   556→        def _remove_row():
+   557→            row_frame.destroy()
+   558→
+   559→        ctk.CTkButton(row_frame, text="X", width=26, height=26,
+   560→                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   561→                       fg_color=theme.colors.ERROR, hover_color=theme.colors.ERROR,
+   562→                       text_color=theme.colors.TEXT_INVERSE, corner_radius=Radius.MD,
+   563→                       command=_remove_row).grid(row=0, column=3, padx=(Spacing.XS, 0))
+   564→
+   565→    def _collect_page_actions(self) -> list[dict]:
+   566→        actions = []
+   567→        for row in self._action_rows_frame.winfo_children():
+   568→            if isinstance(row, ctk.CTkFrame):
+   569→                widgets = row.winfo_children()
+   570→                if len(widgets) >= 3:
+   571→                    actions.append({
+   572→                        "action_type": widgets[0].get(),
+   573→                        "selector": widgets[1].get().strip(),
+   574→                        "value": widgets[2].get().strip(),
+   575→                        "delay": 0.5,
+   576→                    })
+   577→        return actions
+   578→
+   579→    # ------------------------------------------------------------------
+   580→    # Results Section (with search/filter and data table)
+   581→    # ------------------------------------------------------------------
+   582→
+   583→    def _build_results_section(self, parent):
+   584→        card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   585→        card.grid(row=0, column=0, sticky="nsew", pady=(0, Spacing.SM))
+   586→        card.grid_rowconfigure(2, weight=1)
+   587→        card.grid_columnconfigure(1, weight=1)
+   588→
+   589→        # Header with search
+   590→        header = ctk.CTkFrame(card, fg_color="transparent")
+   591→        header.grid(row=0, column=0, columnspan=2, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   592→        header.grid_columnconfigure(1, weight=1)
+   593→
+   594→        ctk.CTkLabel(header, text="Results Preview",
+   595→                      font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   596→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, sticky="w")
+   597→
+   598→        self._result_count_label = ctk.CTkLabel(header, text="0 records",
+   599→                                                  font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   600→                                                  text_color=theme.colors.TEXT_MUTED)
+   601→        self._result_count_label.grid(row=0, column=1, sticky="e")
+   602→
+   603→        # Search bar
+   604→        search_frame = ctk.CTkFrame(card, fg_color="transparent")
+   605→        search_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=Spacing.MD, pady=(Spacing.XS, 0))
+   606→        search_frame.grid_columnconfigure(0, weight=1)
+   607→
+   608→        self._search_entry = ctk.CTkEntry(
+   609→            search_frame, placeholder_text="Search results...",
+   610→            font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+   611→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   612→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   613→            height=28,
+   614→        )
+   615→        self._search_entry.grid(row=0, column=0, sticky="ew", padx=(0, Spacing.SM))
+   616→        self._search_entry.bind("<KeyRelease>", self._on_search)
+   617→
+   618→        # Data table
+   619→        self._data_table = DataTable(card)
+   620→        self._data_table.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=Spacing.MD, pady=(Spacing.XS, Spacing.MD))
+   621→
+   622→        # Fallback textbox (for when table has issues)
+   623→        self._results_text = ctk.CTkTextbox(
+   624→            card, height=400, font=(Typography.MONO_FONT, Typography.TINY_SIZE),
+   625→            fg_color=theme.colors.BG_INPUT, border_color=theme.colors.BORDER,
+   626→            border_width=1, corner_radius=Radius.MD, text_color=theme.colors.TEXT_PRIMARY,
+   627→            state="disabled",
+   628→        )
+   629→
+   630→    def _on_search(self, event=None):
+   631→        app = self.winfo_toplevel()
+   632→        if hasattr(app, 'engine') and app.engine.results:
+   633→            search_text = self._search_entry.get().strip()
+   634→            filtered = self._data_table.get_filtered_data(search_text)
+   635→            self._data_table.set_data(filtered)
+   636→            self._result_count_label.configure(text=f"{len(filtered)} records")
+   637→
+   638→    def _display_results(self, results: list[dict]):
+   639→        if not results:
+   640→            self._data_table.set_data([])
+   641→            self._result_count_label.configure(text="0 records")
+   642→            return
+   643→        # Filter out internal fields
+   644→        display = [{k: v for k, v in r.items() if not k.startswith("_")} for r in results]
+   645→        self._data_table.set_data(display)
+   646→        self._result_count_label.configure(text=f"{len(display)} records")
+   647→
+   648→    # ------------------------------------------------------------------
+   649→    # Export Section
+   650→    # ------------------------------------------------------------------
+   651→
+   652→    def _build_export_section(self, parent):
+   653→        card = ctk.CTkFrame(parent, fg_color=theme.colors.BG_CARD, corner_radius=Radius.LG)
+   654→        card.grid(row=1, column=0, sticky="ew", pady=Spacing.SM)
+   655→
+   656→        ctk.CTkLabel(card, text="Export", font=(Typography.FONT_FAMILY, Typography.BODY_SIZE),
+   657→                      text_color=theme.colors.TEXT_PRIMARY).grid(row=0, column=0, columnspan=6,
+   658→                                                                     sticky="w", padx=Spacing.MD, pady=(Spacing.SM, 0))
+   659→
+   660→        formats = [("CSV", "csv"), ("JSON", "json"), ("Excel", "xlsx"),
+   661→                   ("XML", "xml"), ("HTML", "html"), ("SQLite", "sqlite")]
+   662→        for col, (label, fmt) in enumerate(formats):
+   663→            ctk.CTkButton(
+   664→                card, text=label, width=60, height=28,
+   665→                font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
+   666→                fg_color=theme.colors.BG_ELEVATED, hover_color=theme.colors.BG_HOVER,
+   667→                text_color=theme.colors.TEXT_PRIMARY, corner_radius=Radius.MD, border_width=1,
+   668→                border_color=theme.colors.BORDER,
+   669→                command=lambda f=fmt: self._on_export(f),
+   670→            ).grid(row=1, column=col, padx=(Spacing.MD if col == 0 else 2, Spacing.MD if col == len(formats)-1 else 2),
+   671→                   pady=(Spacing.XS, Spacing.MD))
+   672→
+   673→    def _on_export(self, fmt: str):
+   674→        path = filedialog.asksaveasfilename(
+   675→            defaultextension=f".{fmt}",
+   676→            filetypes=[(f"{fmt.upper()} files", f"*.{fmt}"), ("All files", "*.*")],
+   677→        )
+   678→        if path:
+   679→            try:
+   680→                app = self.winfo_toplevel()
+   681→                if hasattr(app, 'engine') and app.engine.results:
+   682→                    app.engine.export_results(fmt, path)
+   683→                    messagebox.showinfo("Export", f"Exported {len(app.engine.results)} records to:\n{path}")
+   684→                    if hasattr(app, '_log_panel'):
+   685→                        app._log_panel.add_log(f"Exported {len(app.engine.results)} records to {path} ({fmt})", "success")
+   686→            except Exception as e:
+   687→                messagebox.showerror("Export Error", str(e))
+   688→
+   689→    # ------------------------------------------------------------------
+   690→    # Actions
+   691→    # ------------------------------------------------------------------
+   692→
+   693→    def _on_mode_change(self, value):
+   694→        pass
+   695→
+   696→    def _on_template_selected(self, name):
+   697→        from core.templates import get_template_by_name
+   698→        t = get_template_by_name(name)
+   699→        if not t:
+   700→            return
+   701→        self._url_text.configure(state="normal")
+   702→        self._url_text.delete("0.0", "end")
+   703→        for url in t.urls:
+   704→            self._url_text.insert("end", url + "\n")
+   705→        mode_map = {"static": "Static", "dynamic": "Dynamic", "auto": "Auto"}
+   706→        self._mode_seg.set(mode_map.get(t.mode, "Static"))
+   707→        self._var_auto_scroll.set(t.options.get("auto_scroll", False))
+   708→        self._var_follow_links.set(t.options.get("follow_links", False))
+   709→        max_p = t.options.get("max_pages", 100)
+   710→        self._max_pages_entry.delete("0", "end")
+   711→        self._max_pages_entry.insert("0", str(max_p))
+   712→        self._extraction_rules.clear()
+   713→        for rd in t.extraction_rules:
+   714→            self._extraction_rules.append(ExtractionRule(
+   715→                name=rd["name"], method=ExtractionMethod(rd["method"]),
+   716→                selector=rd["selector"], attribute=rd.get("attribute"),
+   717→                default=rd.get("default"), is_list=rd.get("is_list", False),
+   718→            ))
+   719→        self._refresh_rules_list()
+   720→        app = self.winfo_toplevel()
+   721→        if hasattr(app, '_log_panel'):
+   722→            app._log_panel.add_log(f"Template loaded: {t.name}", "info")
+   723→
+   724→    def _on_start(self):
+   725→        app = self.winfo_toplevel()
+   726→        if not hasattr(app, 'engine'):
+   727→            return
+   728→        engine = app.engine
+   729→        urls_text = self._url_text.get("0.0", "end").strip()
+   730→        if not urls_text:
+   731→            messagebox.showwarning("Warning", "Please enter at least one URL.")
+   732→            return
+   733→        urls = [u.strip() for u in urls_text.splitlines() if u.strip()]
+   734→        valid_urls = []
+   735→        for u in urls:
+   736→            if u.startswith(("http://", "https://")):
+   737→                valid_urls.append(u)
+   738→            else:
+   739→                messagebox.showwarning("Invalid URL", f"URL must start with http:// or https://:\n{u}")
+   740→                return
+   741→        if not valid_urls:
+   742→            return
+   743→        mode_map = {"Static": ScrapingMode.STATIC, "Dynamic": ScrapingMode.DYNAMIC, "Auto": ScrapingMode.AUTO}
+   744→        mode = mode_map.get(self._mode_seg.get(), ScrapingMode.STATIC)
+   745→        engine.data_parser.clear_rules()
+   746→        for rule in self._extraction_rules:
+   747→            engine.data_parser.add_rule(rule)
+   748→        engine.clear_results()
+   749→        self._btn_start.configure(state="disabled")
+   750→        self._btn_stop.configure(state="normal")
+   751→        if hasattr(app, '_log_panel'):
+   752→            app._log_panel.add_log(f"Starting {mode.value} scrape of {len(valid_urls)} URL(s)", "info")
+   753→        engine.scrape_urls(valid_urls, mode, callback=self._on_progress)
+   754→
+   755→    def _on_stop(self):
+   756→        app = self.winfo_toplevel()
+   757→        if hasattr(app, 'engine') and app.engine:
+   758→            app.engine.stop()
+   759→            if hasattr(app, '_log_panel'):
+   760→                app._log_panel.add_log("Scraping stopped by user", "warning")
+   761→        self._btn_start.configure(state="normal")
+   762→        self._btn_stop.configure(state="disabled")
+   763→
+   764→    def _on_progress(self, current, total, records):
+   765→        engine = self.winfo_toplevel().engine
+   766→        if engine:
+   767→            self._display_results(engine.results)
+   768→        if engine and engine.state.value == "idle":
+   769→            self._btn_start.configure(state="normal")
+   770→            self._btn_stop.configure(state="disabled")
+   771→            self._display_results(engine.results)
+   772→
+   773→    # ------------------------------------------------------------------
+   774→    # Public API
+   775→    # ------------------------------------------------------------------
+   776→
+   777→    def update_ui(self, engine):
+   778→        if engine:
+   779→            self._display_results(engine.results)
+   780→            if engine.state.value == "idle":
+   781→                self._btn_start.configure(state="normal")
+   782→                self._btn_stop.configure(state="disabled")
+   783→            else:
+   784→                self._btn_start.configure(state="disabled")
+   785→                self._btn_stop.configure(state="normal")
+   786→
