@@ -125,7 +125,7 @@ class MainWindow(ctk.CTk):
             self._nav_buttons[key] = btn
 
         # Bottom version label
-        self._version_label = ctk.CTkLabel(sidebar, text="v1.3.0",
+        self._version_label = ctk.CTkLabel(sidebar, text="v1.4.0",
                       font=(Typography.FONT_FAMILY, Typography.TINY_SIZE),
                       text_color=theme.colors.TEXT_MUTED
                       )

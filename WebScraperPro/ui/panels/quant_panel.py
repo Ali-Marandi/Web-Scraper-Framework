@@ -238,6 +238,7 @@ class QuantPanel(ctk.CTkFrame):
         tab_names = [
             "Time Series", "Financial Eng.", "Portfolio",
             "ML & NLP", "Network", "Fuzzy", "Advanced",
+            "Macro", "Science", "Micro",
         ]
         for name in tab_names:
             self._tabview.add(name)
@@ -249,6 +250,9 @@ class QuantPanel(ctk.CTkFrame):
         self._build_network_tab()
         self._build_fuzzy_tab()
         self._build_advanced_tab()
+        self._build_macro_tab()
+        self._build_science_tab()
+        self._build_micro_tab()
 
     # ------------------------------------------------------------------
     # Tab 1: Time Series
@@ -1287,6 +1291,214 @@ class QuantPanel(ctk.CTkFrame):
         """Called whenever the user switches tabs."""
         pass
 
+    # ------------------------------------------------------------------
+    # Tab 8: Macroeconomic Models
+    # ------------------------------------------------------------------
+
+    def _build_macro_tab(self):
+        import numpy as np
+        tab = self._tabview.tab("Macro")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Method:", r, 0)
+        self._macro_method = ctk.CTkOptionMenu(
+            methods, values=["DSGE Simulation", "Minsky Model", "Kondratiev Waves",
+                              "Taylor Rule", "Phillips Curve", "Modigliani-Miller"],
+            **_option_menu_opts())
+        self._macro_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Dataset (Kondratiev):", r, 0)
+        self._macro_dataset = ctk.CTkOptionMenu(params, values=[], **_option_menu_opts())
+        self._macro_dataset.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Periods / V_u / Debt:", r, 0)
+        self._macro_p1 = ctk.CTkEntry(params, **_entry_opts())
+        self._macro_p1.insert(0, "200")
+        self._macro_p1.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Tax Rate / r_d:", r, 0)
+        self._macro_p2 = ctk.CTkEntry(params, **_entry_opts())
+        self._macro_p2.insert(0, "0.20")
+        self._macro_p2.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Run Analysis", lambda: threading.Thread(target=self._run_macro, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+
+    def _run_macro(self):
+        import numpy as np
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._macro_method.get()
+        try:
+            if method == "DSGE Simulation":
+                result = qe.dsge_simulate(n_periods=int(float(self._macro_p1.get() or 200)))
+            elif method == "Minsky Model":
+                result = qe.minsky_simulation(n_periods=int(float(self._macro_p1.get() or 200)))
+            elif method == "Kondratiev Waves":
+                ds = self._macro_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                result = qe.kondratiev_analysis(ds)
+            elif method == "Taylor Rule":
+                ds = self._macro_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                rets = tsd.returns
+                result = qe.taylor_rule_fit(np.abs(rets) * 10, np.abs(rets) * 15 + 0.02, np.zeros(len(rets)))
+            elif method == "Phillips Curve":
+                ds = self._macro_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                rets = tsd.returns
+                result = qe.phillips_curve(np.abs(rets), np.abs(rets) * 2 + 0.02)
+            elif method == "Modigliani-Miller":
+                vu = float(self._macro_p1.get() or 1000)
+                rd = float(self._macro_p2.get() or 0.05)
+                result = qe.modigliani_miller(vu, vu * 0.4, rd, 0.2)
+            else:
+                result = {"error": f"Unknown: {method}"}
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    # ------------------------------------------------------------------
+    # Tab 9: Natural Science Models
+    # ------------------------------------------------------------------
+
+    def _build_science_tab(self):
+        import numpy as np
+        tab = self._tabview.tab("Science")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Method:", r, 0)
+        self._sci_method = ctk.CTkOptionMenu(
+            methods, values=["SIR Epidemic", "Climate VaR", "Innovation S-Curve", "Hotelling Rule"],
+            **_option_menu_opts())
+        self._sci_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Dataset (Climate/S-Curve):", r, 0)
+        self._sci_dataset = ctk.CTkOptionMenu(params, values=[], **_option_menu_opts())
+        self._sci_dataset.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Beta / Price / mc / rate:", r, 0)
+        self._sci_p1 = ctk.CTkEntry(params, **_entry_opts())
+        self._sci_p1.insert(0, "0.3")
+        self._sci_p1.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Gamma / reserves / N:", r, 0)
+        self._sci_p2 = ctk.CTkEntry(params, **_entry_opts())
+        self._sci_p2.insert(0, "0.1")
+        self._sci_p2.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Run Analysis", lambda: threading.Thread(target=self._run_science, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+
+    def _run_science(self):
+        import numpy as np
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._sci_method.get()
+        try:
+            if method == "SIR Epidemic":
+                result = qe.sir_simulation(N=10000, I0=10, beta=float(self._sci_p1.get() or 0.3), gamma=float(self._sci_p2.get() or 0.1), n_days=200)
+            elif method == "Climate VaR":
+                ds = self._sci_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                result = qe.climate_var(ds)
+            elif method == "Innovation S-Curve":
+                ds = self._sci_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                adopt = np.cumsum(np.abs(np.diff(tsd.values)))
+                result = qe.innovation_s_curve(adopt)
+            elif method == "Hotelling Rule":
+                p0 = float(self._sci_p1.get() or 50)
+                res = float(self._sci_p2.get() or 1000)
+                result = qe.hotelling_extraction(p0, p0 * 0.2, 0.05, res)
+            else:
+                result = {"error": f"Unknown: {method}"}
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    # ------------------------------------------------------------------
+    # Tab 10: Market Microstructure
+    # ------------------------------------------------------------------
+
+    def _build_micro_tab(self):
+        import numpy as np
+        tab = self._tabview.tab("Micro")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Method:", r, 0)
+        self._micro_method = ctk.CTkOptionMenu(
+            methods, values=["Order Book Sim", "Roll Spread", "Nash Market Making",
+                              "Geopolitical Risk", "Basel III Capital"],
+            **_option_menu_opts())
+        self._micro_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Dataset (Roll/Impact):", r, 0)
+        self._micro_dataset = ctk.CTkOptionMenu(params, values=[], **_option_menu_opts())
+        self._micro_dataset.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Mid Price / RWA / N-makers:", r, 0)
+        self._micro_p1 = ctk.CTkEntry(params, **_entry_opts())
+        self._micro_p1.insert(0, "100")
+        self._micro_p1.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Volatility / HQLA:", r, 0)
+        self._micro_p2 = ctk.CTkEntry(params, **_entry_opts())
+        self._micro_p2.insert(0, "0.02")
+        self._micro_p2.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Run Analysis", lambda: threading.Thread(target=self._run_micro, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+
+    def _run_micro(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._micro_method.get()
+        try:
+            if method == "Order Book Sim":
+                result = qe.simulate_orderbook(mid_price=float(self._micro_p1.get() or 100), n_levels=10)
+            elif method == "Roll Spread":
+                ds = self._micro_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                result = qe.roll_spread(tsd.values)
+            elif method == "Nash Market Making":
+                result = qe.nash_market_making(n_makers=int(float(self._micro_p1.get() or 3)), volatility=float(self._micro_p2.get() or 0.02))
+            elif method == "Geopolitical Risk":
+                result = qe.geopolitical_risk(40, 60, 70)
+            elif method == "Basel III Capital":
+                result = qe.basel_capital(float(self._micro_p1.get() or 1000), hqla=float(self._micro_p2.get() or 200), net_outflows=float(self._micro_p2.get() or 200) * 0.9)
+            else:
+                result = {"error": f"Unknown: {method}"}
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
     # ==================================================================
     # DATA MANAGEMENT ACTIONS
     # ==================================================================
@@ -1395,7 +1607,8 @@ class QuantPanel(ctk.CTkFrame):
 
             # Update all option menus
             for menu in [self._ts_dataset_menu, self._ml_dataset_menu,
-                         self._anom_dataset_menu, self._tda_dataset_menu]:
+                         self._anom_dataset_menu, self._tda_dataset_menu,
+                         self._macro_dataset, self._sci_dataset, self._micro_dataset]:
                 current = menu.get()
                 menu.configure(values=names)
                 if current in names:

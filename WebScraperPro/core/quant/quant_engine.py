@@ -24,6 +24,12 @@ from .advanced_methods import (CausalInference, TransferEntropy,
                                 TopologicalDataAnalysis, ReinforcementLearning, GameTheory)
 from .fuzzy_logic import (FuzzyNumber, FuzzyInferenceSystem, FuzzyCreditScoring,
                           FuzzyTradingSystem, FuzzyAHP, FuzzyTOPSIS, ANFIS)
+from .macro_models import (DSGEModel, TaylorRule, PhillipsCurve,
+                           MinskyModel, KondratievWaves, CapitalStructure)
+from .natural_science_models import (ClimateVaR, HotellingRule, SIRModel,
+                                      InnovationSCurve, EpidemicFinance)
+from .market_microstructure import (OrderBookSimulator, BidAskModels,
+                                     MarketMakerNash, GeopoliticalRiskModel, RegulatoryCapital)
 
 
 class QuantEngine:
@@ -451,6 +457,127 @@ class QuantEngine:
         return self._record('Advanced', 'RL Trading', result)
 
     # =================================================================
+    # MACROECONOMIC MODELS
+    # =================================================================
+
+    def dsge_simulate(self, n_periods=200, shock_type='monetary') -> Dict:
+        self._log(f"DSGE simulation: {n_periods} periods")
+        model = DSGEModel()
+        result = model.simulate(n_periods=n_periods)
+        if shock_type != 'none':
+            irf = model.impulse_response(shock_type=shock_type)
+            result['impulse_response'] = irf
+        return self._record('Macroeconomic', 'DSGE', result)
+
+    def taylor_rule_fit(self, inflation, interest_rate, output_gap) -> Dict:
+        self._log("Taylor rule estimation")
+        model = TaylorRule()
+        result = model.fit_rule(np.array(inflation), np.array(interest_rate), np.array(output_gap))
+        return self._record('Macroeconomic', 'Taylor Rule', result)
+
+    def phillips_curve(self, unemployment, inflation) -> Dict:
+        self._log("Phillips curve estimation")
+        model = PhillipsCurve()
+        result = model.estimate(np.array(unemployment), np.array(inflation))
+        return self._record('Macroeconomic', 'Phillips Curve', result)
+
+    def minsky_simulation(self, n_periods=200) -> Dict:
+        self._log("Minsky financial instability simulation")
+        model = MinskyModel()
+        result = model.simulate(n_periods=n_periods)
+        return self._record('Macroeconomic', 'Minsky Model', result)
+
+    def kondratiev_analysis(self, dataset_name: str) -> Dict:
+        tsd = self.data.get_dataset(dataset_name)
+        if not tsd: return {"error": f"Dataset '{dataset_name}' not found"}
+        self._log(f"Kondratiev wave analysis on {dataset_name}")
+        model = KondratievWaves()
+        fft = model.fft_analysis(tsd.values)
+        hp = model.hp_filter(tsd.values)
+        phase = model.current_wave_phase(tsd.values)
+        result = {**fft, 'hp_filter': hp, 'wave_phase': phase}
+        return self._record('Macroeconomic', 'Kondratiev Waves', result)
+
+    def modigliani_miller(self, V_u, debt, r_d, tax_rate=0.2) -> Dict:
+        self._log("Modigliani-Miller analysis")
+        model = CapitalStructure()
+        result = model.modigliani_miller(V_u, debt, r_d, tax_rate)
+        return self._record('Macroeconomic', 'Modigliani-Miller', result)
+
+    # =================================================================
+    # NATURAL SCIENCE MODELS
+    # =================================================================
+
+    def sir_simulation(self, N=10000, I0=10, beta=0.3, gamma=0.1, n_days=200) -> Dict:
+        self._log(f"SIR epidemic model: R0={beta/gamma:.2f}")
+        model = SIRModel()
+        result = model.simulate(N, I0, beta, gamma, n_days)
+        return self._record('Natural Science', 'SIR Model', result)
+
+    def climate_var(self, dataset_name: str, temperature_data=None) -> Dict:
+        tsd = self.data.get_dataset(dataset_name)
+        if not tsd: return {"error": f"Dataset '{dataset_name}' not found"}
+        self._log(f"Climate VaR on {dataset_name}")
+        model = ClimateVaR()
+        temp = np.array(temperature_data) if temperature_data else np.random.normal(0.5, 0.3, len(tsd.returns))
+        result = model.estimate(tsd.returns, temp)
+        return self._record('Natural Science', 'Climate VaR', result)
+
+    def innovation_s_curve(self, adoption_data) -> Dict:
+        self._log("Innovation S-curve fitting")
+        model = InnovationSCurve()
+        result = model.technology_s_curve(np.array(adoption_data))
+        moore = model.moore_law()
+        result['moore_projection'] = moore
+        return self._record('Natural Science', 'S-Curve', result)
+
+    def hotelling_extraction(self, initial_price, marginal_cost, interest_rate, reserves) -> Dict:
+        self._log("Hotelling rule optimal extraction")
+        model = HotellingRule()
+        result = model.optimal_extraction(initial_price, marginal_cost, interest_rate, reserves)
+        return self._record('Natural Science', 'Hotelling Rule', result)
+
+    # =================================================================
+    # MARKET MICROSTRUCTURE
+    # =================================================================
+
+    def simulate_orderbook(self, mid_price=100.0, n_levels=10, shape='normal') -> Dict:
+        self._log(f"Order book simulation: mid={mid_price}")
+        model = OrderBookSimulator()
+        result = model.generate_lob(mid_price, n_levels, shape)
+        impact = model.market_impact(1000, result)
+        result['market_impact'] = impact
+        return self._record('Microstructure', 'Order Book', result)
+
+    def roll_spread(self, prices) -> Dict:
+        self._log("Roll spread estimation")
+        model = BidAskModels()
+        result = model.roll_spread(np.array(prices))
+        return self._record('Microstructure', 'Roll Spread', result)
+
+    def nash_market_making(self, n_makers=3, volatility=0.02) -> Dict:
+        self._log(f"Nash market making: {n_makers} makers")
+        model = MarketMakerNash()
+        result = model.nash_spread(n_makers, volatility)
+        return self._record('Microstructure', 'Nash MM', result)
+
+    def geopolitical_risk(self, economic=50, financial=50, political=50) -> Dict:
+        self._log("ICRG geopolitical risk assessment")
+        model = GeopoliticalRiskModel()
+        result = model.icrg_composite(economic, financial, political)
+        sanction = model.sanction_impact(trade_exposure=0.3, sanction_severity=0.7, gdp_elasticity=0.5, duration_years=3)
+        result['sanction_impact'] = sanction
+        return self._record('Microstructure', 'Geopolitical Risk', result)
+
+    def basel_capital(self, rwa, tier1_capital=None, hqla=None, net_outflows=None) -> Dict:
+        self._log("Basel III capital requirements")
+        model = RegulatoryCapital()
+        result = model.basel_iii_capital(rwa)
+        if hqla is not None and net_outflows is not None:
+            result['lcr'] = model.liquidity_coverage_ratio(hqla, net_outflows)
+        return self._record('Microstructure', 'Basel III', result)
+
+    # =================================================================
     # CONVENIENCE
     # =================================================================
 
@@ -467,6 +594,12 @@ class QuantEngine:
             'Fuzzy Logic': ['Credit Scoring', 'Trading Signal', 'AHP', 'TOPSIS', 'ANFIS'],
             'Advanced': ['Transfer Entropy', 'TDA', 'Causal Inference',
                         'Game Theory', 'Reinforcement Learning'],
+            'Macroeconomic': ['DSGE', 'Taylor Rule', 'Phillips Curve', 'Minsky',
+                            'Kondratiev Waves', 'Modigliani-Miller'],
+            'Natural Science': ['SIR Model', 'Climate VaR', 'Innovation S-Curve',
+                              'Hotelling Rule', 'Moore\'s Law'],
+            'Microstructure': ['Order Book', 'Roll Spread', 'Nash MM',
+                             'Geopolitical Risk', 'Basel III'],
         }
 
     def full_analysis_report(self, dataset_names: List[str]) -> Dict:
