@@ -1,0 +1,14 @@
+{
+  "name": "multi-search-engine",
+  "description": "Multi search engine integration with 8 domestic (CN) search engines",
+  "engines": [
+    {"name": "Baidu", "url": "https://www.baidu.com/s?wd={keyword}", "region": "cn"},
+    {"name": "Bing CN", "url": "https://cn.bing.com/search?q={keyword}&ensearch=0", "region": "cn"},
+    {"name": "Bing INT", "url": "https://cn.bing.com/search?q={keyword}&ensearch=1", "region": "cn"},
+    {"name": "360", "url": "https://www.so.com/s?q={keyword}", "region": "cn"},
+    {"name": "Sogou", "url": "https://sogou.com/web?query={keyword}", "region": "cn"},
+    {"name": "WeChat", "url": "https://wx.sogou.com/weixin?type=2&query={keyword}", "region": "cn"},
+    {"name": "Toutiao", "url": "https://so.toutiao.com/search?keyword={keyword}", "region": "cn"},
+    {"name": "Jisilu", "url": "https://www.jisilu.cn/explore/?keyword={keyword}", "region": "cn"}
+  ]
+}

@@ -1,0 +1,1010 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>栖间 — 定价方案</title>
+
+<!-- 西文用 Inter，仅用于数字 / 价格；中文走系统字体 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+
+<style>
+  /* ---------- 字体回落陷阱处理 ----------
+     破折号、引号、省略号是中西共享码位字符。
+     如果把英文字体放在中文之前，浏览器会先用英文字体渲染这些标点 → 破折号下沉、断开。
+     方案：用 unicode-range 把 Inter 限制在拉丁码位（U+0000–007F + 拉丁补充），
+            中文字体优先承担所有中日韩字符与全角标点。 */
+  @font-face{
+    font-family:'Inter Latin';
+    src: local('Inter'), local('Inter-Regular');
+    font-weight: 400 700;
+    font-style: normal;
+    unicode-range: U+0000-007F, U+00A0-00FF, U+2000-206F, U+2070-209F;
+  }
+
+  :root{
+    --ink:#0a0a0a;
+    --ink-2:#1d1d1f;
+    --muted:#5f6066;
+    --soft:#8a8e96;
+    --line:rgba(10,10,10,.10);
+    --line-2:rgba(10,10,10,.06);
+
+    /* liquid glass surface */
+    --glass:
+      linear-gradient(135deg,
+        rgba(255,255,255,.62) 0%,
+        rgba(255,255,255,.36) 48%,
+        rgba(255,255,255,.52) 100%);
+    --glass-strong:
+      linear-gradient(135deg,
+        rgba(255,255,255,.78) 0%,
+        rgba(255,255,255,.58) 50%,
+        rgba(255,255,255,.72) 100%);
+    --glass-border: rgba(255,255,255,.55);
+    --glass-hi: rgba(255,255,255,.95);
+    --glass-lo: rgba(255,255,255,.12);
+    --glass-shadow:
+      inset 0 1px 0 var(--glass-hi),
+      inset 0 -1px 0 var(--glass-lo),
+      inset 1px 0 0 rgba(255,255,255,.22),
+      inset -1px 0 0 rgba(255,255,255,.16),
+      0 1px 0 rgba(255,255,255,.4),
+      0 22px 50px -22px rgba(20,40,90,.22),
+      0 6px 18px -10px rgba(20,40,90,.14);
+    --blur: blur(28px) saturate(1.7);
+
+    --radius:20px;
+    --radius-sm:999px;
+
+    --sky-overlay: rgba(255,255,255,0);
+    --sky-tint: rgba(245,248,251,.45);
+  }
+
+  body.dark{
+    --ink:#f4f6fa;
+    --ink-2:#dcdfe6;
+    --muted:#9aa0aa;
+    --soft:#6c707a;
+    --line:rgba(255,255,255,.14);
+    --line-2:rgba(255,255,255,.08);
+
+    --glass:
+      linear-gradient(135deg,
+        rgba(22,26,38,.55) 0%,
+        rgba(22,26,38,.38) 50%,
+        rgba(22,26,38,.52) 100%);
+    --glass-strong:
+      linear-gradient(135deg,
+        rgba(22,26,38,.72) 0%,
+        rgba(22,26,38,.55) 50%,
+        rgba(22,26,38,.68) 100%);
+    --glass-border: rgba(255,255,255,.16);
+    --glass-hi: rgba(255,255,255,.22);
+    --glass-lo: rgba(0,0,0,.25);
+    --glass-shadow:
+      inset 0 1px 0 var(--glass-hi),
+      inset 0 -1px 0 var(--glass-lo),
+      inset 1px 0 0 rgba(255,255,255,.06),
+      inset -1px 0 0 rgba(255,255,255,.04),
+      0 22px 60px -22px rgba(0,0,0,.55),
+      0 6px 18px -10px rgba(0,0,0,.4);
+
+    --sky-overlay: rgba(6,9,18,.62);
+    --sky-tint: rgba(6,9,18,.55);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    /* 中文优先：先苹方 / MiSans / HarmonyOS / 雅黑，再 Inter Latin 拉丁码位补位 */
+    font-family:
+      "PingFang SC", "MiSans", "HarmonyOS Sans SC",
+      "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+      "Inter Latin", "Inter",
+      system-ui, -apple-system, sans-serif;
+    color:var(--ink);
+    background:#cfe1ee;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+
+    /* 中文正文不要碰字距 */
+    letter-spacing: 0;
+    line-height: 1.7;
+
+    /* 中文避头尾 + 不在字符内部断行 */
+    line-break: strict;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    hanging-punctuation: allow-end;
+
+    transition: color .35s ease;
+  }
+
+  /* 数字 / 价格用 Inter 等宽几何感 */
+  .num{
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    letter-spacing: -0.01em;
+  }
+
+  /* -------- sky background -------- */
+  .sky{
+    position:fixed;
+    top:-10px; left:-10px; right:-10px; bottom:-10px;
+    background-color:#bcd6ec;
+    z-index:-2;
+    overflow:hidden;
+  }
+  .sky-img{
+    position:absolute; inset:0;
+    background-image:url('https://images.unsplash.com/photo-1601297183305-6df142704ea2?auto=format&fit=crop&w=2800&q=80');
+    background-repeat:repeat;
+    background-size:2800px auto;
+    background-position:0 0;
+    will-change:background-position;
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 7%, #000 93%, transparent 100%),
+      linear-gradient(to right,  transparent 0%, #000 7%, #000 93%, transparent 100%);
+    -webkit-mask-size: 2800px var(--tile-h, 1867px);
+    -webkit-mask-repeat: repeat;
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 7%, #000 93%, transparent 100%),
+      linear-gradient(to right,  transparent 0%, #000 7%, #000 93%, transparent 100%);
+    mask-size: 2800px var(--tile-h, 1867px);
+    mask-repeat: repeat;
+    mask-composite: intersect;
+  }
+  .sky::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(255,255,255,.42), rgba(255,255,255,0) 60%),
+      linear-gradient(180deg, rgba(245,248,251,0) 40%, var(--sky-tint) 100%),
+      var(--sky-overlay);
+    pointer-events:none;
+    transition: background .6s ease;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sky-img{ background-position:50% 50% !important; }
+  }
+
+  /* -------- shell -------- */
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 28px 88px;
+  }
+
+  /* -------- reusable glass surface -------- */
+  .glass{
+    background-image: var(--glass);
+    background-color: transparent;
+    border:1px solid var(--glass-border);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* -------- top nav -------- */
+  nav.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:56px;
+  }
+
+  /* -------- brand：trademark 风胶囊 -------- */
+  .brand{
+    display:inline-flex; align-items:stretch;
+    height: 38px;
+    padding: 0;
+    border-radius: var(--radius-sm);
+    width:fit-content;
+    color:var(--ink);
+    text-decoration:none;
+    overflow:hidden;
+  }
+  .brand-mark{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding: 0 13px 0 0;
+  }
+  .brand-mark svg{
+    width:18px;
+    height:auto;
+    display:block;
+  }
+  .brand-divider{
+    width: 1px;
+    align-self: stretch;
+    background: rgba(10,10,10,.22);
+  }
+  body.dark .brand-divider{
+    background: rgba(255,255,255,.28);
+  }
+  .brand-text{
+    display:inline-flex; align-items:center;
+    padding: 0 0 0 13px;
+    font-family:
+      "PingFang SC", "MiSans", "HarmonyOS Sans SC",
+      "Microsoft YaHei UI", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+  .brand-text .reg{
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    margin-left: 3px;
+    transform: translateY(-5px);
+    color: var(--muted);
+  }
+  .nav-center{
+    display:inline-flex; align-items:center;
+    padding:5px;
+    border-radius:var(--radius-sm);
+  }
+  .nav-center a{
+    color:var(--muted);
+    text-decoration:none;
+    font-size:14px; font-weight:500;
+    padding:7px 18px;
+    border-radius:var(--radius-sm);
+    transition:color .2s ease, background .25s ease;
+    letter-spacing: 0.02em;
+  }
+  .nav-center a:hover{ color:var(--ink) }
+  .nav-center a.active{
+    background:var(--ink);
+    color:#fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 6px 14px -8px rgba(0,0,0,.5);
+  }
+  body.dark .nav-center a.active{
+    background:#fff; color:#0a0a0a;
+  }
+
+  /* -------- pricing hero -------- */
+  .pricing-hero{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    margin-bottom:48px;
+    gap:20px;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:6px 16px;
+    border-radius:var(--radius-sm);
+    width:fit-content;
+    font-size:13px; font-weight:500;
+    color:var(--ink-2);
+    letter-spacing: 0.02em;
+  }
+  .eyebrow .pulse{
+    position:relative;
+    width:6px; height:6px; border-radius:50%;
+    background:var(--ink);
+  }
+  .eyebrow .pulse::after{
+    content:""; position:absolute; inset:-3px; border-radius:50%;
+    background:rgba(10,10,10,.18);
+    animation:pulse 2.2s ease-out infinite;
+  }
+  body.dark .eyebrow .pulse{ background:#fff }
+  body.dark .eyebrow .pulse::after{ background:rgba(255,255,255,.25) }
+  @keyframes pulse{
+    0%{transform:scale(.5);opacity:.8}
+    100%{transform:scale(2.6);opacity:0}
+  }
+
+  h1.headline{
+    /* 大标题用中文系统字体 + Medium 字重；不混 Helvetica 避免破折号问题 */
+    font-family:
+      "PingFang SC", "MiSans", "HarmonyOS Sans SC",
+      "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    font-weight:500;
+    font-size:clamp(40px, 6.4vw, 72px);
+    line-height:1.18;
+    /* 大字号中文加 0.01–0.02em 字距，更从容；过多会破坏节奏 */
+    letter-spacing: 0.01em;
+    margin:0;
+    max-width:860px;
+    text-wrap: balance;
+  }
+  h1.headline em{
+    font-family:inherit;
+    font-style:normal;
+    font-weight:500;
+    color:var(--muted);
+    letter-spacing: 0.01em;
+  }
+  body.dark h1.headline em{ color:#aab0b9 }
+
+  .subhead{
+    color:var(--ink-2);
+    font-size:16px;
+    line-height: 1.75;
+    max-width:560px;
+    margin:0;
+    /* 段落正文严格不加字距 */
+    letter-spacing: 0;
+  }
+
+  /* -------- billing toggle 行 -------- */
+  .toggle-row{
+    display:flex; justify-content:center;
+    margin-bottom:32px;
+  }
+  .toggle{
+    display:inline-flex; align-items:center;
+    padding:4px;
+    border-radius:var(--radius-sm);
+  }
+  .toggle button{
+    border:0; background:transparent; cursor:pointer;
+    font:inherit; font-size:13.5px; font-weight:500;
+    color:var(--muted);
+    padding:8px 18px;
+    border-radius:var(--radius-sm);
+    transition:color .2s, background .2s;
+    display:inline-flex; align-items:center; gap:8px;
+    letter-spacing: 0.02em;
+  }
+  .toggle button.on{
+    background:var(--ink); color:#fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 6px 14px -8px rgba(0,0,0,.4);
+  }
+  body.dark .toggle button.on{ background:#fff; color:#0a0a0a }
+  .toggle .save{
+    font-size:11.5px;
+    color:#7d8088;
+    letter-spacing: 0;
+  }
+  .toggle button.on .save{ color:rgba(255,255,255,.7) }
+  body.dark .toggle button.on .save{ color:rgba(10,10,10,.6) }
+
+  /* -------- tiers -------- */
+  .tiers{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    align-items:stretch;
+  }
+
+  .tier{
+    position:relative;
+    border-radius:var(--radius);
+    padding:26px 24px 22px;
+    display:flex; flex-direction:column;
+    transition:transform .5s cubic-bezier(.2,.7,.2,1),
+               box-shadow .5s ease,
+               color .35s ease;
+    cursor:pointer;
+    overflow:hidden;
+    isolation:isolate;
+    min-height:420px;
+    color:var(--ink);
+  }
+  .tier > *:not(.bg):not(.scrim):not(.frost){ position:relative; z-index:3 }
+  .tier:hover{ transform:translateY(-2px) }
+
+  .tier.selected{
+    transform:translateY(-12px) scale(1.02);
+  }
+  .tier .bg{
+    position:absolute; inset:-14%;
+    background-size:cover;
+    background-position:50% 50%;
+    filter:blur(26px) saturate(1.15) brightness(.55) contrast(1.05);
+    opacity:0;
+    transition:opacity .55s ease;
+    z-index:0;
+  }
+  .tier .scrim{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(0,0,0,.0) 0%, rgba(0,0,0,.25) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.20) 0%, rgba(0,0,0,.55) 100%);
+    opacity:0;
+    transition:opacity .55s ease;
+    z-index:1;
+  }
+  .tier .frost{
+    position:absolute; inset:0;
+    border-radius:inherit;
+    background-image: var(--glass);
+    background-color: transparent;
+    border:1px solid var(--glass-border);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    box-shadow: var(--glass-shadow);
+    z-index:2;
+    opacity:1;
+    transition: opacity .45s ease;
+  }
+  .tier.selected{ color:#fff }
+  .tier.selected .bg, .tier.selected .scrim{ opacity:1 }
+  .tier.selected .frost{ opacity:0 }
+  .tier::after{
+    content:""; position:absolute; inset:0; border-radius:inherit;
+    border:1px solid rgba(255,255,255,0);
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+    pointer-events:none; z-index:4;
+    transition: border-color .4s ease, box-shadow .4s ease;
+  }
+  .tier.selected::after{
+    border-color: rgba(255,255,255,.18);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.18),
+      0 30px 60px -24px rgba(0,0,0,.55),
+      0 8px 24px -12px rgba(0,0,0,.4);
+  }
+
+  .tier .label{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:13.5px; color:var(--muted);
+    margin-bottom:16px;
+    font-weight:500;
+    letter-spacing: 0.05em; /* 双字标签可疏排 */
+    transition: color .35s ease;
+  }
+  .tier.selected .label{ color: rgba(255,255,255,.78) }
+  .tier .badge{
+    font-size:11px;
+    padding:4px 10px;
+    background:var(--ink);
+    color:#fff;
+    border-radius:var(--radius-sm);
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 0 rgba(255,255,255,.3) inset;
+    transition: background .35s ease, color .35s ease;
+  }
+  body.dark .tier .badge{ background:#fff; color:#0a0a0a }
+  .tier.selected .badge{
+    background: rgba(255,255,255,.18);
+    color:#fff;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+  }
+
+  .tier .price{
+    /* 价格主体是数字 → 用 Inter；¥ 用中文字体也能渲染 */
+    font-family: "Inter", "Helvetica Neue", "PingFang SC", sans-serif;
+    font-weight:500;
+    font-size:44px;
+    letter-spacing:-0.025em; line-height:1;
+    margin:0;
+    display:flex; align-items:baseline; gap:2px;
+  }
+  .tier .price .sign{
+    font-size:22px;
+    font-weight:500;
+    margin-right:2px;
+    transform: translateY(-2px);
+  }
+  .tier .price.free{
+    font-family:
+      "PingFang SC", "MiSans", "HarmonyOS Sans SC",
+      "Microsoft YaHei UI", sans-serif;
+    font-size:36px;
+    letter-spacing: 0.04em;
+  }
+  .tier .price-note{
+    margin-top:8px;
+    font-size:12.5px;
+    color:var(--soft);
+    font-weight:500;
+    letter-spacing: 0.02em;
+    transition: color .35s ease;
+  }
+  .tier.selected .price-note{ color: rgba(255,255,255,.72) }
+
+  .tier .pitch{
+    font-size:14px;
+    color:var(--ink-2);
+    margin:20px 0 20px;
+    min-height:48px;
+    line-height:1.65;
+    letter-spacing: 0;
+    transition: color .35s ease;
+  }
+  .tier.selected .pitch{ color: rgba(255,255,255,.88) }
+
+  .tier ul{
+    list-style:none; padding:0; margin:0 0 22px;
+    display:flex; flex-direction:column; gap:11px;
+  }
+  .tier li{
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--ink-2);
+    display:flex; align-items:flex-start; gap:10px;
+    letter-spacing: 0;
+    transition: color .35s ease;
+  }
+  .tier.selected li{ color: rgba(255,255,255,.94) }
+  .tier li::before{
+    content:""; flex:none;
+    width:14px; height:14px; border-radius:50%;
+    margin-top: 3px;
+    background: rgba(10,10,10,.06) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230a0a0a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center/9px no-repeat;
+    transition: background .35s ease;
+  }
+  body.dark .tier li::before{
+    background: rgba(255,255,255,.10) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center/9px no-repeat;
+  }
+  .tier.selected li::before{
+    background: rgba(255,255,255,.20) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center/9px no-repeat;
+  }
+
+  .tier .cta{
+    margin-top:auto;
+    width:100%;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.5);
+    color:var(--ink);
+    border-radius:14px;
+    padding:13px 14px;
+    font:inherit; font-weight:500; font-size:14px;
+    letter-spacing: 0.04em;
+    cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:background .2s, border-color .2s, color .2s, transform .15s;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  body.dark .tier .cta{ background: rgba(255,255,255,.08); color:var(--ink) }
+  .tier .cta:hover{ border-color: rgba(10,10,10,.28) }
+  body.dark .tier .cta:hover{ border-color: rgba(255,255,255,.28) }
+
+  .tier.selected .cta{
+    background:#fff; color:#0a0a0a;
+    border-color:rgba(255,255,255,.6);
+    box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 10px 20px -10px rgba(0,0,0,.5);
+  }
+  body.dark .tier.selected .cta{
+    background:#fff; color:#0a0a0a; border-color:#fff;
+  }
+  .tier .cta svg{ width:14px; height:14px }
+
+  /* -------- 价值对比小条 -------- */
+  .value-strip{
+    margin-top:28px;
+    border-radius:var(--radius);
+    padding:18px 24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:24px;
+    font-size:13.5px;
+    color:var(--ink-2);
+  }
+  .value-strip span{ display:inline-flex; align-items:center; gap:8px }
+  .value-strip svg{ width:14px; height:14px; flex:none }
+  .value-strip .dot{
+    width:4px; height:4px; border-radius:50%; background:var(--line);
+  }
+  @media (max-width:780px){
+    .value-strip{ flex-wrap:wrap; gap:10px 18px; padding:16px 20px }
+  }
+
+  /* -------- FAQ -------- */
+  .faq-card{
+    margin-top:88px;
+    border-radius:var(--radius);
+    padding:40px 44px;
+    display:grid;
+    grid-template-columns:1fr 1.8fr;
+    gap:24px 56px;
+  }
+  .faq-card h2{
+    font-family:
+      "PingFang SC", "MiSans", "HarmonyOS Sans SC",
+      "Microsoft YaHei UI", sans-serif;
+    font-weight:500;
+    font-size:28px;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+    margin:0;
+    max-width:260px;
+  }
+  .faq-card h2 small{
+    display:block;
+    font-size:14px;
+    font-weight:400;
+    color:var(--muted);
+    margin-top:10px;
+    line-height:1.6;
+    letter-spacing: 0;
+  }
+  .faq-list{ display:flex; flex-direction:column }
+  details.q{
+    border-top:1px solid var(--line-2);
+    padding:18px 0;
+  }
+  details.q:first-of-type{ border-top:0; padding-top:4px }
+  details.q summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:24px;
+    font-weight:500; font-size:15px;
+    color:var(--ink);
+    line-height:1.5;
+    letter-spacing: 0.01em;
+  }
+  details.q summary::-webkit-details-marker{ display:none }
+  details.q .plus{
+    flex:none;
+    width:22px; height:22px; border-radius:50%;
+    border:1px solid var(--line);
+    position:relative;
+    transition:background .25s ease, border-color .25s ease;
+  }
+  details.q .plus::before,
+  details.q .plus::after{
+    content:""; position:absolute; left:50%; top:50%;
+    width:10px; height:1.2px; background:var(--ink);
+    transform:translate(-50%,-50%);
+    transition:transform .25s ease, background .25s ease;
+  }
+  details.q .plus::after{ transform:translate(-50%,-50%) rotate(90deg) }
+  details.q[open] .plus{ background:var(--ink); border-color:var(--ink) }
+  details.q[open] .plus::before,
+  details.q[open] .plus::after{ background:#fff }
+  details.q[open] .plus::after{ transform:translate(-50%,-50%) rotate(0) }
+  body.dark details.q[open] .plus{ background:#fff; border-color:#fff }
+  body.dark details.q[open] .plus::before,
+  body.dark details.q[open] .plus::after{ background:#0a0a0a }
+
+  details.q .a{
+    margin-top:12px;
+    color:var(--ink-2);
+    font-size:14.5px;
+    /* 中文长段：行长护栏 + 1.75 行距 */
+    max-width:34em;
+    line-height:1.75;
+    letter-spacing: 0;
+  }
+
+  /* -------- footer -------- */
+  footer{
+    margin-top:56px;
+    padding-top:22px;
+    border-top:1px solid var(--line-2);
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:13px; color:var(--muted);
+    gap:16px;
+    line-height: 1.6;
+  }
+  footer a{ color:var(--muted); text-decoration:none; margin:0 12px }
+  footer a:first-child{ margin-left:0 }
+  footer a:last-child{ margin-right:0 }
+  footer a:hover{ color:var(--ink) }
+  footer .sep{ color:var(--line); }
+  footer .icp{ font-size:12px; color:var(--soft); letter-spacing: 0 }
+
+  /* responsive */
+  @media (max-width:980px){
+    .tiers{ grid-template-columns:repeat(2,1fr) }
+    .tier.selected{ transform:translateY(-4px) scale(1.01) }
+    .faq-card{ grid-template-columns:1fr; gap:18px; padding:30px 26px }
+  }
+  @media (max-width:560px){
+    .wrap{ padding:20px 16px 56px }
+    nav.top{ grid-template-columns:1fr auto; margin-bottom:36px }
+    .nav-center{ display:none }
+    .nav-action{ font-size:12px; padding:7px 12px }
+    .tiers{ grid-template-columns:1fr }
+    .tier.selected{ transform:none }
+    .pricing-hero{ margin-bottom:36px }
+    footer{ flex-direction:column; align-items:flex-start; gap:8px }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky" id="sky">
+  <div class="sky-img" id="skyA"></div>
+</div>
+
+<div class="wrap">
+
+  <nav class="top" aria-label="主导航">
+    <a href="#" class="brand" aria-label="栖间">
+      <span class="brand-mark">
+        <svg viewBox="0 0 26 22" fill="currentColor" fill-rule="evenodd" aria-hidden="true">
+          <!-- 屋顶填充 + evenodd 打孔成圆点 = 栖（鸟）+ 间（屋下空间） -->
+          <path d="M13 2 L24 11 L22 11 L22 19 L4 19 L4 11 L2 11 Z M13 12.6 a1.8 1.8 0 1 0 0 3.6 a1.8 1.8 0 1 0 0 -3.6 Z"/>
+        </svg>
+      </span>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="brand-text">栖间<span class="reg">®</span></span>
+    </a>
+    <div class="nav-center glass" role="tablist">
+      <a href="#" role="tab">案例</a>
+      <a href="#" role="tab">关于</a>
+      <a href="#" role="tab" class="active">定价</a>
+    </div>
+  </nav>
+
+  <header class="pricing-hero">
+    <span class="eyebrow glass"><span class="pulse"></span>早期访问 · 2026 年第三季度开放</span>
+    <h1 class="headline">
+      选一个节奏，<em>慢慢搬进新家。</em>
+    </h1>
+    <p class="subhead">栖间用你拍下的房间照片，配上我们精选的当代家具，给出一份可被实现的居所提案。挑选适合你的入场方式，我们按批次发放席位。</p>
+  </header>
+
+  <section aria-labelledby="tiers-title">
+
+    <div class="toggle-row">
+      <div class="toggle glass" role="tablist" aria-label="订阅周期">
+        <button class="on" data-cycle="reserve">预约保留</button>
+        <button data-cycle="annual">按年订阅 <span class="save">省 <span class="num">15%</span></span></button>
+      </div>
+    </div>
+
+    <h2 id="tiers-title" style="position:absolute; left:-9999px;">选择你的入场批次</h2>
+
+    <div class="tiers" id="tiers">
+      <article class="tier" data-tier="observer" tabindex="0"
+        data-bg="https://images.unsplash.com/photo-1505144808419-1957a94ca61e?auto=format&fit=crop&w=1600&q=70">
+        <span class="bg"></span><span class="scrim"></span><span class="frost"></span>
+        <div class="label"><span>观望</span></div>
+        <div class="price free" data-base="0" data-annual="0">免费</div>
+        <div class="price-note">加入候补名单</div>
+        <p class="pitch">先在队列里占个位置。等到你那一批开放，我们会给你写信。</p>
+        <ul>
+          <li>第四批 · <span class="num">2027 Q1</span> 入场</li>
+          <li>工作室通讯与新品预告</li>
+          <li>每月一次渲染预览</li>
+        </ul>
+        <button class="cta" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          选择此方案
+        </button>
+      </article>
+
+      <article class="tier selected" data-tier="early" tabindex="0"
+        data-bg="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1600&q=70">
+        <span class="bg"></span><span class="scrim"></span><span class="frost"></span>
+        <div class="label">
+          <span>早鸟</span>
+          <span class="badge">最受欢迎</span>
+        </div>
+        <div class="price" data-base="68" data-annual="58"><span class="sign">¥</span><span class="num">68</span></div>
+        <div class="price-note">押金可退</div>
+        <p class="pitch">直接跳到第二批。这笔押金会在你正式开通时折抵首月费用。</p>
+        <ul>
+          <li>第二批 · <span class="num">2026 Q4</span> 入场</li>
+          <li>无限次预览渲染</li>
+          <li>创始用户社群</li>
+          <li>上线赠 <span class="num">¥68</span> 抵扣</li>
+        </ul>
+        <button class="cta" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          已选择
+        </button>
+      </article>
+
+      <article class="tier" data-tier="founder" tabindex="0"
+        data-bg="https://images.unsplash.com/photo-1490604001847-b712b0c2f967?auto=format&fit=crop&w=1600&q=70">
+        <span class="bg"></span><span class="scrim"></span><span class="frost"></span>
+        <div class="label"><span>创始</span></div>
+        <div class="price" data-base="198" data-annual="168"><span class="sign">¥</span><span class="num">198</span></div>
+        <div class="price-note">终身锁价</div>
+        <p class="pitch">移到第一批。价格终身锁定，并享有工作室周边权益。</p>
+        <ul>
+          <li>第一批 · <span class="num">2026 Q3</span> 入场</li>
+          <li>价格终身锁定</li>
+          <li>选品投票权</li>
+          <li>三幅手工艺术微喷</li>
+        </ul>
+        <button class="cta" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          选择此方案
+        </button>
+      </article>
+
+      <article class="tier" data-tier="patron" tabindex="0"
+        data-bg="https://images.unsplash.com/photo-1502472584811-0a2f2feb8968?auto=format&fit=crop&w=1600&q=70">
+        <span class="bg"></span><span class="scrim"></span><span class="frost"></span>
+        <div class="label"><span>甄选</span></div>
+        <div class="price" data-base="498" data-annual="423"><span class="sign">¥</span><span class="num">498</span></div>
+        <div class="price-note">甄选理事</div>
+        <p class="pitch">和团队同处一室。每季度上海工作室聚会，赠签名限量版画。</p>
+        <ul>
+          <li>第零批 · 内测当下可入席</li>
+          <li>每季度一次上海工作室聚会</li>
+          <li>签名限量版画一幅</li>
+          <li>团队直通通道</li>
+        </ul>
+        <button class="cta" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          选择此方案
+        </button>
+      </article>
+    </div>
+
+    <div class="value-strip glass">
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        押金随时可退
+      </span>
+      <span class="dot"></span>
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 12l2 2 4-4"/></svg>
+        方案之间可任意切换
+      </span>
+      <span class="dot"></span>
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+        每八周开放一批新席位
+      </span>
+      <span class="dot"></span>
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-12V5l-8-3-8 3v5c0 8 8 12 8 12z"/></svg>
+        图片不留存、不训练
+      </span>
+    </div>
+  </section>
+
+  <section class="faq-card glass" aria-labelledby="faq-title">
+    <h2 id="faq-title">常见问题<small>没找到想问的，写信到 hi@qijian.studio，<br/>我们每封都亲手回。</small></h2>
+    <div class="faq-list">
+      <details class="q" open>
+        <summary>「押金可退」是什么意思？<span class="plus" aria-hidden="true"></span></summary>
+        <p class="a">预约金只是冻结、不会被扣款。等你这一批开放，可以把它折抵首月费用，也可以一键全额退回——不需要理由，不设流程。</p>
+      </details>
+      <details class="q">
+        <summary>我所在的批次什么时候开放？<span class="plus" aria-hidden="true"></span></summary>
+        <p class="a">从 <span class="num">2026</span> 年第三季度起，大约每八周开放一批。每批的规模都刻意保持小，这样工作室才有余力亲手回每一封信。</p>
+      </details>
+      <details class="q">
+        <summary>开通之后还能更换方案吗？<span class="plus" aria-hidden="true"></span></summary>
+        <p class="a">可以。升级随时生效，我们会把你挪到对应方案的下一个开放批次；降级则保留原批次的位置，仅调整对应权益。</p>
+      </details>
+      <details class="q">
+        <summary>上传的房间照片会被存下来吗？<span class="plus" aria-hidden="true"></span></summary>
+        <p class="a">照片在内存里完成渲染后即从服务器删除，不会被分享给第三方，也不会被用于训练你账户之外的任何模型。</p>
+      </details>
+      <details class="q">
+        <summary>选品库里都是真实买得到的家具吗？<span class="plus" aria-hidden="true"></span></summary>
+        <p class="a">是。每一件家具都来自我们当面拜访过的设计师或品牌。如果在渲染图里看中了哪一件，可以申请一份「来源说明」，包含品牌、交期与价格。</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <span>© <span class="num">2026</span> 栖间设计工作室 · 上海</span>
+    <span>
+      <a href="#">隐私政策</a><span class="sep">/</span>
+      <a href="#">服务条款</a><span class="sep">/</span>
+      <a href="#">hi@qijian.studio</a>
+    </span>
+    <span class="icp">沪 ICP 备 <span class="num">2026 0000</span> 号</span>
+  </footer>
+</div>
+
+<script>
+  // ---- parallax sky ----
+  (function(){
+    const a = document.getElementById('skyA');
+    if (!a) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const TILE_W = 2800;
+    const probe = new Image();
+    probe.onload = () => {
+      if (probe.naturalWidth && probe.naturalHeight){
+        const tileH = TILE_W * (probe.naturalHeight / probe.naturalWidth);
+        document.documentElement.style.setProperty('--tile-h', tileH.toFixed(2) + 'px');
+      }
+    };
+    probe.src = 'https://images.unsplash.com/photo-1601297183305-6df142704ea2?auto=format&fit=crop&w=2800&q=80';
+
+    const target = {x: 0, y: 0};
+    const pos    = {x: 0, y: 0};
+    const drift  = {x: 0.04, y: 0};
+
+    window.addEventListener('mousemove', (e) => {
+      target.x = (e.clientX - window.innerWidth  / 2);
+      target.y = (e.clientY - window.innerHeight / 2);
+    }, {passive:true});
+
+    function tick(){
+      pos.x -= 0.003 * target.x * 0.06 + drift.x;
+      pos.y -= 0.003 * target.y * 0.06 + drift.y;
+      const s = pos.x.toFixed(2) + 'px ' + pos.y.toFixed(2) + 'px';
+      a.style.backgroundPosition = s;
+      a.style.maskPosition = s;
+      a.style.webkitMaskPosition = s;
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  // ---- 主题切换按钮已移除（保留 body.dark 样式以备外部触发） ----
+
+  // ---- 方案选择 ----
+  (function(){
+    const tiers = document.querySelectorAll('.tier');
+    tiers.forEach(card => {
+      const url = card.dataset.bg;
+      if (url) card.querySelector('.bg').style.backgroundImage = `url('${url}')`;
+
+      const select = () => {
+        tiers.forEach(c => {
+          c.classList.remove('selected');
+          const btn = c.querySelector('.cta');
+          if (btn) btn.lastChild.textContent = ' 选择此方案';
+        });
+        card.classList.add('selected');
+        const btn = card.querySelector('.cta');
+        if (btn) btn.lastChild.textContent = ' 已选择';
+      };
+      card.addEventListener('click', select);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); }
+      });
+    });
+  })();
+
+  // ---- 计费周期切换 ----
+  (function(){
+    const buttons = document.querySelectorAll('.toggle button');
+    const cards = document.querySelectorAll('.tier');
+    buttons.forEach(b => {
+      b.addEventListener('click', () => {
+        buttons.forEach(x => x.classList.remove('on'));
+        b.classList.add('on');
+        const annual = b.dataset.cycle === 'annual';
+        cards.forEach(c => {
+          const p = c.querySelector('.price');
+          const note = c.querySelector('.price-note');
+          const base = +p.dataset.base;
+          const ann  = +p.dataset.annual;
+          if (base === 0){
+            p.classList.add('free');
+            p.innerHTML = '免费';
+            note.textContent = '加入候补名单';
+            return;
+          }
+          p.classList.remove('free');
+          if (annual){
+            p.innerHTML = '<span class="sign">¥</span><span class="num">' + ann + '</span>';
+            note.textContent = '每月 · 按年结算';
+          } else {
+            p.innerHTML = '<span class="sign">¥</span><span class="num">' + base + '</span>';
+            note.textContent = base === 68 ? '押金可退'
+                            : base === 198 ? '终身锁价'
+                            :                '甄选理事';
+          }
+        });
+      });
+    });
+  })();
+
+  // ---- FAQ 单开 ----
+  (function(){
+    const all = document.querySelectorAll('details.q');
+    all.forEach(d => {
+      d.addEventListener('toggle', () => {
+        if (d.open) all.forEach(o => { if (o !== d) o.open = false; });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

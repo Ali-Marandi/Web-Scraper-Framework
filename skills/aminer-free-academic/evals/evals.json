@@ -1,0 +1,93 @@
+{
+  "skill_name": "aminer-free-academic",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Help me quickly check whether the paper 'Attention Is All You Need' is worth a deep dive. Use only free AMiner APIs. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the paper triage workflow: paper_search to locate the paper, then paper_info to enrich with abstract slice, year, venue, and author count. Output a lightweight card with a paper URL.",
+      "files": [],
+      "expectations": [
+        "Called Paper Search API (paper_search) to find the paper by title",
+        "Called Paper Info API (paper_info) with the returned paper ID",
+        "Output includes title, first_author, venue_name, year, and n_citation_bucket",
+        "Output includes abstract_slice from paper_info",
+        "Output includes a paper URL in the format https://www.aminer.cn/pub/{paper_id}",
+        "No paid API was called"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I want to identify which 'Andrew Ng' on AMiner is the Stanford professor. Use only free APIs. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the scholar identification workflow: person_search with name and optional org filter. Return candidate list with interests, org, and citation count to help the user pick the right one.",
+      "files": [],
+      "expectations": [
+        "Called Scholar Search API (person_search) with name 'Andrew Ng'",
+        "Output includes multiple candidates with name, org, interests, and n_citation",
+        "Output includes scholar URLs in the format https://www.aminer.cn/profile/{scholar_id}",
+        "No paid API was called"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Normalize the institution name 'MIT CSAIL' using AMiner free APIs. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the institution normalization workflow: organization_search with the raw institution string. Return the canonical org name, org_id, and aliases.",
+      "files": [],
+      "expectations": [
+        "Called Org Search API (organization_search) with orgs=['MIT CSAIL']",
+        "Output includes org_id and standardized org_name",
+        "Output includes aliases list",
+        "No paid API was called"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Help me look up recent patents about quantum computing",
+      "expected_output": "Detect that the user has not provided a token; immediately stop all subsequent API calls and guide the user to obtain a token from the AMiner Console.",
+      "files": [],
+      "expectations": [
+        "Clearly inform the user that a token is currently missing and AMiner API calls cannot continue",
+        "No API calls were made",
+        "Provide the console link https://open.aminer.cn/open/board?tab=control",
+        "Prompt the user to continue after obtaining a token"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Is 'TKDE' a conference or a journal? Help me normalize it using free AMiner APIs. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the venue normalization workflow: venue_search with the name string. Return the standard bilingual name, venue_type, aliases, and venue URL.",
+      "files": [],
+      "expectations": [
+        "Called Venue Search API (venue_search) with name 'TKDE'",
+        "Output includes venue_id, standard name (English and/or Chinese), and venue_type",
+        "Output includes aliases list",
+        "Output includes a venue URL in the format https://www.aminer.cn/open/journal/detail/{venue_id}",
+        "No paid API was called"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Scan recent patent activity in the field of 'autonomous driving lidar' using free APIs only. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the patent trend scan workflow: patent_search to find patents, optionally enriched by patent_info. Return patent titles, first inventor, app_year, pub_year, and patent URLs.",
+      "files": [],
+      "expectations": [
+        "Called Patent Search API (patent_search) with a query about autonomous driving lidar",
+        "Output includes patent titles, inventor_name, app_year, and pub_year",
+        "Output includes patent URLs in the format https://www.aminer.cn/patent/{patent_id}",
+        "No paid API was called"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Give me a quick free-tier overview of the topic 'graph neural network' — papers, scholars, institutions, and venues. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the free entity map workflow: combine paper_search, person_search, organization_search, and venue_search to build a lightweight cross-entity summary.",
+      "files": [],
+      "expectations": [
+        "Called at least paper_search and person_search",
+        "Output covers multiple entity types (papers, scholars, and optionally institutions/venues)",
+        "Output includes AMiner URLs for returned entities",
+        "Clearly states what free-tier can answer and what would require paid upgrade",
+        "No paid API was called"
+      ]
+    }
+  ]
+}

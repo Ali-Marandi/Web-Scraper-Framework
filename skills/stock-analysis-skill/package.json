@@ -1,0 +1,21 @@
+{
+  "name": "stock-analysis-skill",
+  "version": "1.0.0",
+  "description": "A股/港股/美股 决策仪表盘 + 传闻扫描 + 自选股提醒",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "analyze": "ts-node src/index.ts analyze",
+    "dividend": "ts-node src/index.ts dividend",
+    "rumors":   "ts-node src/index.ts rumors",
+    "watch":    "ts-node src/index.ts watch"
+  },
+  "dependencies": {
+    "z-ai-web-dev-sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0"
+  }
+}

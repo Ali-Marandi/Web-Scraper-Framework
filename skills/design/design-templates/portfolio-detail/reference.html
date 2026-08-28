@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<title>白屋 BAIWU — 周墨白作品集 / Studio</title>
+<meta name="description" content="白屋 BAIWU STUDIO，主理人周墨白。装帧、字体、静物——以缓慢的手艺整理纸页与墨色。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=EB+Garamond:ital,wght@0,400;1,400&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<style>
+/* ========= 阿里妈妈刀隶体（艺术感强的隶书）=========
+   from: https://github.com/itorr/china-ex - Alibaba 官方刀切感隶书 */
+@font-face {
+  font-family: 'Alimama DaoLiTi';
+  src: url('https://cdn.jsdelivr.net/npm/@fontpkg/alimama-dao-li-ti@1.0.5/AlimamaDaoLiTi.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+:root[data-theme="light"]{
+  --c-bg:#ffffff;
+  --c-fg:#000000;
+  --c-mute:#787878;
+  --c-line:#000000;
+  --c-line-soft:#e0e0e0;
+  --c-card:#000000;
+  --c-card-fg:#ffffff;
+  --c-card-mute:#9a9a9a;
+  --c-card-line:rgba(255,255,255,.14);
+  --header-h:60px;
+  --pad:clamp(16px,2vw,28px);
+  --grid-gap:20px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+:root[data-theme="dark"]{
+  --c-bg:#000000;
+  --c-fg:#ffffff;
+  --c-mute:#7a7a7a;
+  --c-line:#ffffff;
+  --c-line-soft:#222222;
+  --c-card:#ffffff;
+  --c-card-fg:#000000;
+  --c-card-mute:#5a5a5a;
+  --c-card-line:rgba(0,0,0,.14);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--c-bg);color:var(--c-fg);min-height:100%}
+html{scroll-behavior:auto}
+body{
+  font-family:"DM Mono","Menlo","Monaco","Roboto Mono",monospace;
+  font-weight:400;font-size:13px;line-height:1.4;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+  cursor:default;
+  transition:background .9s var(--ease),color .9s var(--ease);
+}
+img,video{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;background:none;border:0;color:inherit;cursor:pointer}
+ul,ol{list-style:none}
+
+/* ========= 字体类 ========= */
+.kai{
+  font-family:"STKaiti","Kaiti SC","KaiTi","楷体","Songti SC",serif;
+  font-weight:400;letter-spacing:.05em;
+  text-shadow:0 0 .25px currentColor;
+}
+.serif{font-family:"Cormorant Garamond","EB Garamond",serif;font-style:italic;font-weight:300}
+.mono{font-family:"DM Mono",monospace;font-weight:400}
+.li{font-family:"Alimama DaoLiTi","STLibian","SimLi","隶书",serif;font-weight:400;letter-spacing:.06em}
+
+/* ========= 10 列网格（参考站点同款）========= */
+.grid{padding:0 10px;width:100%;display:flex;flex-wrap:nowrap;justify-content:center;min-height:calc(100vh - 100px)}
+.col-1{width:calc(((100vw - 20px) / 10) * 1);padding:0 10px;flex-shrink:0}
+.col-2{width:calc(((100vw - 20px) / 10) * 2);padding:0 10px;flex-shrink:0}
+.col-3{width:calc(((100vw - 20px) / 10) * 3);padding:0 10px;flex-shrink:0}
+.col-4{width:calc(((100vw - 20px) / 10) * 4);padding:0 10px;flex-shrink:0}
+.col-5{width:calc(((100vw - 20px) / 10) * 5);padding:0 10px;flex-shrink:0}
+.col-6{width:calc(((100vw - 20px) / 10) * 6);padding:0 10px;flex-shrink:0}
+.col-7{width:calc(((100vw - 20px) / 10) * 7);padding:0 10px;flex-shrink:0}
+.col-8{width:calc(((100vw - 20px) / 10) * 8);padding:0 10px;flex-shrink:0}
+.col-9{width:calc(((100vw - 20px) / 10) * 9);padding:0 10px;flex-shrink:0}
+.col-10{width:calc(((100vw - 20px) / 10) * 10);padding:0 10px;flex-shrink:0}
+
+/* ========= Curtain ========= */
+.curtain{position:fixed;inset:0;z-index:9999;background:var(--c-bg);display:flex;align-items:center;justify-content:center;pointer-events:auto;transition:transform 1.2s var(--ease),opacity .6s ease .9s}
+.curtain.is-out{transform:translateY(-101%);pointer-events:none}
+.curtain__mark{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:48px;letter-spacing:.2em;color:var(--c-fg);opacity:0;animation:fadeIn 1s ease forwards}
+@keyframes fadeIn{to{opacity:1}}
+
+/* ========= 纸张纹理 ========= */
+.paper{position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:multiply;opacity:.06;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .1 0 0 0 0 .09 0 0 0 0 .07 0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+:root[data-theme="dark"] .paper{mix-blend-mode:screen;opacity:.04}
+
+/* ========= 顶部 logo（左上 · 复古印章）========= */
+#logo{position:fixed;top:20px;left:20px;z-index:100;color:var(--c-fg);transition:opacity .4s var(--ease)}
+#logo:hover{opacity:.6}
+#logo svg{display:block;width:48px;height:auto}
+#logo .stroke{stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:square}
+#logo .fill{fill:currentColor}
+#logo .label{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:9px;letter-spacing:.5em;fill:currentColor}
+
+/* ========= 主导航（右上）========= */
+#main-menu{position:fixed;z-index:100;right:20px;top:20px;text-align:right}
+#main-menu li{position:relative;margin-bottom:8px;display:block;transition:opacity .3s var(--ease)}
+#main-menu li:hover{opacity:.55}
+#main-menu li.current a::before{content:"";width:6px;height:6px;position:absolute;border-radius:50%;background:var(--c-fg);left:-12px;top:6px}
+#main-menu a{font-family:"DM Mono",monospace;font-size:13px;line-height:1;text-transform:lowercase;letter-spacing:.04em;display:inline-block;color:var(--c-fg)}
+
+/* ========= 主题切换（左下）========= */
+.theme-toggle{
+  position:fixed;left:20px;bottom:20px;z-index:100;
+  display:flex;gap:0;
+  font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+}
+.theme-toggle button{
+  padding:6px 10px;color:var(--c-mute);
+  border:1px solid var(--c-line-soft);
+  border-right:0;
+  transition:color .4s var(--ease),background .4s var(--ease),border-color .4s var(--ease);
+}
+.theme-toggle button:last-child{border-right:1px solid var(--c-line-soft)}
+.theme-toggle button[data-active="1"]{
+  color:var(--c-bg);background:var(--c-fg);border-color:var(--c-fg);
+}
+
+/* ========= 视图切换（顶部居中 · 列表/画册）========= */
+#project-view{position:fixed;left:50%;top:60px;transform:translateX(-50%);text-align:center;z-index:100}
+#project-view ul{display:flex;align-items:center;gap:14px}
+#project-view li{display:flex;align-items:center}
+#project-view a{font-family:"DM Mono",monospace;font-size:13px;line-height:1;text-transform:lowercase;letter-spacing:.04em;color:var(--c-fg);display:inline-flex;align-items:center;gap:8px}
+#project-view .icon{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--c-fg);width:22px;height:22px;flex-shrink:0}
+#project-view .icon svg{display:block}
+#project-view .icon svg rect{fill:var(--c-fg)}
+#project-view span{display:inline-block;padding-bottom:1px;border-bottom:1px solid transparent;transition:border-color .3s var(--ease)}
+#project-view a:hover span,#project-view .current span{border-bottom-color:var(--c-fg)}
+
+/* ========= View toggle ========= */
+body[data-view="detail"] .view-home,
+body[data-view="detail"] #project-view{display:none}
+body[data-view="home"] .view-detail{display:none}
+
+/* ========= HOME 总容器 ========= */
+.view-home{padding-top:0;padding-bottom:120px}
+
+/* ========= 顶部品牌区（极小 · 留白）========= */
+.brand-block{padding:140px 20px 80px;text-align:center}
+.brand-block .zh{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:clamp(56px,9vw,140px);line-height:1;letter-spacing:.18em;text-indent:.18em;color:var(--c-fg);display:block}
+.brand-block .en{font-family:"Cormorant Garamond","EB Garamond",serif;font-style:italic;font-size:clamp(18px,1.6vw,24px);letter-spacing:.18em;color:var(--c-mute);margin-top:18px;display:block;text-transform:uppercase}
+.brand-block .tagline{font-family:"STKaiti","KaiTi","楷体",serif;font-size:14px;letter-spacing:.08em;color:var(--c-fg);margin-top:32px;line-height:1.9;max-width:520px;margin-left:auto;margin-right:auto;text-shadow:0 0 .25px currentColor}
+
+/* ========= LISTA 项目列表（核心交互模式 · 完全参考 GD 站点）========= */
+#projects-list{padding-top:60px;margin-bottom:120px;width:100%}
+#projects-list a.item{
+  width:100%;text-align:left;display:block;cursor:pointer;
+  margin-bottom:32px;position:relative;
+  color:var(--c-fg);
+}
+#projects-list a.item:last-child{margin-bottom:0}
+#projects-list .num{
+  font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.18em;
+  display:inline-block;vertical-align:middle;color:var(--c-mute);
+  margin-right:24px;
+}
+#projects-list .project-name{
+  font-family:"Alimama DaoLiTi","STLibian","SimLi","隶书",serif;
+  font-size:clamp(36px,5vw,72px);line-height:1;letter-spacing:.04em;
+  display:inline-block;vertical-align:middle;
+  color:var(--c-fg);
+}
+#projects-list .location{
+  font-family:"DM Mono",monospace;font-size:13px;line-height:1;letter-spacing:.04em;
+  opacity:0;transition:opacity .4s var(--ease);
+  display:inline-block;vertical-align:middle;
+  margin-left:30px;color:var(--c-mute);
+}
+#projects-list .photo-thumb{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  opacity:0;transition:opacity .4s var(--ease);
+  width:calc(((100vw - 20px) / 10) * 3);
+  pointer-events:none;
+}
+#projects-list .photo-grid{
+  position:relative;display:block;width:100%;
+  padding-bottom:calc((100% / 3) * 4);
+  overflow:hidden;background:var(--c-line-soft);
+}
+#projects-list .photo-thumb img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  position:absolute;top:0;left:0;
+}
+#projects-list .item.active .location,
+#projects-list .item.active .photo-thumb{opacity:1}
+#projects-list .item .en-name{
+  font-family:"Cormorant Garamond",serif;font-style:italic;font-size:14px;
+  letter-spacing:.04em;color:var(--c-mute);
+  display:inline-block;vertical-align:baseline;margin-left:14px;
+  opacity:0;transition:opacity .4s var(--ease);
+}
+#projects-list .item.active .en-name{opacity:.65}
+
+@media (max-width:780px){
+  #projects-list .photo-thumb{position:relative;right:auto;top:auto;transform:none;width:100%;margin-top:14px;opacity:1}
+  #projects-list .item.active .photo-thumb{opacity:1}
+  #projects-list .location{display:block;margin-left:0;margin-top:10px;opacity:1}
+  #projects-list .en-name{display:block;margin-left:0;margin-top:6px;opacity:.55}
+}
+
+/* ========= GALERIA 画册视图 ========= */
+#projects-gallery{padding-top:60px;margin-bottom:120px;text-align:center;display:none}
+body[data-mode="gallery"] #projects-gallery{display:block}
+body[data-mode="gallery"] #projects-list{display:none}
+#projects-gallery ul{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+#projects-gallery li{margin:0;display:block}
+#projects-gallery a{display:block;position:relative;overflow:hidden;background:var(--c-line-soft)}
+#projects-gallery .image{display:block;width:100%;padding-bottom:calc((100% / 3) * 4);position:relative;overflow:hidden;transition:opacity .3s var(--ease)}
+#projects-gallery img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;top:0;left:0;transition:transform 1.4s var(--ease)}
+#projects-gallery a:hover img{transform:scale(1.04)}
+#projects-gallery a:hover .image{opacity:.85}
+#projects-gallery .ga-title{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:"Alimama DaoLiTi","STLibian",serif;font-size:32px;letter-spacing:.08em;
+  color:#fff;text-shadow:0 0 24px #000;
+  opacity:0;transition:opacity .4s var(--ease);z-index:2;text-align:center;
+}
+#projects-gallery a:hover .ga-title{opacity:1}
+@media (max-width:780px){#projects-gallery ul{grid-template-columns:repeat(2,1fr)}}
+
+/* ========= 关于 / 笔记 区块（在列表下方，极简）========= */
+.about-strip{padding:120px 20px 80px;display:flex;justify-content:center;width:100%}
+.about-strip .inner{width:calc(((100vw - 20px) / 10) * 6);text-align:left}
+.about-strip h3{
+  font-family:"Alimama DaoLiTi","STLibian",serif;font-size:clamp(32px,4vw,56px);
+  letter-spacing:.1em;color:var(--c-fg);margin-bottom:24px;
+}
+.about-strip h3 .en{
+  font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.5em;
+  color:var(--c-mute);margin-left:18px;letter-spacing:.04em;
+}
+.about-strip p{
+  font-family:"STKaiti","KaiTi","楷体",serif;font-size:15px;line-height:2;letter-spacing:.06em;
+  color:var(--c-fg);margin-bottom:18px;text-shadow:0 0 .25px currentColor;
+}
+.about-strip .meta-list{margin-top:36px;border-top:1px solid var(--c-line-soft);padding-top:20px}
+.about-strip .meta-list li{
+  display:flex;justify-content:space-between;padding:14px 0;
+  border-bottom:1px solid var(--c-line-soft);
+  font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.06em;
+}
+.about-strip .meta-list .k{color:var(--c-mute);text-transform:uppercase;letter-spacing:.16em}
+.about-strip .meta-list .v{color:var(--c-fg)}
+
+/* ========= 底部签名（旋转 · 极小）========= */
+#svp-credit{
+  font-family:"DM Mono",monospace;font-size:11px;line-height:1.3;
+  color:var(--c-fg);text-align:center;
+  position:fixed;right:14px;bottom:36px;z-index:50;
+  transform:rotate(-45deg);text-decoration:none;
+  opacity:0;transition:opacity .5s ease-in;
+  pointer-events:none;
+}
+#svp-credit span{display:block;font-style:italic}
+#svp-credit.visible{opacity:.55;pointer-events:auto}
+
+footer{padding:60px 20px 30px;text-align:center;border-top:1px solid var(--c-line-soft);margin:0 20px;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.16em;color:var(--c-mute);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+footer .links a{margin-left:14px}
+
+/* ========= Detail View（保留）========= */
+.view-detail{padding-top:90px;padding-bottom:60px;animation:fadeInUp .6s var(--ease);max-width:100%}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.detail__back-row{padding:20px var(--pad) 0}
+.detail__back{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:lowercase;
+  padding:6px 0;border-bottom:1px solid var(--c-fg);color:var(--c-fg);
+}
+.detail__back .arrow{display:inline-block;transition:transform .4s var(--ease)}
+.detail__back:hover .arrow{transform:translateX(-6px)}
+
+.detail__head{padding:80px var(--pad) 60px;display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);align-items:end}
+.detail__tag{
+  grid-column:1 / span 12;color:var(--c-mute);margin-bottom:20px;
+  font-family:"Cormorant Garamond",serif;font-style:italic;font-size:14px;letter-spacing:.18em;text-transform:uppercase;
+}
+.detail__title{grid-column:1 / span 9;display:flex;flex-direction:column;gap:8px}
+.detail__title .zh{
+  font-family:"Alimama DaoLiTi","STLibian","SimLi","隶书",serif;
+  font-size:clamp(56px,8vw,120px);line-height:1;letter-spacing:.08em;color:var(--c-fg);
+}
+.detail__title .en{
+  font-family:"Cormorant Garamond","EB Garamond",serif;font-style:italic;font-weight:300;
+  font-size:clamp(18px,2vw,28px);letter-spacing:.04em;color:var(--c-mute);
+}
+.detail__year{
+  grid-column:10 / span 3;justify-self:end;align-self:end;
+  font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.18em;color:var(--c-mute);text-align:right;
+}
+@media (max-width:780px){.detail__title{grid-column:1 / -1}.detail__year{grid-column:1 / -1;justify-self:start;margin-top:12px;text-align:left}}
+
+.detail__hero{margin:0 var(--pad);height:78vh;min-height:480px;max-height:840px;overflow:hidden;position:relative;background:var(--c-line-soft)}
+.detail__hero img,.detail__hero video{width:100%;height:100%;object-fit:cover}
+
+.detail__meta{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);padding:40px var(--pad);border-bottom:1px solid var(--c-line-soft);margin:0 var(--pad)}
+.detail__meta dl{grid-column:span 3;display:flex;flex-direction:column;gap:8px}
+.detail__meta dt{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c-mute)}
+.detail__meta dd{font-family:"STKaiti","KaiTi",serif;font-size:14px;letter-spacing:.04em;color:var(--c-fg);text-shadow:0 0 .25px currentColor}
+@media (max-width:780px){.detail__meta dl{grid-column:span 6}}
+
+.detail__body{padding:100px var(--pad) 40px;display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap)}
+.detail__lead{
+  grid-column:2 / span 9;
+  font-family:"Cormorant Garamond","Noto Serif SC",serif;font-weight:300;font-size:clamp(22px,2.4vw,36px);
+  line-height:1.45;letter-spacing:.012em;margin-bottom:60px;color:var(--c-fg);
+}
+.detail__lead em{font-style:italic;border-bottom:1px solid currentColor;padding-bottom:2px}
+.detail__prose{
+  grid-column:3 / span 7;
+  font-family:"STKaiti","KaiTi","楷体",serif;font-size:15px;line-height:2;letter-spacing:.06em;
+  color:var(--c-fg);text-shadow:0 0 .25px currentColor;
+}
+.detail__prose p{margin-bottom:22px}
+.detail__prose p:first-of-type::first-letter{
+  font-family:"Alimama DaoLiTi","STLibian",serif;font-size:3em;font-weight:400;
+  float:left;line-height:.85;padding:8px 14px 0 0;color:var(--c-fg);
+}
+@media (max-width:780px){.detail__lead,.detail__prose{grid-column:1 / -1}}
+
+.detail__specs{padding:40px var(--pad) 60px;display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);border-top:1px solid var(--c-line-soft);margin:0 var(--pad)}
+.detail__specs h4{
+  grid-column:1 / span 3;align-self:start;padding-top:14px;
+  font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c-mute);
+}
+.detail__specs h4 .zh{
+  display:block;font-family:"Alimama DaoLiTi","STLibian",serif;font-style:normal;
+  font-size:22px;letter-spacing:.16em;color:var(--c-fg);margin-bottom:6px;
+}
+.detail__specs dl{grid-column:5 / span 7;display:grid;grid-template-columns:160px 1fr;gap:0 24px}
+.detail__specs dt,.detail__specs dd{padding:14px 0;border-top:1px solid var(--c-line-soft)}
+.detail__specs dt{font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.06em;color:var(--c-mute)}
+.detail__specs dd{font-family:"STKaiti","KaiTi",serif;font-size:14px;letter-spacing:.05em;text-shadow:0 0 .25px currentColor}
+@media (max-width:780px){.detail__specs h4,.detail__specs dl{grid-column:1 / -1}.detail__specs dl{grid-template-columns:120px 1fr}}
+
+.detail__gallery{padding:40px 0 60px;display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin:0 var(--pad)}
+.detail__gallery figure{position:relative;overflow:hidden;background:var(--c-line-soft)}
+.detail__gallery .g-wide{grid-column:span 12}
+.detail__gallery .g-half{grid-column:span 6}
+.detail__gallery .g-third{grid-column:span 4}
+.detail__gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.4s var(--ease)}
+.detail__gallery figure:hover img{transform:scale(1.03)}
+.detail__gallery .g-half img,.detail__gallery .g-third img{aspect-ratio:4/5}
+.detail__gallery .g-wide img{aspect-ratio:16/8}
+.detail__gallery figcaption{
+  position:absolute;left:14px;bottom:12px;color:#fff;
+  font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.16em;text-shadow:0 0 6px rgba(0,0,0,.6);
+}
+@media (max-width:780px){.detail__gallery .g-half,.detail__gallery .g-third{grid-column:span 12}}
+
+.detail__credits{padding:50px var(--pad) 60px;border-top:1px solid var(--c-line-soft);display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);margin:0 var(--pad)}
+.detail__credits h4{
+  grid-column:1 / span 3;align-self:start;padding-top:14px;
+  font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c-mute);
+}
+.detail__credits h4 .zh{
+  display:block;font-family:"Alimama DaoLiTi","STLibian",serif;font-style:normal;
+  font-size:22px;letter-spacing:.16em;color:var(--c-fg);margin-bottom:6px;
+}
+.detail__credits dl{grid-column:5 / span 7;display:grid;grid-template-columns:200px 1fr;gap:0 24px}
+.detail__credits dt,.detail__credits dd{padding:14px 0;border-top:1px solid var(--c-line-soft)}
+.detail__credits dt{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:12px;letter-spacing:.14em;color:var(--c-mute)}
+.detail__credits dd{font-family:"STKaiti","KaiTi",serif;font-size:14px;letter-spacing:.04em;text-shadow:0 0 .25px currentColor}
+@media (max-width:780px){.detail__credits h4,.detail__credits dl{grid-column:1 / -1}.detail__credits dl{grid-template-columns:1fr;gap:0}.detail__credits dt{padding-bottom:0}.detail__credits dd{border-top:0;padding-top:4px}}
+
+.detail__nav{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;padding:50px var(--pad) 60px;align-items:center;border-top:1px solid var(--c-line-soft);margin:0 var(--pad)}
+.detail__nav a{display:block}
+.detail__nav .prev{justify-self:start;text-align:left}
+.detail__nav .index{
+  justify-self:center;
+  font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:lowercase;
+  border-bottom:1px solid currentColor;padding-bottom:4px;
+}
+.detail__nav .next{justify-self:end;text-align:right}
+.detail__nav .label{
+  display:block;
+  font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--c-mute);margin-bottom:8px;
+}
+.detail__nav .name{
+  font-family:"Alimama DaoLiTi","STLibian",serif;font-size:clamp(20px,2.2vw,32px);
+  letter-spacing:.06em;line-height:1.2;color:var(--c-fg);transition:opacity .3s var(--ease);
+}
+.detail__nav a:hover .name{opacity:.55}
+@media (max-width:780px){.detail__nav{grid-template-columns:1fr;gap:24px}.detail__nav .prev,.detail__nav .next,.detail__nav .index{justify-self:start;text-align:left}}
+</style>
+</head>
+<body data-view="home" data-mode="list">
+
+<!-- 帘幕（加载） -->
+<div class="curtain" id="curtain">
+  <div class="curtain__mark">白&nbsp;屋</div>
+</div>
+
+<!-- 纸张纹理 -->
+<div class="paper" aria-hidden="true"></div>
+
+<!-- 顶部 logo（左上 · 复古印章 + 隶书"白"字） -->
+<a id="logo" href="#top" aria-label="返回首页">
+  <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+    <rect class="stroke" x="4" y="4" width="52" height="60"/>
+    <text class="fill" x="30" y="44" text-anchor="middle" font-family="Alimama DaoLiTi, STLibian, serif" font-size="32">白</text>
+    <text class="label" x="30" y="76" text-anchor="middle">BAIWU</text>
+  </svg>
+</a>
+
+<!-- 主导航（右上） -->
+<nav id="main-menu" aria-label="主导航">
+  <ul>
+    <li class="current"><a href="#top">作品</a></li>
+    <li><a href="#about">关于</a></li>
+    <li><a href="#contact">联系</a></li>
+  </ul>
+</nav>
+
+<!-- 主题切换（左下） -->
+<div class="theme-toggle" role="group" aria-label="主题切换">
+  <button data-theme-set="light" data-active="1">Light</button>
+  <button data-theme-set="dark">Dark</button>
+</div>
+
+<!-- 列表/画册 切换（顶部居中 · 完全参考 GD 站点） -->
+<nav id="project-view" aria-label="视图切换">
+  <ul>
+    <li class="lista current" data-mode-set="list">
+      <a href="#top">
+        <span class="icon">
+          <svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="2"/><rect y="4" width="10" height="2"/><rect y="8" width="10" height="2"/></svg>
+        </span>
+        <span>列表</span>
+      </a>
+    </li>
+    <li class="galeria" data-mode-set="gallery">
+      <a href="#top">
+        <span class="icon">
+          <svg width="10" height="10" viewBox="0 0 10 10"><rect width="4" height="4"/><rect x="6" width="4" height="4"/><rect y="6" width="4" height="4"/><rect x="6" y="6" width="4" height="4"/></svg>
+        </span>
+        <span>画册</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ========= HOME VIEW ========= -->
+<main class="view-home" id="top">
+
+<!-- 品牌区（极简） -->
+<section class="brand-block">
+  <span class="zh">白&nbsp;&nbsp;屋</span>
+  <span class="en">Baiwu Studio · Hangzhou</span>
+  <p class="tagline">装帧、字体、静物 ——<br>以缓慢的手艺整理纸页与墨色</p>
+</section>
+
+<!-- 列表视图（默认） · 横排文字行 + hover 显示右侧大图 -->
+<div class="grid">
+  <section id="projects-list" class="col-10">
+    <div class="itens">
+      <a href="#work/kong-shan-ji" class="item active">
+        <span class="num">i.</span>
+        <h2 class="project-name">空山集</h2>
+        <span class="en-name">An Anthology of Empty Mountains</span>
+        <span class="location">杭州，2024 · 线装 / 灰麻</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/143/900/1200"></div>
+        </div>
+      </a>
+
+      <a href="#work/cao-mu-you-ben-xin" class="item">
+        <span class="num">ii.</span>
+        <h2 class="project-name">草木有本心</h2>
+        <span class="en-name">Herbal Letterforms</span>
+        <span class="location">杭州，2023 · 字体 / 1,072 字</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/165/900/1200"></div>
+        </div>
+      </a>
+
+      <a href="#work/qing-ci-shi-er-pin" class="item">
+        <span class="num">iii.</span>
+        <h2 class="project-name">青瓷十二品</h2>
+        <span class="en-name">Twelve Hues of Celadon</span>
+        <span class="location">龙泉博物馆，2024 秋</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/51/900/1200"></div>
+        </div>
+      </a>
+
+      <a href="#work/dong-zhi-tie" class="item">
+        <span class="num">iv.</span>
+        <h2 class="project-name">冬至帖</h2>
+        <span class="en-name">Letters of the Solar Term</span>
+        <span class="location">杭州，2025 · 字帖 / 限 240 函</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/187/900/1200"></div>
+        </div>
+      </a>
+
+      <a href="#work/jing-wu-qi-ji" class="item">
+        <span class="num">v.</span>
+        <h2 class="project-name">静物七记</h2>
+        <span class="en-name">Seven Notes on Stillness</span>
+        <span class="location">杭州 / 京都，2023</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/96/900/1200"></div>
+        </div>
+      </a>
+
+      <a href="#work/wu-ming-shu" class="item">
+        <span class="num">vi.</span>
+        <h2 class="project-name">无名书</h2>
+        <span class="en-name">The Nameless Book</span>
+        <span class="location">杭州，2025 · 概念 / 限 99 本</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/119/900/1200"></div>
+        </div>
+      </a>
+    </div>
+  </section>
+</div>
+
+<!-- 画册视图 -->
+<div class="grid">
+  <section id="projects-gallery" class="col-10">
+    <ul>
+      <li><a href="#work/kong-shan-ji">
+        <div class="image"><img alt="" src="https://picsum.photos/id/143/900/1200"></div>
+        <span class="ga-title">空山集</span>
+      </a></li>
+      <li><a href="#work/cao-mu-you-ben-xin">
+        <div class="image"><img alt="" src="https://picsum.photos/id/165/900/1200"></div>
+        <span class="ga-title">草木有本心</span>
+      </a></li>
+      <li><a href="#work/qing-ci-shi-er-pin">
+        <div class="image"><img alt="" src="https://picsum.photos/id/51/900/1200"></div>
+        <span class="ga-title">青瓷十二品</span>
+      </a></li>
+      <li><a href="#work/dong-zhi-tie">
+        <div class="image"><img alt="" src="https://picsum.photos/id/187/900/1200"></div>
+        <span class="ga-title">冬至帖</span>
+      </a></li>
+      <li><a href="#work/jing-wu-qi-ji">
+        <div class="image"><img alt="" src="https://picsum.photos/id/96/900/1200"></div>
+        <span class="ga-title">静物七记</span>
+      </a></li>
+      <li><a href="#work/wu-ming-shu">
+        <div class="image"><img alt="" src="https://picsum.photos/id/119/900/1200"></div>
+        <span class="ga-title">无名书</span>
+      </a></li>
+    </ul>
+  </section>
+</div>
+
+<!-- 关于 -->
+<section class="about-strip" id="about">
+  <div class="inner">
+    <h3>关&nbsp;于&nbsp;白&nbsp;屋<span class="en">About the Studio</span></h3>
+    <p>白屋成立于乙未冬，初设于杭州南山路三十七号。一切始于对一行字的犹豫：它该用什么字体、什么纸、印多少本、由谁来读。</p>
+    <p>主理人周墨白，自幼习字，曾在杭州一家旧印社学习活字印刷三年。我们做书、做字、亦做与它们有关的展。慢一点，常常更好。</p>
+    <ul class="meta-list">
+      <li><span class="k">Founded</span><span class="v">乙未冬 / Anno 2018</span></li>
+      <li><span class="k">Location</span><span class="v">杭州西湖区南山路三十七号</span></li>
+      <li><span class="k">Discipline</span><span class="v">装帧 · 字体 · 静物</span></li>
+      <li><span class="k">Director</span><span class="v">周墨白 Zhou Mobai</span></li>
+      <li><span class="k">Open Hours</span><span class="v">周三至周日 10:30 — 18:00</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 联系 -->
+<section class="about-strip" id="contact">
+  <div class="inner">
+    <h3>来&nbsp;信<span class="en">Get in Touch</span></h3>
+    <p>想做一册书，或一个慢一点的字，请来信。<br>
+    每封来信都会亲自回复，最迟不超过五日。</p>
+    <ul class="meta-list">
+      <li><span class="k">E-mail</span><span class="v">hi@baiwu.studio</span></li>
+      <li><span class="k">Phone</span><span class="v">+86 571 8703 1408</span></li>
+      <li><span class="k">Address</span><span class="v">杭州市西湖区南山路三十七号 旧印社二楼 305</span></li>
+      <li><span class="k">Instagram</span><span class="v">@baiwu.studio</span></li>
+      <li><span class="k">公众号</span><span class="v">白屋札记</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- ========= DETAIL VIEW ========= -->
+<main class="view-detail" id="detail-root" aria-live="polite"></main>
+
+<!-- 旋转 credit（参考 GD 同款） -->
+<a id="svp-credit" href="#top" target="_self">Site by<span>白屋</span></a>
+
+<footer>
+  <div>© Anno 2018 — 2025 · Baiwu Studio</div>
+  <div>浙 ICP 备 2024 — 0937 号</div>
+  <div class="links">
+    <a href="#">Instagram</a>
+    <a href="#">Are.na</a>
+    <a href="#">公众号</a>
+  </div>
+</footer>
+
+<!-- ========= 作品数据（保留原 JSON）========= -->
+<script type="application/json" id="works-data">
+[
+  {
+    "slug": "kong-shan-ji",
+    "title_zh": "空山集",
+    "title_en": "An Anthology of Empty Mountains",
+    "year": "甲辰 / 2024",
+    "tag": "[ 诗集 · 装帧设计 ]",
+    "cover": "https://picsum.photos/id/143/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "诗集装帧"},
+      {"label": "Year / 年份", "value": "2024"},
+      {"label": "Edition / 印量", "value": "首印 320 本"},
+      {"label": "Format / 开本", "value": "130 × 195 毫米"}
+    ],
+    "lead": "三十六首关于山的诗，藏在一函灰麻布之内。我们想做一本——读者翻开后，先听见<em>风声</em>，再读见字的书。",
+    "prose": [
+      "诗稿来自旅居终南山十一年的某位作者，他不愿署名，只托人寄来一纸目录与一札手稿。我们做了三个月的设计：拣字、试纸、试装订，最后选择了灰麻布与略带颗粒的本色棉纸，用最传统的线装四目订法，让书在桌上能够平躺、能够呼吸。",
+      "字体使用了铸字时期的「老宋」与自家小楷扫描合成版「白屋楷」，正文 11 磅，行距 1.95 倍，每页留白几乎与字面等大。版心偏下，是为了让读者在翻页时，先看到上方那片空白——像走入山的入口。",
+      "封面与函套用单色凸印，仅一枚指甲大小的「山」字，凿在右下。函套衬里是手工打浆的桑皮纸，米白色，略带草腥味。这一切都不是为了「好看」，而是为了让书与一只手相遇时，那只手会下意识地放轻。"
+    ],
+    "specs": [
+      ["开本 / Format", "130 × 195 毫米 · 函装"],
+      ["页数 / Pages", "正文 144 页 + 衬页 8 页"],
+      ["纸张 / Paper", "正文：本色棉纸 90gsm · 函套衬里：桑皮纸 60gsm"],
+      ["装订 / Binding", "线装四目 · 棉麻线 · 手工订"],
+      ["字体 / Typeface", "老宋（标题）· 白屋楷（正文）"],
+      ["印刷 / Printing", "单色凸印 · 杭州墨耕活字房"],
+      ["印量 / Edition", "首印 320 本 · 含编号"],
+      ["定价 / Price", "¥ 388（含手工签编号）"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/143/1600/900", "layout": "g-wide", "caption": "封面 · 灰麻布"},
+      {"src": "https://picsum.photos/id/40/800/1000", "layout": "g-half", "caption": "内文跨页 · 山字凸印"},
+      {"src": "https://picsum.photos/id/88/800/1000", "layout": "g-half", "caption": "线装订口"},
+      {"src": "https://picsum.photos/id/121/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/175/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/200/600/750", "layout": "g-third"}
+    ],
+    "credits": [
+      ["设计 / Design", "周墨白"],
+      ["排版 / Typesetting", "周墨白 · 白屋"],
+      ["手工装订 / Binding", "陈漱石（杭州·订书坊）"],
+      ["凸印 / Letterpress", "墨耕活字房"],
+      ["纸张顾问 / Paper", "潘野秋"],
+      ["监制 / Producer", "白屋·乙巳春"]
+    ]
+  },
+  {
+    "slug": "cao-mu-you-ben-xin",
+    "title_zh": "草木有本心",
+    "title_en": "Herbal Letterforms — Bencao Variant",
+    "year": "癸卯 / 2023",
+    "tag": "[ 字体设计 · 中草药图谱 ]",
+    "cover": "https://picsum.photos/id/165/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "字体设计 · 双字重"},
+      {"label": "Year / 年份", "value": "2022 — 2023"},
+      {"label": "Glyphs / 字符", "value": "1,072 字"},
+      {"label": "Use / 用途", "value": "古籍图谱排版"}
+    ],
+    "lead": "一套为本草图谱而生的宋体变体，名「<em>本草体</em>」。我们花了一年描出 1,072 个字——它的每一笔，都想长得像一片叶。",
+    "prose": [
+      "缘起于一本残破的明代《本草纲目》翻印本。原书木刻字形古拙，今日重排时一旦换成现代宋体，便丢了那种纸上草木的呼吸感。于是想：能不能为这一类古书，专做一套「会让药草醒过来」的字。",
+      "造字的方法是先描一遍明刊本的笔意——尤其是横画的轻起重收、撇捺的弧度——再将其骨架平整化、笔触现代化。每一个字都经过两轮试印：先用激光打印对版心比例，再用活字凸印验黑度。两个字重——「茎」与「叶」——分别用于标题与正文。",
+      "整套字最终用于杭州中医博物馆 2024 年的常设展《本草十二门》，以及与上海三联书店合作出版的《草木图谱·新编》。后者销量平平，但有一位读者写信来说，「翻开它的时候，闻到了一种很淡的、像是晒干薄荷的气味。」——这是我们听过最满足的一句反馈。"
+    ],
+    "specs": [
+      ["字符数 / Glyph Count", "1,072 字 · 含繁简通用"],
+      ["字重 / Weights", "茎 Stem (350) · 叶 Leaf (480)"],
+      ["格式 / Formats", "OTF · WOFF2"],
+      ["设计周期 / Design Time", "2022.04 — 2023.07 · 计 16 个月"],
+      ["参考底本 / Reference", "明万历刻本《本草纲目》"],
+      ["授权 / License", "限定授权 · 仅用于古籍 / 博物相关出版"],
+      ["首次应用 / First Use", "《草木图谱·新编》上海三联 2024"],
+      ["造字工具 / Tools", "Glyphs 3 · 手描铅笔稿"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/165/1600/900", "layout": "g-wide", "caption": "字样 · 茎与叶"},
+      {"src": "https://picsum.photos/id/0/800/1000", "layout": "g-half", "caption": "笔意分析图"},
+      {"src": "https://picsum.photos/id/20/800/1000", "layout": "g-half", "caption": "试印对照"},
+      {"src": "https://picsum.photos/id/30/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/60/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/100/600/750", "layout": "g-third"}
+    ],
+    "credits": [
+      ["字体设计 / Type Design", "周墨白"],
+      ["造字助理 / Assistant", "苏白薇"],
+      ["顾问 / Consultant", "杭州中医博物馆 · 钱海舟先生"],
+      ["首发出版 / Premiere", "《草木图谱·新编》上海三联"],
+      ["特别鸣谢 / Acknowledgement", "潘野秋（明刊本提供）"]
+    ]
+  },
+  {
+    "slug": "qing-ci-shi-er-pin",
+    "title_zh": "青瓷十二品",
+    "title_en": "Twelve Hues of Celadon",
+    "year": "甲辰 / 2024 秋",
+    "tag": "[ 展览 · 视觉系统 ]",
+    "cover": "https://picsum.photos/id/51/1800/1100",
+    "meta": [
+      {"label": "Venue / 场地", "value": "龙泉青瓷博物馆"},
+      {"label": "Year / 年份", "value": "2024 秋"},
+      {"label": "Duration / 周期", "value": "11 周 · 至 2025.02"},
+      {"label": "Pieces / 展品", "value": "12 件 · 馆藏精选"}
+    ],
+    "lead": "为龙泉青瓷博物馆做的一场小展。十二只碗，十二种颜色——从「<em>梅子青</em>」到「天青带雪」。我们做了它的全部静默之物。",
+    "prose": [
+      "策展人沈渡定下的题目极小：只展十二件，且每件只讲一种青色。我们的工作便是替这十二种青色找到自己的字与纸。最后选用了米色 90gsm 棉纸印画册，封面是单色丝网印，一枚青瓷碗的剪影；展签则用极轻的灰，印在牛皮卡纸上，固定在展柜下方一寸的位置——观众必须俯身才能读到。",
+      "整个视觉系统的色阶仅有三种：墨、灰、米白。青瓷本身的颜色由展品自己说话，设计不去抢。展签的字体使用了我们自家「白屋楷」的一个特别字重，比常见楷体瘦一分，更像古代官窑底款的题字。",
+      "开幕当天下了雨。展厅里几乎听不到讲解的声音，每个人都在低头读那一行行小字。我们站在角落，觉得这便是最好的设计——它什么都没说，却让所有人都安静了下来。"
+    ],
+    "specs": [
+      ["展期 / Period", "2024.11.20 — 2025.02.16"],
+      ["场地 / Venue", "龙泉青瓷博物馆 · 二号展厅"],
+      ["展品数 / Pieces", "12 件馆藏 + 1 件复刻"],
+      ["画册开本 / Catalogue", "190 × 260 毫米 · 锁线裸脊"],
+      ["画册纸张 / Paper", "封面：纯灰卡 280gsm · 内文：米色棉纸 90gsm"],
+      ["印量 / Edition", "1,200 本"],
+      ["展签材质 / Labels", "牛皮卡 350gsm · 墨色凸印"],
+      ["主视觉字体 / Typeface", "白屋楷·瘦版（特制）"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/51/1600/900", "layout": "g-wide", "caption": "展厅入口"},
+      {"src": "https://picsum.photos/id/110/800/1000", "layout": "g-half"},
+      {"src": "https://picsum.photos/id/130/800/1000", "layout": "g-half"},
+      {"src": "https://picsum.photos/id/145/600/750", "layout": "g-third", "caption": "展签"},
+      {"src": "https://picsum.photos/id/158/600/750", "layout": "g-third", "caption": "画册"},
+      {"src": "https://picsum.photos/id/177/600/750", "layout": "g-third", "caption": "纸袋"}
+    ],
+    "credits": [
+      ["策展 / Curator", "沈渡"],
+      ["视觉总设计 / Art Director", "周墨白 · 白屋"],
+      ["画册设计 / Catalogue Design", "周墨白 · 苏白薇"],
+      ["展签 & 物料 / Signage", "白屋工作室"],
+      ["印制 / Production", "杭州墨耕活字房 · 上海雅昌"],
+      ["特别鸣谢 / Special Thanks", "龙泉青瓷博物馆全体研究员"]
+    ]
+  },
+  {
+    "slug": "dong-zhi-tie",
+    "title_zh": "冬至帖",
+    "title_en": "Letters of the Solar Term",
+    "year": "乙巳 / 2025",
+    "tag": "[ 字帖 · 二十四节气 ]",
+    "cover": "https://picsum.photos/id/187/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "书法字帖 · 二十四帖"},
+      {"label": "Year / 年份", "value": "2024 — 2025"},
+      {"label": "Format / 开本", "value": "八开 · 折页"},
+      {"label": "Edition / 印量", "value": "限 240 函"}
+    ],
+    "lead": "一册写给一年的字帖。每一页对应一个节气，每一帖只写一个字——比如冬至写「<em>蛰</em>」，立春写「萌」。共二十四纸。",
+    "prose": [
+      "项目最初只是给自己的练习。从癸卯年的立春起笔，每到一个节气，我便挑一个最合那一日气息的字，在皮纸上写一遍。原本只是日记式的私人功课，到了甲辰冬至那天写完最后一帖「藏」时，朋友说，应该把它印出来。",
+      "字帖的设计极简。每一页只有三样东西：节气名（小印于左上）、当日气候节录（极小字，自《月令七十二候集解》）、以及那个字本身——字大如脸，墨黑如夜。纸是手工纯皮纸，因每一张厚度略有差异，整函的厚度也带着一种自然的偏倚。",
+      "函盒以原木未漆，上有一枚墨章「冬至」二字。盒中除字帖外，附一张折叠的二十四节气年历，背面印一首杜牧的诗。整件作品的售出方式只有一种：邮购。每一函都由我亲手包好、签名、寄出。"
+    ],
+    "specs": [
+      ["开本 / Format", "270 × 380 毫米 · 折页装"],
+      ["纸张 / Paper", "手工纯皮纸 · 100 — 120gsm（厚度自然偏差）"],
+      ["装帧 / Binding", "经折装 · 函套盛"],
+      ["函盒 / Case", "原木未漆 · 钤印「冬至」"],
+      ["印刷 / Printing", "墨色凸印 · 单色"],
+      ["附件 / Insert", "二十四节气年历折页 · 背印杜牧诗"],
+      ["书写 / Calligraphy", "周墨白手写 · 共 24 字 · 凸版翻刻"],
+      ["印量 / Edition", "限 240 函 · 含编号与签名"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/187/1600/900", "layout": "g-wide", "caption": "整函"},
+      {"src": "https://picsum.photos/id/195/800/1000", "layout": "g-half", "caption": "冬至 · 蛰"},
+      {"src": "https://picsum.photos/id/76/800/1000", "layout": "g-half", "caption": "立春 · 萌"},
+      {"src": "https://picsum.photos/id/42/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/64/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/91/600/750", "layout": "g-third"}
+    ],
+    "credits": [
+      ["书写 & 设计 / Calligraphy &amp; Design", "周墨白"],
+      ["凸版翻刻 / Letterpress Engraving", "墨耕活字房 · 老沈师傅"],
+      ["纸张定制 / Paper", "潘野秋（富阳·手工皮纸坊）"],
+      ["木盒 / Wooden Case", "山木屋 · 阿樟"],
+      ["邮包装订 / Hand-wrap", "周墨白 · 苏白薇"]
+    ]
+  },
+  {
+    "slug": "jing-wu-qi-ji",
+    "title_zh": "静物七记",
+    "title_en": "Seven Notes on Stillness",
+    "year": "癸卯 / 2023",
+    "tag": "[ 摄影集 · 装帧合作 ]",
+    "cover": "https://picsum.photos/id/96/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "摄影集装帧"},
+      {"label": "Photographer", "value": "沈 渡"},
+      {"label": "Year / 年份", "value": "2023"},
+      {"label": "Edition / 印量", "value": "首印 800 本"}
+    ],
+    "lead": "与摄影师沈渡合作的一本黑白静物集。七组照片，七种凝视——一只碗、一道光、一段尚未被命名的<em>影子</em>。",
+    "prose": [
+      "沈渡用了三年，在自己的厨房里拍了七组静物。没有人，没有活物，只有日光转移时桌面上的微小变化。他把这些照片寄给我，问能不能装订成一本「翻起来不会发出任何声音的书」。",
+      "我们最后选用了 230 克的德国哑面美术纸，封面用裸壳布做素色，烫一行小银——只两个字：「七记」。书脊采用锁线裸脊，让书可以平摊一百八十度。每一组照片之间只用一张半透粉色硫酸纸隔开，上印那一组的拍摄时间——「丙申·小满·下午四时」之类。",
+      "这本书没有上市发行，只在沈渡个展期间于杭州、京都两地各售三百册。剩余两百本，分赠他与我们各自的朋友。这是白屋少有的、几乎没有公开记录的项目。"
+    ],
+    "specs": [
+      ["开本 / Format", "210 × 270 毫米 · 横"],
+      ["页数 / Pages", "112 页 · 内含 7 张硫酸纸隔页"],
+      ["纸张 / Paper", "德国 Munken 纯质美术纸 230gsm"],
+      ["封面 / Cover", "裸壳布 · 烫单银「七记」"],
+      ["装订 / Binding", "锁线裸脊 · 可平摊"],
+      ["印刷 / Printing", "四色 + 专黑 · 上海雅昌"],
+      ["首映展 / Launch", "沈渡个展《厨房光线》· 杭州 / 京都 2023"],
+      ["流通 / Distribution", "限定 800 本 · 仅展会发售 + 朋友分赠"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/96/1600/900", "layout": "g-wide"},
+      {"src": "https://picsum.photos/id/26/800/1000", "layout": "g-half"},
+      {"src": "https://picsum.photos/id/45/800/1000", "layout": "g-half"},
+      {"src": "https://picsum.photos/id/82/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/103/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/120/600/750", "layout": "g-third"}
+    ],
+    "credits": [
+      ["摄影 / Photography", "沈 渡"],
+      ["装帧设计 / Book Design", "周墨白 · 白屋"],
+      ["排版 / Typesetting", "苏白薇"],
+      ["印刷 / Printing", "上海雅昌艺术印刷"],
+      ["展览鸣谢 / Exhibition", "京都 · 吉原画廊"]
+    ]
+  },
+  {
+    "slug": "wu-ming-shu",
+    "title_zh": "无名书",
+    "title_en": "The Nameless Book",
+    "year": "乙巳 / 2025",
+    "tag": "[ 实验装帧 · 概念书 ]",
+    "cover": "https://picsum.photos/id/119/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "概念书 · 限量"},
+      {"label": "Year / 年份", "value": "2025"},
+      {"label": "Edition / 印量", "value": "限印 99 本"},
+      {"label": "Format / 开本", "value": "110 × 165 毫米"}
+    ],
+    "lead": "一本不可读的书。十六张净页，仅以三种压痕区分章节：<em>井</em>、<em>巷</em>、<em>窗</em>。当文字退场，纸张本身能否继续叙述？",
+    "prose": [
+      "起念于某次在一只旧木匣里，发现祖父留下的一沓白纸。纸已发黄，但每一张都干净如初——它们是被祖父反复摩挲过的、却始终没有写下任何字的稿纸。我望着它们良久，忽然觉得：这本身就是一本书了。",
+      "于是设计了《无名书》。它没有标题、没有作者署名、没有 ISBN，只有十六张被压印过的纯白棉纸：六张「井」（一个深陷的方），五张「巷」（一道贯穿页面的窄线），五张「窗」（一个轻浅的方框）。压印不沾任何油墨，只留下纸的凹凸——逆光时才能勉强看见。",
+      "我们想试一试，当文字退场之后，纸张能否还在叙述什么。读者翻开它的时候，必须把书举到窗边，让光斜斜地穿过去——然后那些井、巷、窗便一一浮现。它读起来像一场长久的呼吸。",
+      "这本书不会再版，也不会数字化。九十九本，全部已寄送给那些愿意收藏一本「不可读」之物的朋友。我们把第 00 号留给了自己。"
+    ],
+    "specs": [
+      ["开本 / Format", "110 × 165 毫米 · 口袋本"],
+      ["页数 / Pages", "16 张净页 + 1 张衬页"],
+      ["纸张 / Paper", "意大利 Magnani 手工棉纸 240gsm · 纯白"],
+      ["封面 / Cover", "未染色亚麻布 · 不烫不印"],
+      ["装订 / Binding", "和式四目线装 · 麻线"],
+      ["工艺 / Process", "全书压印 · 不着墨 · 共 16 页 · 三种纹样"],
+      ["编号 / Numbering", "1 / 99 至 99 / 99 · 含手书钢笔编号"],
+      ["售价 / Price", "非卖品 · 朋友限定赠送"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/119/1600/900", "layout": "g-wide", "caption": "全本 · 逆光"},
+      {"src": "https://picsum.photos/id/164/800/1000", "layout": "g-half", "caption": "井 · 压痕特写"},
+      {"src": "https://picsum.photos/id/180/800/1000", "layout": "g-half", "caption": "巷 · 一道窄线"},
+      {"src": "https://picsum.photos/id/55/600/750", "layout": "g-third", "caption": "窗"},
+      {"src": "https://picsum.photos/id/72/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/93/600/750", "layout": "g-third"}
+    ],
+    "credits": [
+      ["构想 & 设计 / Concept &amp; Design", "周墨白"],
+      ["压印 / Embossing", "墨耕活字房 · 老沈师傅"],
+      ["纸张 / Paper", "意大利 Magnani 1404"],
+      ["手工装订 / Binding", "周墨白 亲手"],
+      ["特别鸣谢 / Dedicated to", "祖父 · 周仲秋（1923 — 2009）"]
+    ]
+  }
+]
+</script>
+
+<script>
+/* ============ 帘幕收起 ============ */
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{
+    const c = document.getElementById('curtain');
+    if (c) c.classList.add('is-out');
+  }, 1100);
+  applyRoute();
+  initSvpCredit();
+});
+
+/* ============ Theme toggle ============ */
+(function themeToggle(){
+  const root = document.documentElement;
+  const buttons = document.querySelectorAll('[data-theme-set]');
+  const saved = localStorage.getItem('baiwu-theme');
+  if (saved === 'dark' || saved === 'light'){
+    root.setAttribute('data-theme', saved);
+    buttons.forEach(b=> b.dataset.active = (b.dataset.themeSet === saved) ? '1' : '0');
+  }
+  buttons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const t = btn.dataset.themeSet;
+      root.setAttribute('data-theme', t);
+      localStorage.setItem('baiwu-theme', t);
+      buttons.forEach(b=> b.dataset.active = (b === btn) ? '1' : '0');
+    });
+  });
+})();
+
+/* ============ List / Gallery 视图切换 ============ */
+(function viewMode(){
+  const items = document.querySelectorAll('#project-view li[data-mode-set]');
+  function setMode(mode){
+    document.body.dataset.mode = mode;
+    items.forEach(li=>{
+      li.classList.toggle('current', li.dataset.modeSet === mode);
+    });
+    localStorage.setItem('baiwu-mode', mode);
+  }
+  const saved = localStorage.getItem('baiwu-mode');
+  if (saved === 'gallery' || saved === 'list') setMode(saved);
+  items.forEach(li=>{
+    const link = li.querySelector('a');
+    link.addEventListener('click', (e)=>{
+      e.preventDefault();
+      setMode(li.dataset.modeSet);
+    });
+  });
+})();
+
+/* ============ Hover-row 显示缩略图（参考 GD 核心交互）============ */
+(function projectListHover(){
+  const list = document.getElementById('projects-list');
+  if (!list) return;
+  const items = list.querySelectorAll('.item');
+
+  function resetVisibility(){
+    items.forEach((item, i)=>{
+      item.classList.toggle('active', i === 0);
+    });
+  }
+
+  items.forEach(item=>{
+    item.addEventListener('mouseenter', ()=>{
+      items.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  list.addEventListener('mouseleave', resetVisibility);
+  resetVisibility();
+})();
+
+/* ============ Footer credit (rotated) ============ */
+function initSvpCredit(){
+  const credit = document.getElementById('svp-credit');
+  if (!credit) return;
+  const sentinel = document.createElement('div');
+  sentinel.style.height = '1px';
+  document.body.appendChild(sentinel);
+  const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if (entry.isIntersecting) credit.classList.add('visible');
+      else credit.classList.remove('visible');
+    });
+  }, { threshold:0, rootMargin:'0px 0px 300px 0px' });
+  observer.observe(sentinel);
+}
+
+/* ============ 详情页路由 ============ */
+const WORKS = (() => {
+  try { return JSON.parse(document.getElementById('works-data').textContent); }
+  catch(e){ console.error('works-data JSON parse failed:', e); return []; }
+})();
+const BY_SLUG = Object.fromEntries(WORKS.map(w => [w.slug, w]));
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderDetail(slug){
+  const w = BY_SLUG[slug];
+  const root = document.getElementById('detail-root');
+  if (!w){
+    root.innerHTML = `<div class="detail__back-row"><a class="detail__back" href="#top"><span class="arrow">←</span>返回首页 / back to index</a></div><div style="padding:120px var(--pad);text-align:center"><h2 style="font-family:'Alimama DaoLiTi',serif;font-size:48px;letter-spacing:.1em">作品不存在</h2></div>`;
+    return;
+  }
+  const idx = WORKS.findIndex(x => x.slug === slug);
+  const prev = WORKS[(idx - 1 + WORKS.length) % WORKS.length];
+  const next = WORKS[(idx + 1) % WORKS.length];
+
+  const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(w.cover);
+  const heroMedia = isVideo
+    ? `<video src="${escapeHTML(w.cover)}" autoplay muted loop playsinline></video>`
+    : `<img src="${escapeHTML(w.cover)}" alt="${escapeHTML(w.title_zh||'')}">`;
+
+  const metaHTML = (w.meta||[]).map(m => `<dl><dt>${escapeHTML(m.label)}</dt><dd>${escapeHTML(m.value)}</dd></dl>`).join('');
+  const proseHTML = (w.prose||[]).map(p => `<p>${p}</p>`).join('');
+  const galleryHTML = (w.gallery||[]).map(g => {
+    const layout = g.layout || 'g-half';
+    const cap = g.caption ? `<figcaption>${escapeHTML(g.caption)}</figcaption>` : '';
+    return `<figure class="${layout}"><img src="${escapeHTML(g.src)}" alt="">${cap}</figure>`;
+  }).join('');
+  const specsHTML = (w.specs||[]).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  const creditsHTML = (w.credits||[]).map(([role, name]) => `<dt>${role}</dt><dd>${name}</dd>`).join('');
+
+  root.innerHTML = `
+    <div class="detail__back-row">
+      <a class="detail__back" href="#top"><span class="arrow">←</span>back to index / 返回索引</a>
+    </div>
+
+    <header class="detail__head">
+      <p class="detail__tag">${escapeHTML(w.tag||'')}</p>
+      <div class="detail__title">
+        <span class="zh">${escapeHTML(w.title_zh||'')}</span>
+        <span class="en">${escapeHTML(w.title_en||'')}</span>
+      </div>
+      <div class="detail__year">${escapeHTML(w.year||'')}</div>
+    </header>
+
+    <div class="detail__hero">${heroMedia}</div>
+
+    ${metaHTML ? `<div class="detail__meta">${metaHTML}</div>` : ''}
+
+    <section class="detail__body">
+      ${w.lead ? `<p class="detail__lead">${w.lead}</p>` : ''}
+      ${proseHTML ? `<div class="detail__prose">${proseHTML}</div>` : ''}
+    </section>
+
+    ${specsHTML ? `<section class="detail__specs"><h4><span class="zh">规&nbsp;格</span>Specifications</h4><dl>${specsHTML}</dl></section>` : ''}
+
+    ${galleryHTML ? `<div class="detail__gallery">${galleryHTML}</div>` : ''}
+
+    ${creditsHTML ? `<section class="detail__credits"><h4><span class="zh">致&nbsp;谢</span>Credits</h4><dl>${creditsHTML}</dl></section>` : ''}
+
+    <nav class="detail__nav" aria-label="作品导航">
+      <a class="prev" href="#work/${escapeHTML(prev.slug)}">
+        <span class="label">← previous · 前一件</span>
+        <span class="name">${escapeHTML(prev.title_zh||'')}</span>
+      </a>
+      <a class="index" href="#top">all works / 全部作品</a>
+      <a class="next" href="#work/${escapeHTML(next.slug)}">
+        <span class="label">next · 下一件 →</span>
+        <span class="name">${escapeHTML(next.title_zh||'')}</span>
+      </a>
+    </nav>
+  `;
+}
+
+function applyRoute(){
+  const h = location.hash || '';
+  if (h.startsWith('#work/')){
+    const slug = h.slice(6);
+    document.body.dataset.view = 'detail';
+    renderDetail(slug);
+    window.scrollTo({top: 0, behavior: 'instant'});
+  } else {
+    document.body.dataset.view = 'home';
+  }
+}
+
+window.addEventListener('hashchange', applyRoute);
+
+/* ============ 平滑滚动（轻量版）============ */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const id = a.getAttribute('href');
+    if (id.length<2) return;
+    if (id.startsWith('#work/')) return;
+    const el = document.querySelector(id);
+    if (!el) return;
+    if (id === '#top'){
+      e.preventDefault();
+      window.scrollTo({top:0, behavior:'smooth'});
+      return;
+    }
+    e.preventDefault();
+    const top = el.getBoundingClientRect().top + window.scrollY - 40;
+    window.scrollTo({top, behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>

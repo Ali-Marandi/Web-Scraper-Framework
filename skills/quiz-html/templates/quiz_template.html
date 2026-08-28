@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>📚 {{TITLE}}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',Roboto,sans-serif;background:#f5f7fb;color:#2d3142;height:100vh;overflow:hidden;display:flex;flex-direction:column;transition:background .2s,color .2s}
+
+/* ============ 顶部条 ============ */
+.topbar{background:#fff;border-bottom:1px solid #e8eaf2;padding:10px 20px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.topbar-row1{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.topbar-row2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed #f0f2f7}
+.topbar h1{font-size:16px;color:#5b8def;white-space:nowrap;font-weight:700}
+.topbar h1 .subtitle{font-size:12px;color:#8a8fa3;font-weight:400;margin-left:6px}
+
+.cat-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%}
+.cat-filter-label{font-size:12px;color:#8a8fa3;white-space:nowrap;font-weight:600}
+.cat-chip{font-size:12px;padding:4px 12px;border-radius:14px;border:1px solid #e0e3ed;background:#fff;cursor:pointer;user-select:none;transition:all .15s;color:#8a8fa3;white-space:nowrap}
+.cat-chip:hover{border-color:#5b8def}
+.cat-chip.active{background:#5b8def;color:#fff;border-color:#5b8def}
+.cat-chip .chip-count{font-size:10px;opacity:.75;margin-left:4px}
+
+.stat-filters{display:flex;gap:6px;align-items:center}
+.sf-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:18px;border:1px solid #e0e3ed;background:#fff;cursor:pointer;transition:all .15s;user-select:none;font-size:12px;color:#8a8fa3}
+.sf-btn:hover{border-color:#5b8def}
+.sf-btn .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:opacity .15s}
+.sf-btn .dot.green{background:#52c785}
+.sf-btn .dot.gray{background:#b8bdcc}
+.sf-btn .dot.red{background:#ff7a90}
+.sf-btn .dot.yellow{background:#ffc857}
+.sf-btn .num{font-weight:700;min-width:16px;color:#2d3142}
+.sf-btn.off{opacity:.4}
+
+.io-btns{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.io-btns button{font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid #e0e3ed;background:#fff;color:#5b6172;cursor:pointer;transition:all .15s}
+.io-btns button:hover{border-color:#5b8def;color:#5b8def}
+.io-btns button.exam{background:#fef0f3;border-color:#ffd1d9;color:#ff5d77}
+.io-btns button.exam:hover{background:#ff5d77;color:#fff;border-color:#ff5d77}
+.io-btns button.danger:hover{border-color:#ff7a90;color:#ff7a90}
+.io-btns .theme-toggle{padding:5px 9px;border-radius:50%;font-size:14px}
+
+/* ============ 主体 ============ */
+.main{display:flex;flex:1;overflow:hidden}
+.left{width:300px;min-width:300px;background:#fff;border-right:1px solid #e8eaf2;display:flex;flex-direction:column;flex-shrink:0}
+.left-header{padding:12px 16px;border-bottom:1px solid #e8eaf2;font-size:13px;color:#8a8fa3;display:flex;justify-content:space-between;align-items:center}
+.left-header .progress{font-weight:700;color:#5b8def}
+.left-scroll{flex:1;overflow-y:auto;padding:6px 0}
+.left-scroll::-webkit-scrollbar{width:6px}
+.left-scroll::-webkit-scrollbar-thumb{background:#d8dce8;border-radius:3px}
+
+.cat-group{margin-bottom:2px}
+.cat-top{padding:8px 16px;font-size:13px;font-weight:700;color:#2d3142;background:#fafbfd;display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:1;border-bottom:1px solid #f0f2f7}
+.cat-count{font-size:11px;color:#a8adbd;font-weight:normal}
+.cat-law{padding:8px 16px 4px 16px;font-size:12px;font-weight:600;color:#5a607a;display:flex;gap:6px;align-items:flex-start;line-height:1.45;border-top:1px solid #f5f6fa}
+.cat-law:first-of-type{border-top:none}
+.cat-law-name{flex:1;word-break:break-word}
+.cat-law-count{font-size:10px;color:#a8adbd;font-weight:normal;background:#f0f2f7;padding:1px 6px;border-radius:8px;flex-shrink:0;margin-top:2px}
+.cat-sub{padding:4px 16px 6px 24px}
+.cat-sub-flat{padding:10px 16px 12px 16px}
+.cat-sub-name{font-size:11px;color:#a8adbd;margin-bottom:5px;line-height:1.4}
+.cat-nums{display:flex;flex-wrap:wrap;gap:3px}
+.qnum{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 6px;border-radius:5px;font-size:12px;cursor:pointer;transition:all .15s;border:1.5px solid transparent;background:#f5f6fa;color:#5b6172;font-weight:600}
+.qnum:hover{border-color:#5b8def;color:#5b8def;transform:translateY(-1px)}
+.qnum.active{border-color:#5b8def!important;color:#fff!important;background:#5b8def!important;box-shadow:0 2px 6px rgba(91,141,239,0.3)}
+.qnum.mastered{color:#3fb371;background:rgba(82,199,133,0.15)}
+.qnum.unstudied{color:#8a8fa3;background:#f0f2f7}
+.qnum.error{color:#ff5d77;background:rgba(255,122,144,0.15)}
+.qnum.filtered-out{display:none!important}
+
+/* ============ 右侧 ============ */
+.right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.right-inner{flex:1;overflow-y:auto;padding:24px 32px}
+.right-inner::-webkit-scrollbar{width:8px}
+.right-inner::-webkit-scrollbar-thumb{background:#d8dce8;border-radius:4px}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a8adbd;font-size:15px;gap:12px;text-align:center}
+.empty-state .icon{font-size:54px}
+.empty-state .hint{font-size:13px;color:#b8bdcc}
+
+.q-card{max-width:780px;margin:0 auto}
+.q-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.q-id{font-size:18px;font-weight:800;color:#5b8def}
+.q-tag{font-size:11px;padding:3px 9px;border-radius:11px;font-weight:600;white-space:nowrap}
+.q-tag.type-choice{background:#e8f0ff;color:#5b8def}
+.q-tag.type-tf{background:#e8f6ed;color:#52c785}
+.q-tag.type-blank{background:#fff4e0;color:#e9a82c}
+.q-tag.type-short{background:#f0e8ff;color:#9168e8}
+.q-tag.level{background:#f0f2f7;color:#8a8fa3}
+.q-state-btn{font-size:11px;padding:4px 10px 4px 12px;border-radius:11px;border:1px solid #e0e3ed;background:#fff;cursor:pointer;color:#8a8fa3;transition:all .15s;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+.q-state-btn:hover{border-color:#5b8def;color:#5b8def;box-shadow:0 2px 6px rgba(91,141,239,0.15);transform:translateY(-1px)}
+.q-state-btn.mastered{color:#3fb371;border-color:#a3dcbb;background:#f0faf3}
+.q-state-btn.error{color:#ff5d77;border-color:#ffb8c4;background:#fff5f6}
+.q-knowledge{font-size:12px;color:#8a8fa3;margin-left:auto;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.q-text{font-size:16px;line-height:1.85;color:#2d3142;margin-bottom:20px;font-weight:500;white-space:pre-wrap}
+
+.opts{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+.opt{display:flex;align-items:flex-start;gap:10px;padding:13px 16px;border-radius:10px;border:1.5px solid #e8eaf2;background:#fff;cursor:pointer;transition:all .15s;font-size:14px;line-height:1.6}
+.opt:hover{border-color:#5b8def;background:#f8faff}
+.opt .letter{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#f0f2f7;color:#5b6172;font-weight:700;flex-shrink:0;font-size:12px;transition:all .15s}
+.opt:hover .letter{background:#5b8def;color:#fff}
+.opt .text{flex:1;padding-top:2px;color:#2d3142}
+.opt.selected{border-color:#5b8def;background:#f0f5ff}
+.opt.selected .letter{background:#5b8def;color:#fff}
+.opt.correct{border-color:#52c785;background:#f0faf3}
+.opt.correct .letter{background:#52c785;color:#fff}
+.opt.wrong{border-color:#ff7a90;background:#fff5f6}
+.opt.wrong .letter{background:#ff7a90;color:#fff}
+.opt.disabled{pointer-events:none}
+
+.q-input{width:100%;padding:13px 15px;border-radius:10px;border:1.5px solid #e8eaf2;font-size:15px;font-family:inherit;background:#fff;color:#2d3142;outline:none;transition:all .15s;resize:vertical;margin-bottom:14px}
+.q-input:focus{border-color:#5b8def;background:#f8faff}
+.q-input.short{min-height:48px}
+.q-input.long{min-height:120px}
+.q-input:disabled{background:#f5f6fa;color:#8a8fa3}
+
+.q-actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.q-actions button{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s}
+.btn-submit{background:#5b8def;color:#fff}
+.btn-submit:hover{background:#4a7adb}
+.btn-submit:disabled{background:#b8bdcc;cursor:not-allowed}
+.btn-reveal{background:#f0f2f7;color:#5b6172}
+.btn-reveal:hover{background:#e0e3ed}
+.btn-reset{background:#fff;color:#8a8fa3;border:1.5px solid #e0e3ed!important}
+.btn-reset:hover{border-color:#ff7a90!important;color:#ff7a90}
+
+.auto-state-hint{font-size:13px;padding:9px 14px;border-radius:8px;margin-bottom:14px;display:none;font-weight:600}
+.auto-state-hint.mastered{display:block;background:rgba(82,199,133,0.12);color:#3fb371;border:1px solid rgba(82,199,133,0.3)}
+.auto-state-hint.error{display:block;background:rgba(255,122,144,0.12);color:#ff5d77;border:1px solid rgba(255,122,144,0.3)}
+.auto-state-hint.retry{display:block;background:rgba(255,200,87,0.18);color:#d68b00;border:1px solid rgba(255,200,87,0.4);animation:slideIn .25s}
+@keyframes slideIn{from{transform:translateY(-4px);opacity:0}to{transform:translateY(0);opacity:1}}
+.opt.wrong-shake{animation:shake .5s;border-color:#ff7a90;background:#fff5f6}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.analysis{display:none;margin-top:14px;padding:14px 18px;background:#fafbfd;border-radius:10px;border-left:4px solid #5b8def}
+.analysis.visible{display:block}
+.analysis.correct{border-left-color:#52c785;background:#f0faf3}
+.analysis.wrong{border-left-color:#ff7a90;background:#fff5f6}
+.ans-line{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.analysis .ans-line{color:#3fb371}
+.analysis.wrong .ans-line{color:#ff5d77}
+.ans-text{font-size:13px;color:#5b6172;line-height:1.75;margin-bottom:6px}
+.ans-text strong{color:#2d3142}
+.ans-text em{color:#5b8def;font-style:normal;font-weight:600}
+.ans-text code{background:rgba(91,141,239,0.1);padding:1px 6px;border-radius:4px;font-size:12px;color:#5b8def}
+.tip{font-size:13px;color:#d68b00;line-height:1.7;padding:8px 12px;background:rgba(255,200,87,0.15);border-radius:6px;margin-top:8px;display:none}
+.tip.visible{display:block}
+.kw{font-size:12px;color:#a8adbd;margin-top:8px}
+
+/* ============ 导航条 ============ */
+.nav-bar{padding:12px 32px;border-top:1px solid #e8eaf2;display:flex;align-items:center;justify-content:space-between;background:#fafbfd;flex-shrink:0}
+.nav-btn{padding:7px 18px;border-radius:7px;border:1px solid #e0e3ed;background:#fff;color:#5b6172;cursor:pointer;font-size:13px;transition:all .15s}
+.nav-btn:hover:not(:disabled){border-color:#5b8def;color:#5b8def}
+.nav-btn:disabled{opacity:.4;cursor:default}
+.nav-info{font-size:12px;color:#8a8fa3}
+.kbd-hint{font-size:11px;color:#a8adbd;flex:1;text-align:center}
+@media(max-width:900px){.kbd-hint{display:none}}
+
+/* ============ Modal ============ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.visible{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px 28px;max-width:480px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.15)}
+.modal h3{font-size:17px;color:#2d3142;margin-bottom:10px}
+.modal p{font-size:13px;color:#8a8fa3;line-height:1.6;margin-bottom:16px}
+.modal-row{margin-bottom:14px}
+.modal-row label{display:block;font-size:12px;color:#5b6172;margin-bottom:6px;font-weight:600}
+.modal-row .opts-row{display:flex;flex-wrap:wrap;gap:6px}
+.modal-btn{padding:7px 14px;border-radius:7px;border:1px solid #e0e3ed;background:#fff;color:#5b6172;cursor:pointer;font-size:13px;transition:all .15s}
+.modal-btn:hover{border-color:#5b8def;color:#5b8def}
+.modal-btn.selected{border-color:#5b8def;background:#5b8def;color:#fff}
+.modal-textarea{width:100%;min-height:140px;padding:10px;border-radius:8px;border:1.5px solid #e8eaf2;font-family:monospace;font-size:12px;resize:vertical;outline:none}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.modal-actions .primary{background:#5b8def;color:#fff;border:none;padding:8px 18px;border-radius:7px;cursor:pointer;font-weight:600}
+.modal-actions .primary:hover{background:#4a7adb}
+.modal-actions .danger{border-color:#ff7a90;color:#ff5d77}
+
+/* ============ 模拟考模式 ============ */
+.exam-overlay{display:none;position:fixed;inset:0;background:#f5f7fb;z-index:2000;flex-direction:column;overflow:hidden}
+.exam-overlay.visible{display:flex}
+.exam-topbar{background:#fff;border-bottom:1px solid #e8eaf2;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.exam-topbar h2{font-size:15px;color:#5b8def;font-weight:700}
+.exam-progress{flex:1;display:flex;align-items:center;gap:8px;min-width:120px}
+.exam-progress-bar{flex:1;height:6px;background:#e8eaf2;border-radius:3px;overflow:hidden}
+.exam-progress-fill{height:100%;background:linear-gradient(90deg,#5b8def,#7a9fff);border-radius:3px;transition:width .3s}
+.exam-progress-text{font-size:12px;color:#8a8fa3;white-space:nowrap}
+.exam-timer{font-size:13px;color:#e9a82c;font-weight:700}
+.exam-body{flex:1;overflow-y:auto;padding:20px 28px}
+.exam-q-card{max-width:780px;margin:0 auto 16px;background:#fff;border:1px solid #e8eaf2;border-radius:12px;padding:18px 22px;box-shadow:0 2px 6px rgba(0,0,0,0.03)}
+.exam-q-num{font-size:13px;color:#5b8def;font-weight:700;margin-bottom:8px}
+.exam-q-text{font-size:15px;line-height:1.75;color:#2d3142;margin-bottom:12px;white-space:pre-wrap}
+.exam-opts{display:flex;flex-direction:column;gap:6px}
+.exam-opt{padding:9px 14px;border-radius:8px;border:1.5px solid #e8eaf2;background:#fff;cursor:pointer;transition:all .15s;display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.55}
+.exam-opt:hover{border-color:#5b8def;background:#f8faff}
+.exam-opt.selected{border-color:#5b8def;background:#f0f5ff}
+.exam-opt .letter{font-weight:700;min-width:22px;color:#5b6172;flex-shrink:0}
+.exam-opt.selected .letter{color:#5b8def}
+.exam-input{width:100%;padding:9px 12px;border-radius:7px;border:1.5px solid #e8eaf2;font-size:13px;outline:none;font-family:inherit;resize:vertical;min-height:42px}
+.exam-input:focus{border-color:#5b8def}
+.exam-submit-bar{padding:14px 28px;border-top:1px solid #e8eaf2;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0}
+.exam-submit-btn{padding:9px 28px;border-radius:8px;border:none;background:#5b8def;color:#fff;cursor:pointer;font-size:14px;font-weight:700}
+.exam-submit-btn:hover{background:#4a7adb}
+.exam-quit-btn{padding:9px 18px;border-radius:8px;border:1px solid #e0e3ed;background:#fff;color:#8a8fa3;cursor:pointer;font-size:13px}
+.exam-quit-btn:hover{border-color:#ff7a90;color:#ff5d77}
+
+/* 结果页 */
+.exam-results{display:none;position:fixed;inset:0;background:#f5f7fb;z-index:2000;flex-direction:column;overflow:hidden}
+.exam-results.visible{display:flex}
+.results-header{background:#fff;border-bottom:1px solid #e8eaf2;padding:24px;text-align:center;flex-shrink:0}
+.results-score{font-size:54px;font-weight:900;margin-bottom:4px;line-height:1}
+.results-score.pass{color:#52c785}
+.results-score.fail{color:#ff5d77}
+.results-detail{font-size:14px;color:#8a8fa3;margin-bottom:14px}
+.results-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.results-actions button{padding:8px 18px;border-radius:7px;border:1px solid #e0e3ed;background:#fff;color:#5b6172;cursor:pointer;font-size:13px}
+.results-actions button:hover{border-color:#5b8def;color:#5b8def}
+.results-actions button.primary{background:#5b8def;color:#fff;border-color:#5b8def}
+.results-body{flex:1;overflow-y:auto;padding:18px 24px}
+.result-item{max-width:780px;margin:0 auto 12px;background:#fff;border:1px solid #e8eaf2;border-radius:10px;padding:14px 18px}
+.result-item.is-correct{border-left:4px solid #52c785}
+.result-item.is-wrong{border-left:4px solid #ff7a90}
+.result-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.result-badge{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:700}
+.result-badge.correct{background:#f0faf3;color:#3fb371}
+.result-badge.wrong{background:#fff5f6;color:#ff5d77}
+.result-qid{font-size:12px;color:#5b8def;font-weight:700}
+.result-text{font-size:13px;line-height:1.7;color:#2d3142;margin-bottom:6px;white-space:pre-wrap}
+.result-answers{font-size:12px;color:#5b6172;margin-bottom:6px}
+.result-answers .correct-ans{color:#3fb371;font-weight:700}
+.result-answers .wrong-ans{color:#ff5d77;text-decoration:line-through}
+.result-analysis{font-size:12px;color:#5b6172;line-height:1.7;padding:7px 11px;background:#fafbfd;border-radius:6px;margin-bottom:6px}
+.result-tip{font-size:12px;color:#d68b00;line-height:1.6;padding:6px 10px;background:rgba(255,200,87,0.15);border-radius:6px;margin-bottom:6px}
+
+/* ============ 移动端 ============ */
+.sidebar-toggle{display:none;position:fixed;bottom:20px;right:20px;z-index:999;width:48px;height:48px;border-radius:50%;background:#5b8def;color:#fff;border:none;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.sidebar-toggle:active{transform:scale(0.92)}
+@media(max-width:768px){
+  .left{width:100%;min-width:100%;max-height:50vh;border-right:none;border-bottom:1px solid #e8eaf2;transition:max-height .3s ease}
+  .left.hidden{max-height:0;overflow:hidden;border-bottom:none}
+  .main{flex-direction:column}
+  .topbar{gap:8px;padding:8px 12px}
+  .topbar h1{font-size:14px}
+  .cat-filter{order:10;width:100%}
+  .io-btns{margin-left:0;width:100%;justify-content:flex-end}
+  .right-inner{padding:14px}
+  .sidebar-toggle{display:flex;align-items:center;justify-content:center}
+  .nav-bar{padding:10px 14px}
+}
+
+/* ============ Dark Mode ============ */
+body.dark{background:#1a1a2e;color:#e0e3ed}
+body.dark .topbar{background:#16213e;border-bottom-color:#0f3460;box-shadow:none}
+body.dark .topbar h1{color:#e88ca5}
+body.dark .cat-filter-label,body.dark .cat-sub-name,body.dark .left-header,body.dark .nav-info,body.dark .empty-state,body.dark .ans-text,body.dark .modal p{color:#888}
+body.dark .cat-chip{background:transparent;border-color:#333;color:#888}
+body.dark .cat-chip.active{background:#e88ca5;color:#fff;border-color:#e88ca5}
+body.dark .sf-btn{background:transparent;border-color:#333;color:#aaa}
+body.dark .sf-btn:hover{border-color:#e88ca5}
+body.dark .sf-btn .num{color:#e0e3ed}
+body.dark .io-btns button{background:transparent;border-color:#333;color:#aaa}
+body.dark .io-btns button:hover{border-color:#e88ca5;color:#e88ca5}
+body.dark .io-btns button.exam{background:rgba(232,140,165,0.15);border-color:#e88ca5;color:#e88ca5}
+body.dark .left{background:#16213e;border-right-color:#0f3460}
+body.dark .left-scroll::-webkit-scrollbar-thumb{background:#333}
+body.dark .cat-top{background:#16213e;color:#e0e3ed;border-bottom-color:#0f3460}
+body.dark .cat-law{color:#c5cad8;border-top-color:#1f2a44}
+body.dark .cat-law-count{background:#1f2a44;color:#888}
+body.dark .cat-count{color:#666}
+body.dark .qnum{background:rgba(100,100,100,0.15);color:#777;border-color:transparent}
+body.dark .qnum:hover{border-color:#e88ca5;color:#fff}
+body.dark .qnum.active{background:#e88ca5!important;border-color:#e88ca5!important;color:#fff!important}
+body.dark .qnum.mastered{background:rgba(110,197,168,0.15);color:#6ec5a8}
+body.dark .qnum.unstudied{background:rgba(100,100,100,0.15);color:#888}
+body.dark .qnum.error{background:rgba(232,140,165,0.15);color:#e88ca5}
+body.dark .right-inner::-webkit-scrollbar-thumb{background:#333}
+body.dark .q-text{color:#e0e3ed}
+body.dark .q-id{color:#e88ca5}
+body.dark .q-tag.type-choice{background:rgba(91,141,239,0.15);color:#7a9fff}
+body.dark .q-tag.type-tf{background:rgba(110,197,168,0.15);color:#6ec5a8}
+body.dark .q-tag.type-blank{background:rgba(255,200,87,0.15);color:#f4a261}
+body.dark .q-tag.type-short{background:rgba(145,104,232,0.15);color:#b08fff}
+body.dark .q-tag.level{background:rgba(100,100,100,0.2);color:#888}
+body.dark .q-state-btn{background:transparent;border-color:#333;color:#aaa}
+body.dark .q-knowledge{color:#666}
+body.dark .opt{background:#1f2541;border-color:#333;color:#e0e3ed}
+body.dark .opt:hover{background:rgba(232,140,165,0.05);border-color:#555}
+body.dark .opt .text{color:#e0e3ed}
+body.dark .opt .letter{background:#333;color:#888}
+body.dark .opt.selected{background:rgba(232,140,165,0.1);border-color:#e88ca5}
+body.dark .opt.correct{background:rgba(110,197,168,0.1);border-color:#6ec5a8}
+body.dark .opt.wrong{background:rgba(232,140,165,0.1);border-color:#e88ca5}
+body.dark .q-input{background:#1f2541;border-color:#333;color:#e0e3ed}
+body.dark .q-input:focus{background:#1a1a2e;border-color:#e88ca5}
+body.dark .btn-submit{background:#e88ca5}
+body.dark .btn-submit:hover{background:#d97a93}
+body.dark .btn-reveal{background:#333;color:#aaa}
+body.dark .btn-reset{background:transparent;color:#888}
+body.dark .analysis{background:#1a1a2e;border-left-color:#e88ca5}
+body.dark .analysis.correct{background:#1a1a2e;border-left-color:#6ec5a8}
+body.dark .analysis.wrong{background:#1a1a2e;border-left-color:#e88ca5}
+body.dark .nav-bar{background:#16213e;border-top-color:#0f3460}
+body.dark .nav-btn{background:transparent;border-color:#333;color:#aaa}
+body.dark .kbd-hint{color:#555}
+body.dark .modal{background:#16213e;color:#e0e3ed}
+body.dark .modal h3{color:#e0e3ed}
+body.dark .modal-btn{background:transparent;border-color:#333;color:#aaa}
+body.dark .modal-btn.selected{background:#e88ca5;border-color:#e88ca5;color:#fff}
+body.dark .modal-textarea{background:#1f2541;border-color:#333;color:#e0e3ed}
+body.dark .exam-overlay,body.dark .exam-results{background:#1a1a2e}
+body.dark .exam-topbar,body.dark .exam-submit-bar,body.dark .results-header{background:#16213e;border-color:#0f3460}
+body.dark .exam-q-card,body.dark .result-item{background:#16213e;border-color:#0f3460}
+body.dark .exam-q-text,body.dark .result-text{color:#e0e3ed}
+body.dark .exam-opt{background:#1f2541;border-color:#333;color:#e0e3ed}
+body.dark .exam-opt.selected{background:rgba(232,140,165,0.1);border-color:#e88ca5}
+body.dark .result-analysis{background:#1a1a2e;color:#aaa}
+body.dark .auto-state-hint.mastered{background:rgba(110,197,168,0.1);color:#6ec5a8;border-color:rgba(110,197,168,0.3)}
+body.dark .auto-state-hint.error{background:rgba(232,140,165,0.1);color:#e88ca5;border-color:rgba(232,140,165,0.3)}
+</style>
+</head>
+<body class="light">
+
+<div class="topbar">
+  <div class="topbar-row1">
+    <h1>📚 {{TITLE}} <span class="subtitle">{{SUBTITLE}}</span></h1>
+    <div class="stat-filters" id="statFilters">
+      <div class="sf-btn" data-f="mastered" onclick="toggleFilter('mastered',this)"><span class="dot green"></span><span class="num" id="numMastered">0</span><span>已掌握</span></div>
+      <div class="sf-btn" data-f="unstudied" onclick="toggleFilter('unstudied',this)"><span class="dot gray"></span><span class="num" id="numUnstudied">0</span><span>未做</span></div>
+      <div class="sf-btn" data-f="error" onclick="toggleFilter('error',this)"><span class="dot red"></span><span class="num" id="numError">0</span><span>错题</span></div>
+    </div>
+    <div class="io-btns">
+      <button class="exam" onclick="showExamModal()">📝 模拟考</button>
+      <button onclick="randomQ()">🎲 随机</button>
+      <button onclick="exportProgress()">💾 导出进度</button>
+      <button class="danger" onclick="showResetModal()">🗑️ 重置</button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">☀️</button>
+    </div>
+  </div>
+  <div class="topbar-row2">
+    <div class="cat-filter" id="catFilter"><span class="cat-filter-label">📂 分类：</span></div>
+  </div>
+</div>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()">📋</button>
+
+<div class="main">
+  <div class="left" id="sidebar">
+    <div class="left-header"><span>📚 题号目录</span><span class="progress" id="progressTxt">0/0</span></div>
+    <div class="left-scroll" id="leftScroll"></div>
+  </div>
+  <div class="right">
+    <div class="right-inner" id="rightInner">
+      <div class="empty-state">
+        <div class="icon">📖</div>
+        <div>选择左侧题号开始学习</div>
+        <div class="hint">点击题号查看，做完会自动记录到本地</div>
+      </div>
+    </div>
+    <div class="nav-bar" id="navBar" style="display:none;">
+      <button class="nav-btn" id="prevBtn" onclick="goPrev()" title="← 上一题">← 上一题</button>
+      <span class="nav-info" id="navInfo"></span>
+      <span class="kbd-hint">⌨️ A/B/C/D 选项 · Enter 提交 · ← → 切题 · Space 看答案</span>
+      <button class="nav-btn" id="nextBtn" onclick="goNext()" title="→ 下一题">下一题 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 模拟考 modal ===== -->
+<div class="modal-overlay" id="examModal">
+  <div class="modal">
+    <h3>📝 开始模拟考</h3>
+    <p id="examPoolSize">从当前题池中随机抽题作答</p>
+    <div class="modal-row">
+      <label>题量</label>
+      <div class="opts-row">
+        <button class="modal-btn" data-n="5" onclick="selectExamCount(5)">5题</button>
+        <button class="modal-btn selected" data-n="10" onclick="selectExamCount(10)">10题</button>
+        <button class="modal-btn" data-n="20" onclick="selectExamCount(20)">20题</button>
+        <button class="modal-btn" data-n="30" onclick="selectExamCount(30)">30题</button>
+        <button class="modal-btn" data-n="50" onclick="selectExamCount(50)">50题</button>
+      </div>
+    </div>
+    <div class="modal-row">
+      <label>每题限时</label>
+      <div class="opts-row">
+        <button class="modal-btn selected" data-t="0" onclick="selectExamTime(0)">不限时</button>
+        <button class="modal-btn" data-t="30" onclick="selectExamTime(30)">30秒</button>
+        <button class="modal-btn" data-t="60" onclick="selectExamTime(60)">1分钟</button>
+        <button class="modal-btn" data-t="90" onclick="selectExamTime(90)">1.5分钟</button>
+        <button class="modal-btn" data-t="120" onclick="selectExamTime(120)">2分钟</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="hideExamModal()">取消</button>
+      <button class="primary" onclick="startExam()">🚀 开考</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 导入 modal ===== -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <h3 id="importTitle">📥 导入</h3>
+    <p id="importHint">粘贴 JSON 内容</p>
+    <textarea class="modal-textarea" id="importText" placeholder=""></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="hideImportModal()">取消</button>
+      <button class="primary" onclick="doImport()">导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 重置 modal ===== -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h3>🗑️ 重置答题记录</h3>
+    <p>这会清空所有"已掌握 / 错题 / 答题状态"，但题目本身不会删除。确定吗？</p>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="hideResetModal()">取消</button>
+      <button class="primary danger" style="background:#ff5d77;" onclick="doReset()">确认重置</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 模拟考答题界面 ===== -->
+<div class="exam-overlay" id="examOverlay">
+  <div class="exam-topbar">
+    <h2>📝 模拟考</h2>
+    <div class="exam-progress">
+      <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgressFill" style="width:0%"></div></div>
+      <span class="exam-progress-text" id="examProgressText">0 / 0</span>
+    </div>
+    <span class="exam-timer" id="examTimer">⏱ 0:00</span>
+    <button class="exam-quit-btn" onclick="quitExam()">退出</button>
+  </div>
+  <div class="exam-body" id="examBody"></div>
+  <div class="exam-submit-bar">
+    <button class="exam-submit-btn" id="examSubmitBtn" onclick="submitExam()">📤 提交答卷</button>
+  </div>
+</div>
+
+<!-- ===== 成绩页 ===== -->
+<div class="exam-results" id="examResults">
+  <div class="results-header">
+    <div class="results-score" id="resultsScore">0</div>
+    <div class="results-detail" id="resultsDetail"></div>
+    <div class="results-actions">
+      <button class="primary" onclick="closeResults()">返回</button>
+      <button onclick="retakeExam()">🔄 再考一次</button>
+    </div>
+  </div>
+  <div class="results-body" id="resultsBody"></div>
+</div>
+
+<!-- ===== 题库数据（脚本注入） ===== -->
+<script>
+window.__QUIZ_DATA__ = {{QUIZ_DATA}};
+window.__META__ = {{META}};
+</script>
+
+<script>
+'use strict';
+
+/* ============================================
+ * Quiz Engine - K12 StudyBuddy 4.0
+ * 受 v15 启发，针对 K12 多学科多题型优化
+ * ============================================ */
+const META = window.__META__ || {};
+const STORAGE_KEY = 'k12_quiz_' + (META.id || 'default');
+const FILTER_KEY = STORAGE_KEY + '_filter';
+const CATS_KEY = STORAGE_KEY + '_cats';
+const THEME_KEY = 'k12_quiz_theme';
+
+const TYPE_LABELS = {
+  single_choice: { txt: '选择', cls: 'type-choice' },
+  true_false:    { txt: '判断', cls: 'type-tf' },
+  fill_blank:    { txt: '填空', cls: 'type-blank' },
+  short_answer:  { txt: '简答', cls: 'type-short' }
+};
+const LEVEL_LABELS = { 1: 'L1·识记', 2: 'L2·理解', 3: 'L3·应用' };
+const STATE_LABELS = { mastered: '✅ 已掌握', unstudied: '⬜ 未做', error: '❌ 错题' };
+
+let QS = [];                 // 全部题目（含 id）
+let states = {};             // {id: 'mastered'|'unstudied'|'error'}
+let answered = {};           // {id: userAnswer}
+let activeFilters = { mastered: true, unstudied: true, error: true };
+let activeCats = new Set();  // 当前激活的学科
+let currentId = null;
+let filteredIds = [];
+
+/* ===== 启动 ===== */
+function init() {
+  // 主题恢复（默认 light）
+  try {
+    const t = localStorage.getItem(THEME_KEY);
+    if (t === 'dark') {
+      document.body.classList.remove('light');
+      document.body.classList.add('dark');
+      document.querySelector('.theme-toggle').textContent = '🌙';
+    }
+  } catch (e) {}
+
+  // 强制按数组下标重排 id：忽略题目原始 id 字段（可能是字符串或冲突值）
+  QS = (window.__QUIZ_DATA__ || []).map((q, i) => Object.assign({}, q, { id: i + 1, _origId: q.id }));
+  if (QS.length === 0) {
+    document.getElementById('leftScroll').innerHTML = '<div style="padding:20px;color:#a8adbd;font-size:13px;text-align:center;">题库为空，请先导入题目</div>';
+    return;
+  }
+
+  loadState();
+  loadFilters();
+  buildCatChips();
+  buildSidebar();
+  applyFilters();
+  updateStats();
+
+  // 默认选中筛选结果中的第 1 题（首次进入不再是空白态）
+  if (filteredIds.length > 0) selectQ(filteredIds[0]);
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const obj = JSON.parse(raw);
+      states = obj.states || {};
+      answered = obj.answered || {};
+    }
+  } catch (e) { states = {}; answered = {}; }
+  QS.forEach(q => { if (!states[q.id]) states[q.id] = 'unstudied'; });
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ states, answered })); } catch (e) {}
+}
+
+function loadFilters() {
+  try {
+    const raw = localStorage.getItem(FILTER_KEY);
+    if (raw) activeFilters = Object.assign(activeFilters, JSON.parse(raw));
+  } catch (e) {}
+  document.querySelectorAll('.sf-btn').forEach(btn => {
+    if (!activeFilters[btn.dataset.f]) btn.classList.add('off');
+  });
+
+  // 学科：默认全选（只取一级分类）
+  const cats = [...new Set(QS.map(getCatKey))];
+  try {
+    const raw = localStorage.getItem(CATS_KEY);
+    const arr = raw ? JSON.parse(raw) : null;
+    activeCats = new Set(Array.isArray(arr) && arr.length ? arr : cats);
+  } catch (e) { activeCats = new Set(cats); }
+}
+
+/* ===== 分类解析 =====
+   category 形如 "通用类 / 1.中华人民共和国证券法（…）"：
+     一级（顶部 chip + 侧栏顶 cat-top）= 斜杠前的 "通用类"
+     二级（侧栏 cat-sub-top，法规名）  = 斜杠后剩余部分
+   knowledge_point 形如 "一、法律/1.中华人民共和国证券法（…）/《证券法》适用范围"：
+     真正的知识点 = 最后一段 "《证券法》适用范围"
+   既兼容旧扁平数据（无斜杠），又把 badcase 里冗余的层级路径清掉。
+*/
+function splitCat(raw) {
+  const s = (raw || '通用').trim();
+  const i = s.indexOf('/');
+  if (i < 0) return { top: s, sub: '' };
+  return { top: s.slice(0, i).trim() || '通用', sub: s.slice(i + 1).trim() };
+}
+function getCatKey(q) {
+  return splitCat(q.category).top;
+}
+function getSubCat(q) {
+  return splitCat(q.category).sub;
+}
+function getKpLeaf(q) {
+  const raw = (q.knowledge_point || q.knowledge || '').trim();
+  if (!raw) return '未分类';
+  const parts = raw.split('/').map(s => s.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : '未分类';
+}
+function buildCatChips() {
+  const cats = [...new Set(QS.map(getCatKey))];
+  const counts = {};
+  cats.forEach(c => { counts[c] = QS.filter(q => getCatKey(q) === c).length; });
+
+  const wrap = document.getElementById('catFilter');
+  wrap.querySelectorAll('.cat-chip').forEach(el => el.remove());
+  cats.forEach(c => {
+    const chip = document.createElement('span');
+    chip.className = 'cat-chip' + (activeCats.has(c) ? ' active' : '');
+    chip.dataset.cat = c;
+    chip.innerHTML = `${escapeHtml(c)}<span class="chip-count">${counts[c]}</span>`;
+    chip.onclick = () => toggleCat(c, chip);
+    wrap.appendChild(chip);
+  });
+}
+
+function toggleCat(cat, el) {
+  if (activeCats.has(cat)) {
+    if (activeCats.size <= 1) return;  // 至少保留一个
+    activeCats.delete(cat);
+    el.classList.remove('active');
+  } else {
+    activeCats.add(cat);
+    el.classList.add('active');
+  }
+  try { localStorage.setItem(CATS_KEY, JSON.stringify([...activeCats])); } catch (e) {}
+  buildSidebar();
+  applyFilters();
+}
+
+/* ===== 侧栏 ===== */
+function buildSidebar() {
+  // 三层：一级分类 → 法规（category 后段） → 知识点（knowledge_point 最后一段）
+  const groups = {};
+  QS.forEach(q => {
+    const cat = getCatKey(q);
+    if (!activeCats.has(cat)) return;
+    const law = getSubCat(q) || '通用';   // 二级：法规名
+    const kp = getKpLeaf(q);              // 三级：知识点叶子
+    if (!groups[cat]) groups[cat] = {};
+    if (!groups[cat][law]) groups[cat][law] = {};
+    if (!groups[cat][law][kp]) groups[cat][law][kp] = [];
+    groups[cat][law][kp].push(q);
+  });
+
+  const container = document.getElementById('leftScroll');
+  container.innerHTML = '';
+  Object.keys(groups).forEach(cat => {
+    const laws = groups[cat];
+    const lawKeys = Object.keys(laws);
+    const total = Object.values(laws).reduce(
+      (s, kps) => s + Object.values(kps).reduce((n, arr) => n + arr.length, 0), 0
+    );
+
+    // 兜底：如果该一级下没有任何有效二级 / 三级（法规名都是"通用" 且 知识点都是"未分类"），
+    // 直接平铺题号，避免出现一个孤零零的"未分类"中间层
+    const hasLaw = lawKeys.some(l => l && l !== '通用');
+    const hasKp = lawKeys.some(l => Object.keys(laws[l]).some(k => k && k !== '未分类'));
+    const flat = !hasLaw && !hasKp;
+
+    let html = `<div class="cat-group"><div class="cat-top">📂 ${escapeHtml(cat)} <span class="cat-count">${total}题</span></div>`;
+
+    if (flat) {
+      // 收集所有题号，按 id 排序后一把铺出来
+      const allQs = [];
+      lawKeys.forEach(l => Object.values(laws[l]).forEach(arr => allQs.push(...arr)));
+      allQs.sort((a, b) => a.id - b.id);
+      html += `<div class="cat-sub cat-sub-flat"><div class="cat-nums">`;
+      allQs.forEach(q => {
+        const st = states[q.id] || 'unstudied';
+        html += `<span class="qnum ${st}" data-id="${q.id}" onclick="selectQ(${q.id})">${q.id}</span>`;
+      });
+      html += `</div></div>`;
+    } else {
+      lawKeys.forEach(law => {
+        const kps = laws[law];
+        const lawTotal = Object.values(kps).reduce((n, arr) => n + arr.length, 0);
+        // 法规名长，可能换行；用 title 兜底显示完整原文
+        if (law && law !== '通用') {
+          html += `<div class="cat-law" title="${escapeHtml(law)}"><span class="cat-law-name">${escapeHtml(law)}</span><span class="cat-law-count">${lawTotal}</span></div>`;
+        }
+        Object.keys(kps).forEach(kp => {
+          html += `<div class="cat-sub"><div class="cat-sub-name" title="${escapeHtml(kp)}">${escapeHtml(kp)}</div><div class="cat-nums">`;
+          kps[kp].forEach(q => {
+            const st = states[q.id] || 'unstudied';
+            html += `<span class="qnum ${st}" data-id="${q.id}" onclick="selectQ(${q.id})">${q.id}</span>`;
+          });
+          html += `</div></div>`;
+        });
+      });
+    }
+
+    html += `</div>`;
+    container.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+function applyStatesToDOM() {
+  document.querySelectorAll('.qnum').forEach(el => {
+    el.classList.remove('mastered', 'unstudied', 'error');
+    const id = parseInt(el.dataset.id, 10);
+    el.classList.add(states[id] || 'unstudied');
+  });
+}
+
+function updateStats() {
+  let m = 0, u = 0, e = 0;
+  QS.forEach(q => {
+    if (!activeCats.has(getCatKey(q))) return;
+    const s = states[q.id] || 'unstudied';
+    if (s === 'mastered') m++;
+    else if (s === 'error') e++;
+    else u++;
+  });
+  document.getElementById('numMastered').textContent = m;
+  document.getElementById('numUnstudied').textContent = u;
+  document.getElementById('numError').textContent = e;
+  const total = m + u + e;
+  document.getElementById('progressTxt').textContent = `${m}/${total}`;
+}
+
+/* ===== 过滤 ===== */
+function toggleFilter(type, btn) {
+  activeFilters[type] = !activeFilters[type];
+  btn.classList.toggle('off', !activeFilters[type]);
+  try { localStorage.setItem(FILTER_KEY, JSON.stringify(activeFilters)); } catch (e) {}
+  applyFilters();
+}
+
+function applyFilters() {
+  filteredIds = [];
+  document.querySelectorAll('.qnum').forEach(el => {
+    const id = parseInt(el.dataset.id, 10);
+    const st = states[id] || 'unstudied';
+    const visible = activeFilters[st];
+    el.classList.toggle('filtered-out', !visible);
+    if (visible) filteredIds.push(id);
+  });
+  updateStats();
+  updateNav();
+}
+
+/* ===== 选题 + 渲染 ===== */
+window.selectQ = function (id) {
+  id = parseInt(id, 10);  // 防御：onclick 传进来如果是字符串先转 int
+  currentId = id;
+  document.querySelectorAll('.qnum').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.id, 10) === id);
+  });
+  const q = QS.find(x => x.id === id);
+  if (!q) { console.error('[selectQ] 找不到题目 id=' + id + '，QS 中 id 列表：', QS.map(x => x.id)); return; }
+  renderQuestion(q);
+  document.getElementById('navBar').style.display = 'flex';
+  updateNav();
+  // 移动端：选完自动收起侧栏
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.add('hidden');
+  }
+};
+
+function renderQuestion(q) {
+  const typeInfo = TYPE_LABELS[q.type] || { txt: '题', cls: 'type-choice' };
+  const lvl = LEVEL_LABELS[q.level] || '';
+  const kp = q.knowledge_point || q.knowledge || '';
+  const st = states[q.id] || 'unstudied';
+
+  let html = `<div class="q-card">
+    <div class="q-meta">
+      <span class="q-id">Q${q.id}</span>
+      <span class="q-tag ${typeInfo.cls}">${typeInfo.txt}</span>
+      ${lvl ? `<span class="q-tag level">${lvl}</span>` : ''}
+      <button class="q-state-btn ${st}" id="qStateBtn" onclick="cycleState()" title="点击手动切换：未做 → 已掌握 → 错题">${STATE_LABELS[st]} <span style="opacity:.5;font-weight:400;">▾</span></button>
+      ${kp ? `<span class="q-knowledge" title="${escapeHtml(kp)}">🏷️ ${escapeHtml(kp)}</span>` : ''}
+    </div>
+    <div class="q-text">${renderMD(q.prompt || q.question)}</div>`;
+
+  if (q.type === 'single_choice') {
+    html += `<div class="opts" id="qOpts">`;
+    (q.options || []).forEach((opt, i) => {
+      const m = opt.match(/^([A-Z])[\.\、]\s*(.+)/);
+      const letter = m ? m[1] : String.fromCharCode(65 + i);
+      const text = m ? m[2] : opt;
+      html += `<div class="opt" data-key="${letter}" onclick="chooseOpt(this,'${letter}',${q.id})">
+        <span class="letter">${letter}</span><span class="text">${renderMD(text)}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  } else if (q.type === 'true_false') {
+    html += `<div class="opts" id="qOpts">
+      <div class="opt" data-key="True" onclick="chooseOpt(this,'True',${q.id})"><span class="letter">✓</span><span class="text">正确</span></div>
+      <div class="opt" data-key="False" onclick="chooseOpt(this,'False',${q.id})"><span class="letter">✗</span><span class="text">错误</span></div>
+    </div>`;
+  } else if (q.type === 'fill_blank') {
+    html += `<input class="q-input short" id="qInput" placeholder="在这里输入你的答案..." />`;
+  } else if (q.type === 'short_answer') {
+    html += `<textarea class="q-input long" id="qInput" placeholder="在这里写下你的回答..."></textarea>`;
+  }
+
+  if (q.type === 'fill_blank' || q.type === 'short_answer') {
+    html += `<div class="q-actions">
+      <button class="btn-submit" id="btnSubmit" onclick="submitTextAnswer(${q.id})">提交 (Enter)</button>
+      <button class="btn-reveal" onclick="revealAnswer(${q.id})">查看答案</button>
+      <button class="btn-reset" onclick="resetQ(${q.id})">↻ 重做</button>
+    </div>`;
+  } else {
+    html += `<div class="q-actions">
+      <button class="btn-submit" id="btnSubmit" onclick="submitChoice(${q.id})" disabled>提交 (Enter)</button>
+      <button class="btn-reveal" onclick="revealAnswer(${q.id})">查看答案</button>
+      <button class="btn-reset" onclick="resetQ(${q.id})">↻ 重做</button>
+    </div>`;
+  }
+
+  html += `<div class="auto-state-hint" id="autoHint"></div>
+    <div class="analysis" id="analysis">
+      <div class="ans-line" id="ansLine"></div>
+      <div class="ans-text" id="ansText"></div>
+      <div class="tip" id="tipBox"></div>
+      <div class="kw" id="kwDetail"></div>
+    </div>
+  </div>`;
+
+  document.getElementById('rightInner').innerHTML = html;
+
+  // 恢复已答状态
+  if (answered[q.id] !== undefined) {
+    if (q.type === 'single_choice' || q.type === 'true_false') {
+      const el = document.querySelector(`#qOpts .opt[data-key="${answered[q.id]}"]`);
+      if (el) showChoiceAnswer(q, answered[q.id]);
+    } else {
+      const inp = document.getElementById('qInput');
+      if (inp) { inp.value = answered[q.id]; inp.disabled = true; }
+      showTextAnswer(q, answered[q.id]);
+    }
+  }
+}
+
+/* ===== 选择题 / 判断题作答 =====
+ * 新逻辑：选择 ≠ 提交
+ * - 点选项：仅高亮，不锁定，不判分
+ * - 点【提交】或按 Enter：判分；答错首次仅提示「再想想」并允许重选
+ * - 答错第二次：才显示答案 + 标错题
+ */
+window.__pendingChoice = null;
+window.__wrongTriedOnce = {};  // {id: true} 记录这题是否已经错过一次
+
+window.chooseOpt = function (el, key, id) {
+  // 已最终提交过的不能再选
+  if (answered[id] !== undefined) return;
+  window.__pendingChoice = key;
+  document.querySelectorAll('#qOpts .opt').forEach(o => {
+    o.classList.remove('selected');
+  });
+  el.classList.add('selected');
+  // 启用提交按钮
+  const btn = document.getElementById('btnSubmit');
+  if (btn) btn.disabled = false;
+};
+
+window.submitChoice = function (id) {
+  const q = QS.find(x => x.id === id);
+  if (!q) return;
+  const key = window.__pendingChoice;
+  if (!key) { showRetryHint('先选一个选项呀～ 😊'); return; }
+  const stdU = String(q.answer || '').toUpperCase();
+  const correct = key.toUpperCase() === stdU;
+
+  if (correct) {
+    answered[id] = key;
+    window.__wrongTriedOnce[id] = false;
+    showChoiceAnswer(q, key, true);
+    autoUpdateState(q, true);
+  } else {
+    if (!window.__wrongTriedOnce[id]) {
+      // 第一次错：给一次重试机会，不锁，不标错题
+      window.__wrongTriedOnce[id] = true;
+      const errOpt = document.querySelector(`#qOpts .opt[data-key="${key}"]`);
+      if (errOpt) {
+        errOpt.classList.add('wrong-shake');
+        setTimeout(() => errOpt.classList.remove('wrong-shake'), 600);
+      }
+      showRetryHint('🤔 不对哦，再想想？（这次错不算，可以重选）');
+      window.__pendingChoice = null;
+      if (errOpt) errOpt.classList.remove('selected');
+      return;
+    }
+    // 第二次错：真正锁定 + 标错题
+    answered[id] = key;
+    showChoiceAnswer(q, key, false);
+    autoUpdateState(q, false);
+  }
+};
+
+function showRetryHint(msg) {
+  const hint = document.getElementById('autoHint');
+  hint.className = 'auto-state-hint retry';
+  hint.textContent = msg;
+  // 自动消失
+  clearTimeout(window.__retryTimer);
+  window.__retryTimer = setTimeout(() => {
+    if (hint.classList.contains('retry')) {
+      hint.className = 'auto-state-hint';
+      hint.textContent = '';
+    }
+  }, 3500);
+}
+
+function showChoiceAnswer(q, chosen, correct) {
+  const stdU = String(q.answer || '').toUpperCase();
+  document.querySelectorAll('#qOpts .opt').forEach(el => {
+    el.classList.add('disabled');
+    el.classList.remove('selected');
+    const k = el.dataset.key.toUpperCase();
+    if (k === stdU) el.classList.add('correct');
+    if (k === String(chosen).toUpperCase() && k !== stdU) el.classList.add('wrong');
+  });
+  // 提交按钮锁死
+  const btn = document.getElementById('btnSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = '已提交'; }
+  showAnalysis(q, chosen, correct);
+}
+
+/* ===== 填空 / 简答作答 ===== */
+window.submitTextAnswer = function (id) {
+  const q = QS.find(x => x.id === id);
+  if (!q) return;
+  const inp = document.getElementById('qInput');
+  const userAns = (inp && inp.value || '').trim();
+  if (!userAns) { alert('先写点答案再提交呀～ ✍️'); return; }
+  answered[id] = userAns;
+  inp.disabled = true;
+  document.getElementById('btnSubmit').disabled = true;
+  document.getElementById('btnSubmit').textContent = '已提交';
+
+  if (q.type === 'fill_blank') {
+    const correct = fuzzyMatch(userAns, q.answer);
+    showAnalysis(q, userAns, correct);
+    autoUpdateState(q, correct);
+  } else {
+    // 简答题：不强判
+    showAnalysis(q, userAns, null);
+    // 状态不动，由用户手动判定（点 q-state-btn）
+    saveState();
+  }
+};
+
+window.revealAnswer = function (id) {
+  const q = QS.find(x => x.id === id);
+  if (!q) return;
+  showAnalysis(q, answered[id] || '', null);
+};
+
+function showTextAnswer(q, userAns) {
+  if (q.type === 'fill_blank') {
+    const correct = fuzzyMatch(userAns, q.answer);
+    showAnalysis(q, userAns, correct);
+  } else {
+    showAnalysis(q, userAns, null);
+  }
+  const btn = document.getElementById('btnSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = '已提交'; }
+}
+
+function fuzzyMatch(a, b) {
+  if (a === null || b === null || a === undefined || b === undefined) return false;
+  const norm = s => String(s).replace(/[\s\.,，。、；;:：!！?？""''""()（）]/g, '').toLowerCase();
+  return norm(a) === norm(b);
+}
+
+/* ===== 显示解析 ===== */
+function showAnalysis(q, userAns, correct) {
+  const an = document.getElementById('analysis');
+  const line = document.getElementById('ansLine');
+  const txt = document.getElementById('ansText');
+  const tip = document.getElementById('tipBox');
+  const kw = document.getElementById('kwDetail');
+
+  an.classList.remove('correct', 'wrong');
+  let lineHtml = '';
+  if (q.type === 'short_answer') {
+    lineHtml = `📝 参考答案：${renderMD(String(q.answer || ''))}`;
+  } else if (correct) {
+    an.classList.add('correct');
+    lineHtml = `🎉 答对啦！正确答案：<strong>${renderMD(String(q.answer || ''))}</strong>`;
+  } else if (correct === false) {
+    an.classList.add('wrong');
+    lineHtml = `❌ 你的答案是 <span style="text-decoration:line-through;opacity:.7;">${escapeHtml(userAns)}</span>，正确答案是 <strong>${renderMD(String(q.answer || ''))}</strong>`;
+  } else {
+    lineHtml = `📌 正确答案：<strong>${renderMD(String(q.answer || ''))}</strong>`;
+  }
+  line.innerHTML = lineHtml;
+
+  txt.innerHTML = q.explanation ? '<strong>💡 解析：</strong><br>' + renderMD(q.explanation) : '';
+  if (q.memory_tip) { tip.innerHTML = '🧠 ' + renderMD(q.memory_tip); tip.classList.add('visible'); }
+  else { tip.classList.remove('visible'); tip.innerHTML = ''; }
+  const knp = q.knowledge_point || q.knowledge;
+  kw.innerHTML = knp ? '📚 知识点：' + escapeHtml(knp) : '';
+
+  an.classList.add('visible');
+}
+
+/* ===== 状态自动 / 手动 ===== */
+function autoUpdateState(q, correct) {
+  const prev = states[q.id] || 'unstudied';
+  if (prev !== 'unstudied') { saveState(); return; }  // 已有状态不覆盖
+  states[q.id] = correct ? 'mastered' : 'error';
+  saveState();
+
+  const hint = document.getElementById('autoHint');
+  if (correct) {
+    hint.className = 'auto-state-hint mastered';
+    hint.textContent = '✅ 回答正确，状态自动更新为「已掌握」';
+  } else {
+    hint.className = 'auto-state-hint error';
+    hint.textContent = '❌ 这题答错了，已加入「错题本」～ 别灰心，多看看解析就掌握啦';
+  }
+  document.getElementById('qStateBtn').className = 'q-state-btn ' + states[q.id];
+  document.getElementById('qStateBtn').textContent = STATE_LABELS[states[q.id]];
+  applyStatesToDOM();
+  applyFilters();
+}
+
+window.cycleState = function () {
+  if (!currentId) return;
+  const order = ['unstudied', 'mastered', 'error'];
+  const cur = states[currentId] || 'unstudied';
+  const next = order[(order.indexOf(cur) + 1) % order.length];
+  states[currentId] = next;
+  saveState();
+  document.getElementById('qStateBtn').className = 'q-state-btn ' + next;
+  document.getElementById('qStateBtn').textContent = STATE_LABELS[next];
+  applyStatesToDOM();
+  applyFilters();
+};
+
+window.resetQ = function (id) {
+  states[id] = 'unstudied';
+  delete answered[id];
+  saveState();
+  selectQ(id);
+  applyStatesToDOM();
+  applyFilters();
+};
+
+/* ===== 导航 ===== */
+function updateNav() {
+  const info = document.getElementById('navInfo');
+  const prev = document.getElementById('prevBtn');
+  const next = document.getElementById('nextBtn');
+  if (!currentId || filteredIds.length === 0) { info.textContent = ''; prev.disabled = true; next.disabled = true; return; }
+  const idx = filteredIds.indexOf(currentId);
+  if (idx < 0) { info.textContent = `当前题在筛选外`; prev.disabled = true; next.disabled = true; return; }
+  info.textContent = `${idx + 1} / ${filteredIds.length}（当前筛选）`;
+  prev.disabled = idx <= 0;
+  next.disabled = idx >= filteredIds.length - 1;
+}
+
+window.goPrev = function () { const i = filteredIds.indexOf(currentId); if (i > 0) selectQ(filteredIds[i - 1]); };
+window.goNext = function () { const i = filteredIds.indexOf(currentId); if (i >= 0 && i < filteredIds.length - 1) selectQ(filteredIds[i + 1]); };
+
+/* ===== 随机抽题 ===== */
+window.randomQ = function () {
+  if (filteredIds.length === 0) { alert('当前筛选下没有题目 🙃'); return; }
+  selectQ(filteredIds[Math.floor(Math.random() * filteredIds.length)]);
+};
+
+/* ===== 导入导出 ===== */
+window.exportProgress = function () {
+  const data = { meta: META, states, answered, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `quiz_progress_${(META.id || 'quiz')}_${Date.now()}.json`; a.click();
+  URL.revokeObjectURL(url);
+};
+
+let importMode = 'questions';
+window.showImportModal = function (mode) {
+  importMode = mode;
+  document.getElementById('importTitle').textContent = mode === 'questions' ? '📥 导入题库' : '📂 导入进度';
+  document.getElementById('importHint').textContent = mode === 'questions'
+    ? '粘贴题目 JSON 数组（会覆盖当前题库）'
+    : '粘贴之前导出的进度 JSON';
+  document.getElementById('importText').value = '';
+  document.getElementById('importText').placeholder = mode === 'questions'
+    ? '[\n  {"type":"single_choice","prompt":"...","options":["A. ...","B. ..."],"answer":"A","explanation":"...","category":"数学","knowledge_point":"分数"}\n]'
+    : '{"states":{...},"answered":{...}}';
+  document.getElementById('importModal').classList.add('visible');
+};
+window.hideImportModal = function () { document.getElementById('importModal').classList.remove('visible'); };
+
+window.doImport = function () {
+  const txt = document.getElementById('importText').value.trim();
+  if (!txt) { alert('先粘贴点东西嘛 😊'); return; }
+  try {
+    const obj = JSON.parse(txt);
+    if (importMode === 'questions') {
+      if (!Array.isArray(obj)) { alert('题目必须是数组格式'); return; }
+      window.__QUIZ_DATA__ = obj;
+      states = {}; answered = {};
+      localStorage.removeItem(STORAGE_KEY);
+      QS = obj.map((q, i) => Object.assign({}, q, { id: i + 1, _origId: q.id }));
+      QS.forEach(q => { states[q.id] = 'unstudied'; });
+      buildCatChips();
+      buildSidebar();
+      applyFilters();
+      updateStats();
+      hideImportModal();
+      alert(`✅ 导入 ${obj.length} 道题`);
+    } else {
+      if (!obj.states) { alert('进度文件格式不对'); return; }
+      states = obj.states;
+      answered = obj.answered || {};
+      saveState();
+      applyStatesToDOM();
+      applyFilters();
+      hideImportModal();
+      alert('✅ 进度已恢复');
+    }
+  } catch (e) {
+    alert('❌ JSON 解析失败：' + e.message);
+  }
+};
+
+window.showResetModal = function () { document.getElementById('resetModal').classList.add('visible'); };
+window.hideResetModal = function () { document.getElementById('resetModal').classList.remove('visible'); };
+window.doReset = function () {
+  states = {}; answered = {};
+  QS.forEach(q => { states[q.id] = 'unstudied'; });
+  saveState();
+  applyStatesToDOM();
+  applyFilters();
+  hideResetModal();
+  document.getElementById('rightInner').innerHTML = '<div class="empty-state"><div class="icon">✨</div><div>已重置，重新开始！</div></div>';
+  document.getElementById('navBar').style.display = 'none';
+  currentId = null;
+};
+
+/* ===== 主题 ===== */
+window.toggleTheme = function () {
+  const isDark = document.body.classList.contains('dark');
+  document.body.classList.toggle('dark', !isDark);
+  document.body.classList.toggle('light', isDark);
+  document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+  try { localStorage.setItem(THEME_KEY, isDark ? 'light' : 'dark'); } catch (e) {}
+};
+
+/* ===== 侧栏（移动） ===== */
+window.toggleSidebar = function () {
+  document.getElementById('sidebar').classList.toggle('hidden');
+};
+
+/* ============================================
+ * 模拟考模式
+ * ============================================ */
+let examConfig = { count: 10, timeLimit: 0 };
+let examQuestions = [];
+let examAnswers = {};
+let examTimerInterval = null;
+let examTimeLeft = 0;
+let examStartTime = 0;
+
+window.selectExamCount = function (n) {
+  examConfig.count = n;
+  document.querySelectorAll('#examModal [data-n]').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.n, 10) === n);
+  });
+};
+window.selectExamTime = function (t) {
+  examConfig.timeLimit = t;
+  document.querySelectorAll('#examModal [data-t]').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.t, 10) === t);
+  });
+};
+
+window.showExamModal = function () {
+  const pool = QS.filter(q => activeCats.has(getCatKey(q)));
+  document.getElementById('examPoolSize').textContent = `当前题池：${pool.length} 题（按学科筛选）`;
+  document.getElementById('examModal').classList.add('visible');
+};
+window.hideExamModal = function () { document.getElementById('examModal').classList.remove('visible'); };
+
+window.startExam = function () {
+  hideExamModal();
+  const pool = QS.filter(q => activeCats.has(getCatKey(q))).slice();
+  if (pool.length === 0) { alert('题池为空'); return; }
+  // shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  examQuestions = pool.slice(0, Math.min(examConfig.count, pool.length));
+  examAnswers = {};
+  examStartTime = Date.now();
+
+  let html = '';
+  examQuestions.forEach((q, idx) => {
+    const typeInfo = TYPE_LABELS[q.type] || { txt: '', cls: '' };
+    html += `<div class="exam-q-card" id="eq-${q.id}">
+      <div class="exam-q-num">第 ${idx + 1} 题 · ${typeInfo.txt}</div>
+      <div class="exam-q-text">${renderMD(q.prompt || q.question)}</div>`;
+    if (q.type === 'single_choice') {
+      html += `<div class="exam-opts">`;
+      (q.options || []).forEach((opt, i) => {
+        const m = opt.match(/^([A-Z])[\.\、]\s*(.+)/);
+        const letter = m ? m[1] : String.fromCharCode(65 + i);
+        const text = m ? m[2] : opt;
+        html += `<div class="exam-opt" data-qid="${q.id}" data-key="${letter}" onclick="examChoose(this,${q.id},'${letter}')">
+          <span class="letter">${letter}</span><span>${renderMD(text)}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    } else if (q.type === 'true_false') {
+      html += `<div class="exam-opts">
+        <div class="exam-opt" data-qid="${q.id}" data-key="True" onclick="examChoose(this,${q.id},'True')"><span class="letter">✓</span><span>正确</span></div>
+        <div class="exam-opt" data-qid="${q.id}" data-key="False" onclick="examChoose(this,${q.id},'False')"><span class="letter">✗</span><span>错误</span></div>
+      </div>`;
+    } else {
+      const tag = q.type === 'short_answer' ? 'textarea class="exam-input" rows="3"' : 'input class="exam-input"';
+      html += `<${tag} data-qid="${q.id}" oninput="examTextInput(${q.id},this.value)" placeholder="输入答案..."></${q.type === 'short_answer' ? 'textarea' : 'input'}>`;
+    }
+    html += `</div>`;
+  });
+  document.getElementById('examBody').innerHTML = html;
+  updateExamProgress();
+  document.getElementById('examOverlay').classList.add('visible');
+  document.getElementById('examSubmitBtn').disabled = false;
+  document.getElementById('examSubmitBtn').textContent = '📤 提交答卷';
+
+  // 计时
+  if (examTimerInterval) clearInterval(examTimerInterval);
+  if (examConfig.timeLimit > 0) {
+    examTimeLeft = examConfig.timeLimit * examQuestions.length;
+    updateExamTimer();
+    examTimerInterval = setInterval(() => {
+      examTimeLeft--;
+      updateExamTimer();
+      if (examTimeLeft <= 0) { clearInterval(examTimerInterval); submitExam(); }
+    }, 1000);
+  } else {
+    updateElapsed();
+    examTimerInterval = setInterval(updateElapsed, 1000);
+  }
+};
+
+function updateExamTimer() {
+  const el = document.getElementById('examTimer');
+  const m = Math.floor(examTimeLeft / 60), s = examTimeLeft % 60;
+  el.textContent = '⏱ ' + m + ':' + (s < 10 ? '0' : '') + s;
+  el.style.color = examTimeLeft <= 10 ? '#ff5d77' : '';
+}
+function updateElapsed() {
+  const e = Math.floor((Date.now() - examStartTime) / 1000);
+  const m = Math.floor(e / 60), s = e % 60;
+  document.getElementById('examTimer').textContent = '⏱ ' + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+window.examChoose = function (el, qid, key) {
+  examAnswers[qid] = key;
+  document.querySelectorAll(`#eq-${qid} .exam-opt`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  updateExamProgress();
+};
+window.examTextInput = function (qid, val) {
+  examAnswers[qid] = val;
+  updateExamProgress();
+};
+
+function updateExamProgress() {
+  const total = examQuestions.length;
+  const done = Object.keys(examAnswers).filter(k => String(examAnswers[k] || '').trim() !== '').length;
+  document.getElementById('examProgressText').textContent = `${done} / ${total}`;
+  document.getElementById('examProgressFill').style.width = (total > 0 ? (done / total * 100) : 0) + '%';
+}
+
+window.submitExam = function () {
+  if (examTimerInterval) clearInterval(examTimerInterval);
+  document.getElementById('examOverlay').classList.remove('visible');
+  showResults();
+};
+
+window.quitExam = function () {
+  if (!confirm('确定退出本次模拟考？答题进度会丢失')) return;
+  if (examTimerInterval) clearInterval(examTimerInterval);
+  document.getElementById('examOverlay').classList.remove('visible');
+};
+
+function showResults() {
+  let correct = 0, gradable = 0;
+  const items = [];
+  examQuestions.forEach((q, idx) => {
+    const userAns = examAnswers[q.id];
+    let isCorrect = null;
+    if (q.type === 'single_choice' || q.type === 'true_false') {
+      gradable++;
+      isCorrect = String(userAns || '').toUpperCase() === String(q.answer || '').toUpperCase();
+      if (isCorrect) correct++;
+    } else if (q.type === 'fill_blank') {
+      gradable++;
+      isCorrect = fuzzyMatch(userAns, q.answer);
+      if (isCorrect) correct++;
+    }
+    // 同步主答题状态
+    if (isCorrect === true) states[q.id] = 'mastered';
+    else if (isCorrect === false) states[q.id] = 'error';
+    if (userAns !== undefined) answered[q.id] = userAns;
+    items.push({ q, userAns, isCorrect, idx });
+  });
+  saveState();
+  applyStatesToDOM();
+  applyFilters();
+
+  const score = gradable > 0 ? Math.round(correct / gradable * 100) : 0;
+  const passed = score >= 60;
+  const scoreEl = document.getElementById('resultsScore');
+  scoreEl.textContent = score;
+  scoreEl.className = 'results-score ' + (passed ? 'pass' : 'fail');
+  document.getElementById('resultsDetail').textContent =
+    `${examQuestions.length} 题 · 答对 ${correct}/${gradable}${gradable < examQuestions.length ? ` · ${examQuestions.length - gradable} 题需自评` : ''}`;
+
+  let html = '';
+  items.forEach(it => {
+    const { q, userAns, isCorrect, idx } = it;
+    const cls = isCorrect === true ? 'is-correct' : isCorrect === false ? 'is-wrong' : '';
+    const badge = isCorrect === true
+      ? '<span class="result-badge correct">✓ 正确</span>'
+      : isCorrect === false
+      ? '<span class="result-badge wrong">✗ 错误</span>'
+      : '<span class="result-badge" style="background:#fff4e0;color:#e9a82c;">📝 待自评</span>';
+
+    let ansHtml = '';
+    if (q.type === 'single_choice' || q.type === 'true_false' || q.type === 'fill_blank') {
+      if (isCorrect) {
+        ansHtml = `<div class="result-answers">✓ 你答：<span class="correct-ans">${escapeHtml(String(userAns || ''))}</span></div>`;
+      } else {
+        ansHtml = `<div class="result-answers">你答：<span class="wrong-ans">${escapeHtml(String(userAns || '（未作答）'))}</span> · 正确答案：<span class="correct-ans">${renderMD(String(q.answer || ''))}</span></div>`;
+      }
+    } else {
+      ansHtml = `<div class="result-answers">你答：${escapeHtml(String(userAns || '（未作答）'))}</div>
+        <div class="result-answers">参考：<span class="correct-ans">${renderMD(String(q.answer || ''))}</span></div>`;
+    }
+
+    html += `<div class="result-item ${cls}">
+      <div class="result-top">
+        <span class="result-qid">第${idx + 1}题 · Q${q.id}</span>
+        ${badge}
+      </div>
+      <div class="result-text">${renderMD(q.prompt || q.question)}</div>
+      ${ansHtml}
+      ${q.explanation ? `<div class="result-analysis">💡 ${renderMD(q.explanation)}</div>` : ''}
+      ${q.memory_tip ? `<div class="result-tip">🧠 ${renderMD(q.memory_tip)}</div>` : ''}
+    </div>`;
+  });
+  document.getElementById('resultsBody').innerHTML = html;
+  document.getElementById('examResults').classList.add('visible');
+}
+
+window.closeResults = function () { document.getElementById('examResults').classList.remove('visible'); };
+window.retakeExam = function () { closeResults(); startExam(); };
+
+/* ===== 工具 ===== */
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function renderMD(s) {
+  if (s === null || s === undefined) return '';
+  return escapeHtml(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>')
+    .replace(/____+/g, '<span style="display:inline-block;min-width:80px;border-bottom:2px solid currentColor;margin:0 4px;opacity:.5;">&nbsp;</span>');
+}
+
+/* ===== 键盘快捷键 ===== */
+document.addEventListener('keydown', (e) => {
+  // 在 input/textarea 内时，只允许 Enter 触发提交，其它不拦截
+  const inExam = document.getElementById('examOverlay').classList.contains('visible');
+  const inResults = document.getElementById('examResults').classList.contains('visible');
+  const inModal = document.querySelector('.modal-overlay.visible');
+  if (inExam || inResults || inModal) {
+    // 模拟考也支持 Enter 提交
+    if (inExam && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      submitExam();
+    }
+    return;
+  }
+
+  const tag = (e.target.tagName || '').toLowerCase();
+  const inField = tag === 'input' || tag === 'textarea';
+
+  // Enter 提交（在文本框里只有 Ctrl/Cmd+Enter）
+  if (e.key === 'Enter') {
+    if (inField && !(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    const btn = document.getElementById('btnSubmit');
+    if (btn && !btn.disabled) btn.click();
+    return;
+  }
+
+  if (inField) return;  // 文本框内不再处理其它快捷键
+
+  // A/B/C/D 选项
+  if (/^[a-dA-D]$/.test(e.key)) {
+    const letter = e.key.toUpperCase();
+    const el = document.querySelector(`#qOpts .opt[data-key="${letter}"]`);
+    if (el && !el.classList.contains('disabled')) { el.click(); e.preventDefault(); }
+    return;
+  }
+  // T/F 判断题
+  if (e.key === 't' || e.key === 'T') {
+    const el = document.querySelector('#qOpts .opt[data-key="True"]');
+    if (el && !el.classList.contains('disabled')) { el.click(); e.preventDefault(); }
+    return;
+  }
+  if (e.key === 'f' || e.key === 'F') {
+    const el = document.querySelector('#qOpts .opt[data-key="False"]');
+    if (el && !el.classList.contains('disabled')) { el.click(); e.preventDefault(); }
+    return;
+  }
+  // 上下题
+  if (e.key === 'ArrowLeft') { goPrev(); e.preventDefault(); return; }
+  if (e.key === 'ArrowRight') { goNext(); e.preventDefault(); return; }
+  // Space: 查看答案
+  if (e.key === ' ') {
+    if (currentId !== null) { revealAnswer(currentId); e.preventDefault(); }
+    return;
+  }
+});
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

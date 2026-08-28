@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>墨思 — 智能思维编织工作台</title>
+<style>
+:root{
+  --bg:#05060f;
+  --fg:#e6e8ff;
+  --dim:#7a7fa8;
+  --accent:#8be9ff;
+  --accent2:#ff6ad5;
+  --accent3:#c792ea;
+  --line:#1a1d3a;
+  --hl:#0d1024;
+  --paper:#0a0c1f;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);font-family:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC","SimSun",serif;font-size:14px;line-height:1.8;-webkit-font-smoothing:antialiased}
+/* 中文段落均使用宋体 */
+:lang(zh),.intro-text,.showcase-text p,.showcase-text h3,.info-big,.hero-title,.card-title,.price .desc,.cell{font-family:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC","SimSun",serif}
+/* 数字 / 拉丁字母仍保持等宽，但中文遇到等宽会 fallback 回宋体 */
+.header-logo,.nav a,.hero-meta,.hero-sub,.sec-head,.scroll-cue,.tag,.card-num,.card-tags,.spec-row b,.price h4,.price .num,.platforms,.footer,.here{font-family:"SF Mono","Menlo","Consolas","Songti SC","STSong","SimSun",serif}
+a{color:inherit;text-decoration:none;cursor:pointer}
+::selection{background:var(--accent);color:var(--bg)}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:18px 28px;z-index:100;color:var(--fg);background:rgba(5,6,15,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.header-logo{font-weight:600;letter-spacing:0.18em;font-size:13px}
+.header-logo span{color:var(--accent)}
+.nav ul{display:flex;gap:26px;list-style:none}
+.nav a{font-size:12px;letter-spacing:0.2em;position:relative;padding:4px 0;transition:color .3s}
+.nav a:hover{color:var(--accent)}
+.nav a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--accent);transition:width .3s}
+.nav a:hover::after{width:100%}
+
+/* HEY */
+.here{position:fixed;right:32px;bottom:28px;font-size:12px;letter-spacing:0.2em;z-index:90;text-align:right;color:var(--dim)}
+.here .blink{display:inline-block;animation:blink 1.2s infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* HERO ASCII */
+.hero{height:100vh;width:100%;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(ellipse at 30% 20%, #1a0a2e 0%, #05060f 55%, #000 100%)}
+.ascii-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:12px;letter-spacing:0;white-space:pre;font-family:"SF Mono",monospace;pointer-events:none;font-weight:600;margin:0}
+#ascii-nebula{color:#a87bd6;opacity:.55;text-shadow:0 0 8px rgba(168,123,214,.45);mix-blend-mode:screen}
+#ascii-stars{color:#cfe6ff;opacity:.85;text-shadow:0 0 4px rgba(207,230,255,.5)}
+#ascii-planet{color:var(--accent);opacity:.95;text-shadow:0 0 6px rgba(139,233,255,.45)}
+#ascii-asteroids{color:#f5b971;opacity:.92;text-shadow:0 0 6px rgba(245,185,113,.45)}
+#ascii-comets{color:#ff8fd2;opacity:.95;text-shadow:0 0 8px rgba(255,143,210,.55)}
+.hero-overlay{position:relative;z-index:2;text-align:center;padding:0 24px;color:var(--fg)}
+.hero-title{font-size:clamp(40px,7vw,98px);font-weight:300;letter-spacing:0.04em;line-height:1;margin-bottom:18px}
+.hero-title .em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:14px;letter-spacing:0.3em;color:var(--dim);margin-bottom:36px}
+
+/* ASCII 大标题 */
+.ascii-title{font-family:"SF Mono","Menlo","Consolas",monospace;color:var(--accent);white-space:pre;display:inline-block;text-align:left;line-height:1;font-weight:700;margin:0 auto;letter-spacing:0;text-shadow:0 0 12px rgba(139,233,255,.5),0 0 2px rgba(199,146,234,.4)}
+.ascii-title.lg{font-size:clamp(8px,1.25vw,14px);line-height:1.05}
+.ascii-title.md{font-size:clamp(6px,.85vw,10px);color:var(--fg)}
+.ascii-title.sm{font-size:clamp(5px,.55vw,7px);color:var(--accent);opacity:.85}
+.brand-wrap-outer{text-align:center}
+.brand-cn-sub{font-family:"Songti SC","STSong","SimSun",serif;font-size:clamp(28px,3.6vw,46px);font-weight:400;letter-spacing:0.5em;color:var(--fg);margin:24px 0 0;padding-left:0.5em}
+.ascii-cn{display:none}
+.sec-ascii{display:block;color:var(--accent);white-space:pre;font-family:"SF Mono",monospace;font-size:14px;line-height:1;margin-bottom:10px;opacity:.85;letter-spacing:0.4em}
+
+/* 中文真字宋体大标题 + ASCII 网点背景 */
+.brand-block{text-align:center;line-height:1;display:inline-block;padding:36px 64px;position:relative}
+.brand-block::before{
+  content:"";position:absolute;inset:0;
+  background-image:radial-gradient(circle, rgba(139,233,255,.22) 1px, transparent 1.4px);
+  background-size:7px 7px;
+  pointer-events:none;
+  opacity:.85;
+  z-index:0;
+  /* 中间淡四角浓的渐隐遮罩，像深空尘埃 */
+  -webkit-mask-image:radial-gradient(ellipse at center, transparent 30%, #000 90%);
+          mask-image:radial-gradient(ellipse at center, transparent 30%, #000 90%);
+}
+.brand-deco-top,.brand-deco-bot{font-family:"SF Mono","Menlo",monospace;color:var(--accent);font-size:clamp(12px,1.4vw,18px);letter-spacing:0.6em;opacity:.85;margin:0 0 18px;position:relative;z-index:1}
+.brand-deco-bot{margin:18px 0 0}
+.brand-title-cn{
+  font-family:"Songti SC","STSong","Source Han Serif SC","SimSun",serif;
+  font-weight:700;
+  font-size:clamp(140px,20vw,240px);
+  line-height:1;
+  letter-spacing:0.32em;
+  display:inline-block;
+  position:relative;
+  z-index:1;
+
+  /* 字内填充：星云网点，模拟字符画/星尘 */
+  background-image:
+    radial-gradient(circle, var(--accent) 0.95px, transparent 1.3px),
+    radial-gradient(circle, var(--accent2) 0.45px, transparent 0.85px);
+  background-size: 5px 5px, 3px 3px;
+  background-position: 0 0, 1.5px 1.5px;
+  -webkit-background-clip:text;
+          background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+
+  /* 极细描边 */
+  -webkit-text-stroke:0.4px rgba(139,233,255,.55);
+  text-shadow:0 0 8px rgba(139,233,255,.3);
+}
+.brand-title-cn .gap{display:inline-block;width:.2em}
+.brand-wrap-outer{text-align:center}
+.sec-head h2{font-size:18px;font-weight:400;letter-spacing:0.4em;color:var(--fg);display:flex;flex-direction:column;gap:6px;font-family:"Songti SC","STSong","SimSun",serif}
+.hero-meta{display:flex;gap:32px;justify-content:center;font-size:11px;letter-spacing:0.16em;color:var(--dim);flex-wrap:wrap}
+.hero-meta span b{color:var(--fg);font-weight:400}
+
+.scroll-cue{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);font-size:11px;letter-spacing:0.3em;color:var(--dim);z-index:3;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+
+/* SECTION */
+.sec{padding:96px 48px;border-bottom:1px solid var(--line);position:relative}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px;font-size:11px;letter-spacing:0.24em;color:var(--dim);border-bottom:1px solid var(--line);padding-bottom:18px}
+.sec-head .idx{font-family:monospace}
+
+/* INTRO */
+.intro{max-width:980px;margin:0 auto}
+.intro-text{font-size:clamp(20px,2.4vw,30px);line-height:1.55;font-weight:300;letter-spacing:0.02em}
+.intro-text .pt{display:inline;cursor:default;transition:color .2s}
+.intro-text .pt:hover{color:var(--accent)}
+.intro-text .pt.scrambling{color:var(--accent)}
+.intro-text .em{color:var(--accent);font-style:italic}
+.intro-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;margin-top:64px;padding-top:48px;border-top:1px dashed var(--line)}
+.intro-grid .cell{font-size:12px;color:var(--dim);line-height:1.7}
+.intro-grid .cell b{display:block;color:var(--fg);font-weight:400;margin-bottom:8px;letter-spacing:0.16em;font-size:11px}
+
+/* TAGS */
+.filter{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:36px}
+.tag{padding:6px 14px;border:1px solid var(--line);font-size:11px;letter-spacing:0.16em;color:var(--dim);transition:all .25s;cursor:pointer;user-select:none}
+.tag:hover{color:var(--fg);border-color:var(--dim)}
+.tag.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.tag .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:8px;vertical-align:middle;opacity:.6}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{border:1px solid var(--line);background:var(--paper);transition:all .3s;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 32px -16px rgba(139,233,255,.5)}
+.card-img{aspect-ratio:4/3;background:#0d1024;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .8s ease,filter .4s;filter:hue-rotate(200deg) saturate(.9) contrast(1.1) brightness(.6)}
+.card:hover .card-img img{transform:scale(1.06);filter:hue-rotate(220deg) saturate(1.1) contrast(1.05) brightness(.75)}
+.card-img .ascii-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:9px;color:var(--accent);white-space:pre;opacity:.75;pointer-events:none;mix-blend-mode:screen;text-shadow:0 0 4px rgba(139,233,255,.6)}
+.card-meta{padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.card-title{font-size:14px;letter-spacing:0.04em;font-weight:400}
+.card-title .pt{cursor:default}
+.card-title small{display:block;color:var(--dim);font-size:11px;margin-top:6px;letter-spacing:0.12em}
+.card-num{color:var(--dim);font-size:10px;font-family:monospace;letter-spacing:0.1em}
+.card-tags{display:flex;gap:6px;padding:0 20px 18px;flex-wrap:wrap}
+.card-tags span{font-size:10px;letter-spacing:0.16em;color:var(--dim);padding:2px 8px;border:1px solid var(--line);text-transform:uppercase}
+.card.hidden{display:none}
+
+/* SHOWCASE / UI 截图 */
+.showcase{display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:center;margin-top:24px}
+.showcase-shot{border:1px solid var(--line);background:var(--paper);padding:14px;position:relative;box-shadow:0 8px 28px -16px rgba(139,233,255,.3)}
+.showcase-shot .bar{display:flex;gap:6px;margin-bottom:10px}
+.showcase-shot .bar i{display:block;width:10px;height:10px;border-radius:50%;background:#3a3f6a}
+.showcase-shot img{width:100%;height:auto;display:block;filter:hue-rotate(200deg) saturate(.85) contrast(1.05) brightness(.7);border:1px solid var(--line)}
+.showcase-text h3{font-size:clamp(24px,3vw,36px);font-weight:300;line-height:1.3;margin-bottom:18px;letter-spacing:0.02em;color:var(--fg)}
+.showcase-text h3 .em{color:var(--accent);font-style:italic}
+.showcase-text .mini-ascii{font-family:"SF Mono",monospace;color:var(--accent);font-size:10px;line-height:1;white-space:pre;display:block;margin-bottom:18px;opacity:.85}
+.showcase-text p{color:var(--dim);font-size:13px;line-height:1.8;margin-bottom:14px}
+.showcase-text p .pt:hover{color:var(--accent)}
+
+/* SPEC */
+.spec-wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:64px;align-items:start}
+.spec-visual{position:relative;aspect-ratio:4/5;background:var(--paper);border:1px solid var(--line);overflow:hidden}
+.spec-visual img{width:100%;height:100%;object-fit:cover;filter:hue-rotate(220deg) saturate(.9) contrast(1.05) brightness(.7)}
+.spec-visual::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,15,0) 50%,rgba(5,6,15,.85) 100%);z-index:2}
+.spec-visual .label{position:absolute;left:20px;bottom:18px;z-index:3;font-size:11px;letter-spacing:0.2em;color:var(--accent)}
+.spec-table{width:100%}
+.spec-row{display:grid;grid-template-columns:140px 1fr;padding:14px 0;border-bottom:1px dashed var(--line);font-size:12px;align-items:baseline}
+.spec-row b{color:var(--dim);font-weight:400;letter-spacing:0.16em;font-size:11px}
+.spec-row span{color:var(--fg)}
+.spec-row .pt{cursor:default}
+
+/* PRICING */
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.price{border:1px solid var(--line);padding:32px 26px;background:var(--paper);transition:.3s;display:flex;flex-direction:column}
+.price:hover{border-color:var(--accent);box-shadow:0 12px 32px -16px rgba(139,233,255,.4)}
+.price.featured{border-color:var(--accent);background:#0f1233;border-width:1px;box-shadow:0 0 0 1px var(--accent) inset, 0 0 32px -8px rgba(139,233,255,.3)}
+.price h4{font-size:13px;letter-spacing:0.2em;color:var(--dim);margin-bottom:18px;font-weight:400}
+.price .num{font-size:42px;font-weight:300;letter-spacing:0.02em;margin-bottom:6px;color:var(--fg)}
+.price .num small{font-size:13px;color:var(--dim);letter-spacing:0.1em;margin-left:6px}
+.price .desc{color:var(--dim);font-size:12px;margin-bottom:24px;line-height:1.6}
+.price ul{list-style:none;font-size:12px;color:var(--fg);line-height:2;margin-bottom:28px;flex:1}
+.price ul li::before{content:"+ ";color:var(--accent);margin-right:4px}
+.price .btn{display:block;text-align:center;padding:12px;border:1px solid var(--fg);font-size:11px;letter-spacing:0.2em;transition:.25s;color:var(--fg)}
+.price .btn:hover{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.price.featured .btn{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.price.featured .btn:hover{background:var(--accent2);border-color:var(--accent2);color:var(--bg)}
+
+/* INFO */
+.info{text-align:center;padding:120px 24px}
+.info-big{font-size:clamp(36px,6vw,76px);font-weight:300;line-height:1.1;letter-spacing:0.02em;margin-bottom:36px}
+.info-big .em{font-style:italic;color:var(--accent)}
+.info-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:28px;font-size:12px;letter-spacing:0.2em}
+.info-links a{padding:14px 28px;border:1px solid var(--fg);transition:all .25s;color:var(--fg)}
+.info-links a:hover{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.info-orbit{margin:0 auto 48px;width:280px;height:280px;position:relative;color:var(--dim);font-size:9px;line-height:9px;white-space:pre;font-family:monospace;display:flex;align-items:center;justify-content:center}
+#info-ascii{color:var(--accent);opacity:1;font-weight:700}
+
+/* PLATFORMS */
+.platforms{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:24px;font-size:11px;letter-spacing:0.18em;color:var(--dim)}
+.platforms span{padding:6px 14px;border:1px solid var(--line)}
+
+/* FOOTER */
+.footer{padding:24px 32px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:0.18em;color:var(--dim);border-top:1px solid var(--line);flex-wrap:wrap;gap:12px;background:var(--paper)}
+
+/* HERO 后景柔光遮罩，仅在中心给标题留出可读区，四周让 ASCII 充分显现 */
+.hero::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(82vw,1100px);height:min(58vh,520px);background:radial-gradient(ellipse at center,rgba(5,6,15,.85) 0%,rgba(5,6,15,.6) 40%,rgba(5,6,15,0) 80%);pointer-events:none;z-index:1;border-radius:50%}
+
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr 1fr}
+  .intro-grid{grid-template-columns:1fr}
+  .spec-wrap,.showcase{grid-template-columns:1fr;gap:32px}
+  .price-grid{grid-template-columns:1fr}
+  .sec{padding:64px 24px}
+  .header{padding:14px 18px}
+}
+@media(max-width:560px){
+  .grid{grid-template-columns:1fr}
+  #ascii-stage{font-size:7px;line-height:7px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo"><a href="#top">墨思</a></div>
+  <nav class="nav">
+    <ul>
+      <li><a href="#features">功能</a></li>
+      <li><a href="#showcase">界面</a></li>
+      <li><a href="#spec">规格</a></li>
+      <li><a href="#price">订阅</a></li>
+      <li><a href="#info">关于</a></li>
+    </ul>
+  </nav>
+</div>
+
+<!-- HEY -->
+<div class="here">你好<br><span class="blink">▮</span> 现在是 凌晨 03:14</div>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <pre id="ascii-nebula" class="ascii-layer"></pre>
+  <pre id="ascii-stars" class="ascii-layer"></pre>
+  <pre id="ascii-planet" class="ascii-layer"></pre>
+  <pre id="ascii-asteroids" class="ascii-layer"></pre>
+  <pre id="ascii-comets" class="ascii-layer"></pre>
+  <div class="hero-overlay">
+    <div class="brand-wrap-outer">
+<pre class="ascii-title lg">
+██╗███╗   ██╗██╗  ██╗██╗    ██╗███████╗ █████╗ ██╗   ██╗███████╗
+██║████╗  ██║██║ ██╔╝██║    ██║██╔════╝██╔══██╗██║   ██║██╔════╝
+██║██╔██╗ ██║█████╔╝ ██║ █╗ ██║█████╗  ███████║██║   ██║█████╗
+██║██║╚██╗██║██╔═██╗ ██║███╗██║██╔══╝  ██╔══██║╚██╗ ██╔╝██╔══╝
+██║██║ ╚██╗██║██║  ██╗╚███╔███╔╝███████╗██║  ██║ ╚████╔╝ ███████╗
+╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝
+</pre>
+      <div class="brand-cn-sub">墨　思</div>
+    </div>
+    <div class="hero-sub" style="margin-top:28px">让 散 落 的 想 法，自 己 长 出 经 纬</div>
+    <div class="hero-meta">
+      <span>版本 <b>v3.2 / 2026.05</b></span>
+      <span>类型 <b>本地智能笔记 / 知识星图</b></span>
+      <span>平台 <b>桌面 / 移动 / 网页</b></span>
+    </div>
+  </div>
+  <div class="scroll-cue">↓ 向 下 滚 动 探 索 ↓</div>
+</section>
+
+<!-- INTRO -->
+<section class="sec">
+  <div class="sec-head"><h2><pre class="sec-ascii">═══ ❖ ═══</pre>关于</h2><div class="idx">[ 01 / 05 ]</div></div>
+  <div class="intro">
+    <p class="intro-text">
+      <span class="pt" data-text="墨思">墨思</span> 是一款 <span class="em">本地优先</span> 的智能思维工作台。
+      它会在你写字时，悄悄读懂上下文，
+      把你过去 <span class="pt" data-text="三年">三年</span> 写过的 <span class="pt" data-text="所有笔记、网页摘录、文献批注">所有笔记、网页摘录、文献批注</span>
+      自动织成一张 <span class="em">双向链接图谱</span>。
+      所有推理 <span class="pt" data-text="完全在你的电脑上运行">完全在你的电脑上运行</span>，
+      你的想法 <span class="em">永远不离开本机</span>。
+    </p>
+    <div class="intro-grid">
+      <div class="cell"><b>✦ 本地优先</b>内置量化大模型，主流芯片可全程离线运行，不依赖任何云端接口。</div>
+      <div class="cell"><b>✦ 双链图谱</b>每一个想法都是一颗节点，智能模型自动发现它们之间的潜在引用，让旧笔记重新被点亮。</div>
+      <div class="cell"><b>✦ 端到端加密</b>多端同步走点对点链路，密钥只在你的设备里，连我们也读不到。</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES GRID -->
+<section class="sec" id="features">
+  <div class="sec-head"><h2><pre class="sec-ascii">═══ ❍ ═══</pre>核心功能</h2><div class="idx">[ 02 / 05 ]</div></div>
+  <div class="filter">
+    <a class="tag active" data-cat="all"><span class="dot"></span>全部</a>
+    <a class="tag" data-cat="ai"><span class="dot"></span>智能协作</a>
+    <a class="tag" data-cat="write"><span class="dot"></span>写作</a>
+    <a class="tag" data-cat="graph"><span class="dot"></span>图谱</a>
+    <a class="tag" data-cat="sync"><span class="dot"></span>同步</a>
+  </div>
+  <div class="grid" id="grid">
+
+    <div class="card" data-cat="ai write">
+      <div class="card-img">
+        <img src="../assets/ai-01-search.jpg" alt="AI 续写">
+        <pre class="ascii-overlay">▌ AI ▍▎▏
+  ╭─────╮
+  │ ... │
+  ╰──→──╯</pre>
+      </div>
+      <div class="card-meta">
+        <div class="card-title"><span class="pt" data-text="智能续写">智能续写</span><small>本机模型</small></div>
+        <div class="card-num">/01</div>
+      </div>
+      <div class="card-tags"><span>智能</span><span>写作</span></div>
+    </div>
+
+    <div class="card" data-cat="graph">
+      <div class="card-img">
+        <img src="../assets/ai-02-document.jpg" alt="知识图谱">
+        <pre class="ascii-overlay">  ●─●─●
+  │\ │ /│
+  ● ●─● ●
+  │/ │ \│
+  ●─●─●</pre>
+      </div>
+      <div class="card-meta">
+        <div class="card-title"><span class="pt" data-text="思维双链图谱">思维双链图谱</span><small>反向链接</small></div>
+        <div class="card-num">/02</div>
+      </div>
+      <div class="card-tags"><span>图谱</span></div>
+    </div>
+
+    <div class="card" data-cat="ai">
+      <div class="card-img">
+        <img src="../assets/ai-03-video.jpg" alt="语义搜索">
+        <pre class="ascii-overlay">┌─────────┐
+│ ⌕ 找到 │
+│  3 处   │
+│  相似   │
+└─────────┘</pre>
+      </div>
+      <div class="card-meta">
+        <div class="card-title"><span class="pt" data-text="语义搜索">语义搜索</span><small>向量检索</small></div>
+        <div class="card-num">/03</div>
+      </div>
+      <div class="card-tags"><span>智能</span><span>搜索</span></div>
+    </div>
+
+    <div class="card" data-cat="write">
+      <div class="card-img">
+        <img src="../assets/ai-04-orchestration.jpg" alt="Markdown 编辑">
+        <pre class="ascii-overlay"># Heading
+- list
+  - item
+> quote
+**bold**</pre>
+      </div>
+      <div class="card-meta">
+        <div class="card-title"><span class="pt" data-text="纯文本写作">纯文本写作</span><small>原生标记</small></div>
+        <div class="card-num">/04</div>
+      </div>
+      <div class="card-tags"><span>写作</span></div>
+    </div>
+
+    <div class="card" data-cat="sync">
+      <div class="card-img">
+        <img src="../assets/ai-05-voice.jpg" alt="多端同步">
+        <pre class="ascii-overlay"> ▣ ⇄ ▢
+  ╲   ╱
+   ⇅
+  ╱   ╲
+ ▤ ⇄ ▥</pre>
+      </div>
+      <div class="card-meta">
+        <div class="card-title"><span class="pt" data-text="端到端同步">端到端同步</span><small>全程加密</small></div>
+        <div class="card-num">/05</div>
+      </div>
+      <div class="card-tags"><span>同步</span><span>加密</span></div>
+    </div>
+
+    <div class="card" data-cat="ai graph">
+      <div class="card-img">
+        <img src="../assets/ai-06-integration.jpg" alt="时光回溯">
+        <pre class="ascii-overlay">←─◆─◆─◆─◆─→
+  2023 24 25 26
+  ░░▒▒▓▓██</pre>
+      </div>
+      <div class="card-meta">
+        <div class="card-title"><span class="pt" data-text="时间线回溯">时间线回溯</span><small>变迁追踪</small></div>
+        <div class="card-num">/06</div>
+      </div>
+      <div class="card-tags"><span>图谱</span><span>智能</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SHOWCASE -->
+<section class="sec" id="showcase">
+  <div class="sec-head"><h2><pre class="sec-ascii">═══ ◈ ═══</pre>界面预览</h2><div class="idx">[ 03 / 05 ]</div></div>
+
+  <div class="showcase">
+    <div class="showcase-shot">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <img src="../assets/ai-07-hero.jpg" alt="编辑器界面">
+    </div>
+    <div class="showcase-text">
+<pre class="mini-ascii">┌──────────────────────┐
+│ ▓▓░░░░░░░░░░░░░░░░░  │
+└──────────────────────┘</pre>
+      <h3>一个 <span class="em">极克制</span> 的写作环境，<br>但每一行都被静静听见。</h3>
+      <p><span class="pt" data-text="左侧">左侧</span> 是无限层级的笔记本，
+        <span class="pt" data-text="中间">中间</span> 是纯净的写作区域，
+        <span class="pt" data-text="右侧">右侧</span> 折叠面板里，正在为你浮现三条相关旧笔记。</p>
+      <p>没有花里胡哨的图标，没有打扰你的弹窗。所有的智能，<span class="pt" data-text="都安静地待在角落">都安静地待在角落</span>，等你召唤。</p>
+    </div>
+  </div>
+
+  <div class="showcase" style="margin-top:64px">
+    <div class="showcase-text">
+<pre class="mini-ascii">  ●─●─●─●
+  │╲│╱│╲│
+  ●─●─●─●
+  │╱│╲│╱│
+  ●─●─●─●</pre>
+      <h3>用 <span class="em">图谱视图</span>，<br>看见你思考的<span class="em">形状</span>。</h3>
+      <p>每一个 <span class="pt" data-text="双向链接">双向链接</span> 都会变成一条引力线。后台持续计算笔记之间的语义距离，让相关的想法在画布上相互靠近。</p>
+      <p>支持 <span class="pt" data-text="立体力导向布局、自由排布、时间线视图">立体力导向布局、自由排布、时间线视图</span>，鼠标滚轮缩放穿越十万个节点也不卡顿。</p>
+    </div>
+    <div class="showcase-shot">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <img src="../assets/ai-08-architecture.jpg" alt="图谱视图">
+    </div>
+  </div>
+</section>
+
+<!-- SPEC -->
+<section class="sec" id="spec">
+  <div class="sec-head"><h2><pre class="sec-ascii">═══ ✦ ═══</pre>技术规格</h2><div class="idx">[ 04 / 05 ]</div></div>
+  <div class="spec-wrap">
+    <div class="spec-visual">
+      <img src="../assets/ai-01-search.jpg" alt="技术架构">
+      <div class="label">✦ 本地推理 / 跨平台 / 开源核心</div>
+    </div>
+    <div class="spec-table">
+      <div class="spec-row"><b>软件版本</b><span class="pt" data-text="墨思 v3.2.1，构建 26513">墨思 v3.2.1，构建 26513</span></div>
+      <div class="spec-row"><b>支持平台</b><span class="pt" data-text="桌面三端 / 手机平板 / 网页">桌面三端 / 手机平板 / 网页</span></div>
+      <div class="spec-row"><b>本机模型</b><span class="pt" data-text="千问 7B / 羊驼 8B 量化">千问 7B / 羊驼 8B 量化</span></div>
+      <div class="spec-row"><b>云端模型</b><span class="pt" data-text="可选接入主流大模型，或自托管">可选接入主流大模型，或自托管</span></div>
+      <div class="spec-row"><b>数据格式</b><span class="pt" data-text="纯文本标记 + 本地索引数据库">纯文本标记 + 本地索引数据库</span></div>
+      <div class="spec-row"><b>同步协议</b><span class="pt" data-text="冲突自由 / 点对点 / 端到端加密">冲突自由 / 点对点 / 端到端加密</span></div>
+      <div class="spec-row"><b>插件系统</b><span class="pt" data-text="脚本 + 沙盒，已有 280 余款插件">脚本 + 沙盒，已有 280 余款插件</span></div>
+      <div class="spec-row"><b>导入导出</b><span class="pt" data-text="兼容主流笔记软件迁移">兼容主流笔记软件迁移</span></div>
+      <div class="spec-row"><b>离线能力</b><span class="pt" data-text="完全可用，同步可选，无需账号">完全可用，同步可选，无需账号</span></div>
+      <div class="spec-row"><b>开源情况</b><span class="pt" data-text="核心引擎开源，星标超 25k">核心引擎开源，星标超 25k</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="sec" id="price">
+  <div class="sec-head"><h2><pre class="sec-ascii">═══ ❑ ═══</pre>订阅方案</h2><div class="idx">[ 05 / 05 ]</div></div>
+  <div class="price-grid">
+
+    <div class="price">
+      <h4>个人版</h4>
+      <div class="num">¥0<small>/ 永久免费</small></div>
+      <p class="desc">适合个人写作者、学生、研究者</p>
+      <ul>
+        <li>所有本地功能 不限笔记数</li>
+        <li>本机智能模型</li>
+        <li>两台设备局域网同步</li>
+        <li>社区插件 主题</li>
+        <li>核心代码开源 可自托管</li>
+      </ul>
+      <a class="btn pt" data-text="立即下载 ↓">立即下载 ↓</a>
+    </div>
+
+    <div class="price featured">
+      <h4>★ 专业版</h4>
+      <div class="num">¥38<small>/ 月，年付 ¥328</small></div>
+      <p class="desc">为创作者提供云同步与高级智能</p>
+      <ul>
+        <li>包含个人版全部功能</li>
+        <li>无限设备 端到端加密同步</li>
+        <li>云端大模型接入</li>
+        <li>语义搜索 自动双链建议</li>
+        <li>高级图谱视图 主题市场</li>
+        <li>优先邮件支持</li>
+      </ul>
+      <a class="btn pt" data-text="开始 14 天试用 →">开始 14 天试用 →</a>
+    </div>
+
+    <div class="price">
+      <h4>团队版</h4>
+      <div class="num">¥98<small>/ 人 / 月</small></div>
+      <p class="desc">适合 5–50 人的研究 创作团队</p>
+      <ul>
+        <li>包含专业版全部功能</li>
+        <li>共享工作区 多人协作编辑</li>
+        <li>权限分级 审计日志</li>
+        <li>统一身份认证</li>
+        <li>私有部署 内网托管</li>
+        <li>专属客户成功经理</li>
+      </ul>
+      <a class="btn pt" data-text="联系销售 ✉">联系销售 ✉</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- INFO / CTA -->
+<section class="sec info" id="info">
+  <div class="info-orbit"><pre id="info-ascii"></pre></div>
+  <div class="info-big">让你的 <span class="em">想法</span>，<br>开始彼此对话。</div>
+  <div class="hero-sub">v3.2 已上线 / 桌面、移动、网页全平台</div>
+  <div class="info-links">
+    <a class="pt" data-text="下载墨思 ↓">下载墨思 ↓</a>
+    <a class="pt" data-text="网页版打开 →">网页版打开 →</a>
+    <a class="pt" data-text="开发者文档 ✦">开发者文档 ✦</a>
+  </div>
+  <div class="platforms">
+    <span>★ 苹果电脑</span><span>★ 视窗系统</span><span>★ 开源系统</span><span>★ 苹果手机</span><span>★ 平板</span><span>★ 安卓</span><span>★ 网页</span>
+  </div>
+</section>
+
+<div class="footer">
+  <span>© 2026 墨思工作室，版权所有</span>
+  <span>以 ASCII 与 茶 写就于 凌晨三点</span>
+</div>
+
+<script>
+/* ============================================================
+   1. HERO ASCII ：旋转球体 + 行星轨道 + 星点场
+   ============================================================ */
+(function(){
+  const elNeb = document.getElementById('ascii-nebula');
+  const elStar = document.getElementById('ascii-stars');
+  const elPlanet = document.getElementById('ascii-planet');
+  const elAst = document.getElementById('ascii-asteroids');
+  const elComet = document.getElementById('ascii-comets');
+  if(!elPlanet) return;
+  let cols, rows, t = 0;
+  let stars = [];
+  let asteroids = [];
+  let comets = [];
+  let nebulae = [];
+
+  // 不规则小行星形状（多种轮廓 + 表面陨石坑）
+  const ASTEROID_SHAPES = [
+    [
+      "  .-~~-. ",
+      " ( o..o )",
+      "  `-~~-' "
+    ],
+    [
+      "  _.--._  ",
+      " /  .o  \\ ",
+      " \\ o.   / ",
+      "  `~--~'  "
+    ],
+    [
+      "  .-=-.   ",
+      " /,o o.\\  ",
+      " \\ `-' /  ",
+      "  `~~-'   "
+    ],
+    [
+      " _.+~+._ ",
+      "/ .  o  \\",
+      "\\  o . o/",
+      " `~--~~' "
+    ],
+    [
+      "  .o0o.  ",
+      " 0o..oO  ",
+      "  `OoO'  "
+    ],
+    [
+      " ,-~^~-. ",
+      "( :*. * )",
+      " `-,_,-' "
+    ]
+  ];
+
+  function reseed(){
+    cols = Math.floor(window.innerWidth / 7);
+    rows = Math.floor(window.innerHeight / 11);
+    stars = [];
+    const n = Math.floor(cols*rows*0.05);
+    for(let i=0;i<n;i++){
+      stars.push({
+        x: Math.random()*cols,
+        y: Math.random()*rows,
+        z: Math.random()*0.9+0.1,
+        c: Math.random()<.04?'★':(Math.random()<.15?'✦':(Math.random()<.5?'.':'∙'))
+      });
+    }
+    asteroids = [];
+    const aN = Math.max(4, Math.floor(Math.min(cols,rows)/14));
+    for(let i=0;i<aN;i++){
+      asteroids.push({
+        x: Math.random()*cols,
+        y: Math.random()*rows,
+        vx: (Math.random()-0.5)*0.08,
+        vy: (Math.random()-0.5)*0.04,
+        shape: ASTEROID_SHAPES[Math.floor(Math.random()*ASTEROID_SHAPES.length)],
+        rot: Math.random()*Math.PI*2,
+        rs: (Math.random()-0.5)*0.01
+      });
+    }
+    comets = [];
+    for(let i=0;i<2;i++){
+      comets.push({
+        x: Math.random()*cols,
+        y: Math.random()*rows*0.6,
+        vx: 0.35 + Math.random()*0.25,
+        vy: 0.12 + Math.random()*0.1,
+        life: Math.random()*200
+      });
+    }
+    nebulae = [];
+    for(let i=0;i<3;i++){
+      nebulae.push({
+        x: Math.random()*cols,
+        y: Math.random()*rows,
+        r: 9 + Math.random()*15,
+        seed: Math.random()*100
+      });
+    }
+  }
+  reseed();
+  window.addEventListener('resize', reseed);
+
+  function newBuf(){
+    const b = new Array(rows);
+    for(let y=0;y<rows;y++) b[y] = new Array(cols).fill(' ');
+    return b;
+  }
+  function flush(buf){ return buf.map(r=>r.join('')).join('\n'); }
+
+  function drawAsteroid(buf, ax, ay, shape){
+    for(let i=0;i<shape.length;i++){
+      const line = shape[i];
+      const yy = Math.floor(ay) + i - Math.floor(shape.length/2);
+      if(yy<0||yy>=rows) continue;
+      for(let j=0;j<line.length;j++){
+        const ch = line[j];
+        if(ch===' ') continue;
+        const xx = Math.floor(ax) + j - Math.floor(line.length/2);
+        if(xx<0||xx>=cols) continue;
+        buf[yy][xx] = ch;
+      }
+    }
+  }
+
+  const chars = " .,:;-~+*=%#@█";
+  const nebChars = "·∙∶⋮⋯░▒";
+  function render(){
+    t += 0.012;
+    const bufNeb = newBuf();
+    const bufStar = newBuf();
+    const bufPlanet = newBuf();
+    const bufAst = newBuf();
+    const bufComet = newBuf();
+
+    // 星云气体
+    for(const n of nebulae){
+      const cx = n.x + Math.sin(t*0.2 + n.seed)*3;
+      const cy = n.y + Math.cos(t*0.15 + n.seed)*2;
+      for(let dy=-n.r; dy<=n.r; dy++){
+        for(let dx=-n.r*1.6; dx<=n.r*1.6; dx++){
+          const xx = Math.floor(cx+dx);
+          const yy = Math.floor(cy+dy);
+          if(xx<0||xx>=cols||yy<0||yy>=rows) continue;
+          const d = Math.sqrt((dx/1.6)*(dx/1.6) + dy*dy);
+          if(d > n.r) continue;
+          const noise = Math.sin(xx*0.3 + n.seed)*Math.cos(yy*0.4 - n.seed*0.7) + Math.sin(t*0.5+n.seed);
+          const intensity = (1 - d/n.r) * (0.5 + 0.5*noise);
+          if(intensity > 0.55){
+            const ci = Math.min(nebChars.length-1, Math.floor(intensity * nebChars.length));
+            bufNeb[yy][xx] = nebChars[ci];
+          }
+        }
+      }
+    }
+
+    // 闪烁星点
+    for(const s of stars){
+      const xi = Math.floor((s.x + Math.sin(t*0.3 + s.y)*0.3 + cols)%cols);
+      const yi = Math.floor(s.y);
+      if(yi>=0 && yi<rows){
+        const tw = (Math.sin(t*2 + s.x*0.7 + s.y*0.3)+1)*0.5;
+        if(tw>0.55 || s.c==='★' || s.c==='✦') bufStar[yi][xi] = s.c;
+      }
+    }
+
+    // 旋转行星
+    const cx = cols/2, cy = rows/2;
+    const R = Math.min(cols,rows*2)*0.18;
+    const aspect = 0.5;
+    for(let phi=0; phi<Math.PI; phi+=0.06){
+      for(let theta=0; theta<2*Math.PI; theta+=0.04){
+        const x3 = R*Math.sin(phi)*Math.cos(theta + t);
+        const y3 = R*Math.cos(phi);
+        const z3 = R*Math.sin(phi)*Math.sin(theta + t);
+        const lx = Math.cos(t*0.6), ly = -0.3, lz = Math.sin(t*0.6);
+        const nx = Math.sin(phi)*Math.cos(theta + t);
+        const ny = Math.cos(phi);
+        const nz = Math.sin(phi)*Math.sin(theta + t);
+        const lum = nx*lx + ny*ly + nz*lz;
+        if(z3 < 0) continue;
+        const sx = Math.floor(cx + x3/aspect);
+        const sy = Math.floor(cy + y3);
+        if(sx<0||sx>=cols||sy<0||sy>=rows) continue;
+        const idx = Math.max(0, Math.min(chars.length-1, Math.floor((lum+0.2)*chars.length*0.9)));
+        bufPlanet[sy][sx] = chars[idx];
+      }
+    }
+
+    // 行星轨道与卫星
+    for(let i=0; i<3; i++){
+      const orbR = R*(1.6 + i*0.5);
+      const tilt = 0.35 + i*0.1;
+      for(let a=0; a<2*Math.PI; a+=0.04){
+        const ox = orbR*Math.cos(a + t*(0.4-i*0.1));
+        const oy = orbR*Math.sin(a + t*(0.4-i*0.1))*tilt;
+        const sx = Math.floor(cx + ox/aspect);
+        const sy = Math.floor(cy + oy);
+        if(sx<0||sx>=cols||sy<0||sy>=rows) continue;
+        if(bufPlanet[sy][sx]===' ') bufPlanet[sy][sx] = (i===0?'.':(i===1?'∙':'•'));
+      }
+      const a = t*(0.7-i*0.18);
+      const ox = orbR*Math.cos(a);
+      const oy = orbR*Math.sin(a)*tilt;
+      const sx = Math.floor(cx + ox/aspect);
+      const sy = Math.floor(cy + oy);
+      if(sx>=0&&sx<cols&&sy>=0&&sy<rows) bufPlanet[sy][sx] = (i===0?'◉':(i===1?'◎':'○'));
+    }
+
+    // 彗星拖尾
+    for(const c of comets){
+      c.x += c.vx; c.y += c.vy; c.life++;
+      if(c.x>cols+10 || c.y>rows+5){
+        c.x = -10; c.y = Math.random()*rows*0.5;
+        c.life = 0;
+      }
+      const tail = 16;
+      for(let k=0;k<tail;k++){
+        const tx = Math.floor(c.x - k*c.vx*1.5);
+        const ty = Math.floor(c.y - k*c.vy*1.5);
+        if(tx<0||tx>=cols||ty<0||ty>=rows) continue;
+        const tch = k===0?'☄':(k<3?'*':(k<7?'∙':(k<12?'·':'.')));
+        bufComet[ty][tx] = tch;
+      }
+    }
+
+    // 漂浮的小行星
+    for(const a of asteroids){
+      a.x += a.vx; a.y += a.vy; a.rot += a.rs;
+      if(a.x<-6) a.x = cols+6;
+      if(a.x>cols+6) a.x = -6;
+      if(a.y<-4) a.y = rows+4;
+      if(a.y>rows+4) a.y = -4;
+      const wob = Math.sin(t*0.8 + a.rot)*0.6;
+      drawAsteroid(bufAst, a.x + wob, a.y + Math.cos(t*0.6+a.rot)*0.4, a.shape);
+    }
+
+    elNeb.textContent = flush(bufNeb);
+    elStar.textContent = flush(bufStar);
+    elPlanet.textContent = flush(bufPlanet);
+    elAst.textContent = flush(bufAst);
+    elComet.textContent = flush(bufComet);
+    requestAnimationFrame(render);
+  }
+  render();
+})();
+
+/* ============================================================
+   2. INFO 区小型轨道
+   ============================================================ */
+(function(){
+  const el = document.getElementById('info-ascii');
+  if(!el) return;
+  const W=44, H=22;
+  let t=0;
+  // 小行星带的随机位置
+  const belt = [];
+  for(let i=0;i<14;i++){
+    belt.push({
+      a: Math.random()*Math.PI*2,
+      r: 8.5 + Math.random()*1.6,
+      sp: 0.5 + Math.random()*0.4,
+      ch: '✦◆◈*·•'[Math.floor(Math.random()*6)]
+    });
+  }
+  function tick(){
+    t+=0.04;
+    const buf = Array.from({length:H},()=>new Array(W).fill(' '));
+    const cx=W/2, cy=H/2;
+
+    // 散落的星点背景
+    for(let i=0;i<24;i++){
+      const x = Math.floor((Math.sin(i*7.3)+1)*W/2);
+      const y = Math.floor((Math.cos(i*5.1)+1)*H/2);
+      const tw = (Math.sin(t*1.5 + i)+1)*0.5;
+      if(x>=0&&x<W&&y>=0&&y<H && tw>0.6) buf[y][x]='.';
+    }
+
+    // 行星轨道
+    for(let i=0;i<4;i++){
+      const r = 3+i*2.6;
+      for(let a=0;a<Math.PI*2;a+=0.18){
+        const x = Math.floor(cx + r*Math.cos(a)*1.0);
+        const y = Math.floor(cy + r*Math.sin(a)*0.5);
+        if(x>=0&&x<W&&y>=0&&y<H && buf[y][x]===' ') buf[y][x]='.';
+      }
+      const a = t*(1-i*0.18);
+      const x = Math.floor(cx + r*Math.cos(a));
+      const y = Math.floor(cy + r*Math.sin(a)*0.5);
+      if(x>=0&&x<W&&y>=0&&y<H) buf[y][x]='★';
+    }
+
+    // 外侧小行星带
+    for(const b of belt){
+      const ang = b.a + t*b.sp*0.3;
+      const x = Math.floor(cx + b.r*Math.cos(ang));
+      const y = Math.floor(cy + b.r*Math.sin(ang)*0.5);
+      if(x>=0&&x<W&&y>=0&&y<H) buf[y][x]=b.ch;
+    }
+
+    // 中心恒星与日冕
+    if(buf[Math.floor(cy)]) buf[Math.floor(cy)][Math.floor(cx)]='◉';
+    const halo = [[-1,0,'-'],[1,0,'-'],[0,-1,'|'],[0,1,'|']];
+    for(const [dx,dy,ch] of halo){
+      const x = Math.floor(cx)+dx, y = Math.floor(cy)+dy;
+      if(x>=0&&x<W&&y>=0&&y<H && buf[y][x]===' ') buf[y][x]=ch;
+    }
+
+    el.textContent = buf.map(r=>r.join('')).join('\n');
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ============================================================
+   3. PROTEXT ：文本乱码-解码效果
+   悬停或进入视口时，文字先打乱再逐字"解密"显现
+   ============================================================ */
+(function(){
+  const glyphs = "★☆✶✦✧◉◎○●∙•~≈≋▁▂▃▄▅▆▇█ABCDEFGHJKLMNPQRSTUVWXYZ0123456789@#%&*";
+  const RAND = ()=> glyphs[Math.floor(Math.random()*glyphs.length)];
+
+  function scramble(el){
+    if(el.dataset.scrLock==='1') return;
+    el.dataset.scrLock='1';
+    el.classList.add('scrambling');
+    const target = el.dataset.text || el.textContent;
+    const chars = [...target];
+    const len = chars.length;
+    let frame = 0;
+    const total = 16;
+    const step = ()=>{
+      frame++;
+      const out = chars.map((ch,i)=>{
+        if(ch===' '||ch==='\n') return ch;
+        const reveal = Math.floor((frame/total)*len*1.2);
+        if(i < reveal) return ch;
+        return RAND();
+      }).join('');
+      el.textContent = out;
+      if(frame < total){
+        setTimeout(step, 40);
+      } else {
+        el.textContent = target;
+        el.classList.remove('scrambling');
+        el.dataset.scrLock='0';
+      }
+    };
+    step();
+  }
+
+  document.querySelectorAll('.pt').forEach(el=>{
+    if(!el.dataset.text) el.dataset.text = el.textContent.trim();
+    el.addEventListener('mouseenter', ()=>scramble(el));
+  });
+
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        scramble(e.target);
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.3});
+  document.querySelectorAll('.intro-text .pt, .spec-row .pt, .showcase-text .pt').forEach(el=>io.observe(el));
+})();
+
+/* ============================================================
+   4. 标签筛选
+   ============================================================ */
+(function(){
+  const tags = document.querySelectorAll('.tag');
+  const cards = document.querySelectorAll('#grid .card');
+  tags.forEach(tag=>{
+    tag.addEventListener('click', ()=>{
+      tags.forEach(t=>t.classList.remove('active'));
+      tag.classList.add('active');
+      const cat = tag.dataset.cat;
+      cards.forEach(c=>{
+        if(cat==='all' || c.dataset.cat.split(' ').includes(cat)){
+          c.classList.remove('hidden');
+        } else {
+          c.classList.add('hidden');
+        }
+      });
+    });
+  });
+})();
+
+/* ============================================================
+   5. 平滑滚动
+   ============================================================ */
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    const id = a.getAttribute('href');
+    if(id.length>1){
+      const tgt = document.querySelector(id);
+      if(tgt){ e.preventDefault(); tgt.scrollIntoView({behavior:'smooth',block:'start'}); }
+    }
+  });
+});
+
+/* ============================================================
+   6. 实时时钟
+   ============================================================ */
+(function(){
+  const el = document.querySelector('.here');
+  if(!el) return;
+  function fmt(n){return n<10?'0'+n:n}
+  function tick(){
+    const d = new Date();
+    el.innerHTML = '你好<br><span class="blink">▮</span> 现在是 ' + fmt(d.getHours())+':'+fmt(d.getMinutes())+':'+fmt(d.getSeconds());
+    setTimeout(tick, 1000);
+  }
+  tick();
+})();
+</script>
+
+</body>
+</html>

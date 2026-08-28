@@ -1,0 +1,61 @@
+% =================================================================
+% SURVEY PAPER TEMPLATE
+% =================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsfonts}
+% Helvetica for \sffamily so figure labels match the Nature/Science sans-serif
+% convention, while body text stays serif (familydefault unchanged).
+\usepackage[scaled]{helvet}
+% Nature-ish figure palette (used by TikZ/forest diagrams). Wong palette in scripts.
+\usepackage{xcolor}
+\definecolor{nblue}{HTML}{0072B2}
+\definecolor{ngrey}{HTML}{4D4D4D}
+\definecolor{nfill}{HTML}{EAF2FB}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{subcaption}
+% Taxonomy/diagram figures: TikZ for drawing, forest for auto-spaced trees
+% (taxonomies MUST use forest, not hand-tuned sibling distances — see
+% references/02-survey-figures.md). graphicx
+% (above) provides \resizebox for clamping any figure to \linewidth.
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, fit, backgrounds, calc, trees}
+\usepackage{forest}
+
+% Custom commands
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\title{\textbf{{{TITLE}}}}
+% Author defaults to "AI4S Agent". The enrichment step
+% (see SKILL.md Step 3) is responsible for
+% adding a \thanks footnote that recommends human review. Surveys do NOT
+% include a simulated clause (no numerical experiments).
+\author{AI4S Agent}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/background}
+\input{sections/methods}
+\input{sections/discussion}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{bibliography}
+
+\end{document}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Social Card Image-Led Pattern</title>
+<style>
+  /* Pattern reference only. Do not copy this file verbatim into final artifacts. */
+  :root{--ink:#151515;--paper:#f8f5ec;--muted:#756f63;--accent:#e34d2f;--line:rgba(21,21,21,.16)}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#ddd;font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.card{width:1080px;height:1440px;background:var(--paper);color:var(--ink);position:relative;overflow:hidden}.image{position:absolute;inset:0 0 500px 0;background:linear-gradient(135deg,#dcc7aa,#8da099 42%,#2d3835);}.image:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.2));}.safe{position:absolute;left:72px;right:72px;top:72px;display:flex;justify-content:space-between;color:white;font-size:25px;letter-spacing:.04em}.panel{position:absolute;left:56px;right:56px;bottom:56px;background:rgba(248,245,236,.96);border-radius:42px;padding:54px 54px 46px;border:1px solid var(--line);box-shadow:0 -24px 80px rgba(0,0,0,.18)}h1{font-size:86px;line-height:1.02;letter-spacing:-.07em;margin:0;max-width:800px}.sub{margin:28px 0 0;color:var(--muted);font-size:31px;line-height:1.45;max-width:760px}.ledger{margin-top:42px;display:grid;grid-template-columns:1.2fr .8fr;gap:36px;border-top:1px solid var(--line);padding-top:26px}.caption{font-size:25px;color:var(--muted);line-height:1.4}.points{display:grid;gap:12px}.point{display:grid;grid-template-columns:24px 1fr;gap:12px;font-size:25px;line-height:1.35}.dot{margin-top:9px;width:9px;height:9px;border-radius:50%;background:var(--accent)}.badge{position:absolute;right:72px;bottom:452px;background:var(--accent);color:white;border-radius:999px;padding:14px 24px;font-size:24px;font-weight:800}
+</style>
+</head>
+<body>
+<main class="card" data-template="social-card-image-led">
+  <div class="image" aria-label="image area"></div>
+  <div class="safe"><span>IMAGE-LED COVER</span><span>@account</span></div>
+  <div class="badge">SAFE TITLE BLOCK</div>
+  <section class="panel">
+    <h1>让图片先说话，标题不要压住主体</h1>
+    <p class="sub">图像必须承担证据、情绪或产品展示功能；如果只是装饰，换成文字主导模板。</p>
+    <div class="ledger">
+      <div class="caption">Pattern: full image well + protected title area + caption ledger.</div>
+      <div class="points"><div class="point"><i class="dot"></i><span>避开脸和产品关键区</span></div><div class="point"><i class="dot"></i><span>不要用遮罩硬救</span></div><div class="point"><i class="dot"></i><span>图片和标题互相解释</span></div></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

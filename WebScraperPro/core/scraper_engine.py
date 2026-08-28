@@ -23,8 +23,7 @@ from .rate_limiter import RateLimiter, LimitStrategy, DomainLimits
 from .data_parser import DataParser, ExtractionRule, ExtractionMethod, ParseResult
 from .data_exporter import DataExporter
 from .scheduler import TaskScheduler, ScheduledTask, ScheduleType
-from .history import HistoryManager, HistoryEntry
-from .captcha_detector import detect_captcha, get_captcha_info_for_log
+from .quant.quant_engine import QuantEngine
 
 
 class ScrapingMode(Enum):
@@ -128,7 +127,8 @@ class ScraperEngine:
         self._data_parser = DataParser()
         self._data_exporter = DataExporter()
         self._scheduler = TaskScheduler()
-        self._history = HistoryManager()
+        self._quant_engine = QuantEngine()
+        self._quant_engine.set_log_callback(self._log)
 
         # Scrapers (created on demand)
         self._static_scraper: Optional[StaticScraper] = None
@@ -194,8 +194,8 @@ class ScraperEngine:
         return self._scheduler
 
     @property
-    def history(self) -> HistoryManager:
-        return self._history
+    def quant_engine(self) -> QuantEngine:
+        return self._quant_engine
 
     @property
     def projects(self) -> List[ScrapingProject]:

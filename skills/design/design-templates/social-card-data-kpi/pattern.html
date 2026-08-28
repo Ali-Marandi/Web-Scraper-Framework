@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Social Card Data KPI Pattern</title>
+<style>
+  /* Pattern reference only. Do not copy this file verbatim into final artifacts. */
+  :root { --bg:#101214; --ink:#f7f4ea; --muted:#a9a397; --line:rgba(247,244,234,.16); --accent:#c9ff4a; --panel:#1b1e21; }
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;display:grid;place-items:center;background:#ccc;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  .card{width:1080px;height:1440px;background:radial-gradient(circle at 80% 10%,rgba(201,255,74,.22),transparent 30%),var(--bg);color:var(--ink);padding:72px;position:relative;overflow:hidden}
+  .top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:28px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:26px}
+  h1{font-size:70px;line-height:1.05;letter-spacing:-.05em;margin:46px 0 18px;max-width:820px}.sub{font-size:30px;line-height:1.45;color:var(--muted);max-width:760px;margin:0}
+  .hero{margin-top:64px;border:1px solid var(--line);border-radius:34px;padding:44px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
+  .number{font-variant-numeric:tabular-nums;font-size:190px;line-height:.86;font-weight:850;letter-spacing:-.08em;color:var(--accent)}.unit{font-size:46px;color:var(--accent);margin-left:10px}.caption{margin-top:22px;font-size:34px;line-height:1.35;max-width:780px}
+  .kpis{margin-top:34px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.kpi{border:1px solid var(--line);border-radius:26px;padding:26px;background:var(--panel)}.kpi b{display:block;font-size:52px;font-variant-numeric:tabular-nums}.kpi span{display:block;margin-top:8px;color:var(--muted);font-size:23px;line-height:1.3}
+  .bars{margin-top:32px;display:grid;gap:18px}.bar{display:grid;grid-template-columns:110px 1fr 80px;gap:18px;align-items:center;font-size:24px;color:var(--muted)}.track{height:18px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}.fill{height:100%;border-radius:99px;background:var(--accent)}
+  .note{position:absolute;left:72px;right:72px;bottom:58px;color:var(--muted);font-size:24px;line-height:1.4;border-top:1px solid var(--line);padding-top:24px;display:flex;justify-content:space-between;gap:40px}.note strong{color:var(--ink)}
+</style>
+</head>
+<body>
+<main class="card" data-template="social-card-data-kpi">
+  <div class="top"><span>KPI CARD</span><span>Sample data</span></div>
+  <h1>一个数字先说结论，再展示支撑</h1>
+  <p class="sub">数据卡不是把数字堆满，而是让用户 3 秒内知道哪个变化最重要。</p>
+  <section class="hero">
+    <div><span class="number">32</span><span class="unit">%</span></div>
+    <div class="caption">示例：重复咨询自动化后，人工回复量下降。</div>
+    <div class="kpis">
+      <div class="kpi"><b>1.8x</b><span>响应速度提升</span></div>
+      <div class="kpi"><b>7d</b><span>观察窗口</span></div>
+      <div class="kpi"><b>500+</b><span>日均咨询量</span></div>
+    </div>
+    <div class="bars">
+      <div class="bar"><span>Before</span><div class="track"><div class="fill" style="width:86%"></div></div><b>86</b></div>
+      <div class="bar"><span>After</span><div class="track"><div class="fill" style="width:54%"></div></div><b>54</b></div>
+    </div>
+  </section>
+  <footer class="note"><span><strong>Pattern:</strong> hero number + support metrics + labeled assumptions.</span><span>Source: demo / placeholder</span></footer>
+</main>
+</body>
+</html>

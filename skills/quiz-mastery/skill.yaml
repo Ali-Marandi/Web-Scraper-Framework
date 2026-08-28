@@ -1,0 +1,21 @@
+name: quiz_mastery
+version: 0.2.0
+entrypoints:
+  run_quiz: scripts/run_quiz.py
+  submit_answers: scripts/submit_answers.py
+  generate_from_material: scripts/generate_from_material.py
+  import_quiz: scripts/import_quiz.py
+
+storage:
+  type: local_json
+  base_dir: ./data
+
+features:
+  - knowledge_extraction
+  - quiz_generation
+  - question_import
+  - answer_evaluation
+  - mastery_tracking
+  - weak_point_tracking
+  - ebbinghaus_review
+  - review_planning

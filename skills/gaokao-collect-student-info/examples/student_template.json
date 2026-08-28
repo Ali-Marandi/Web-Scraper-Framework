@@ -1,0 +1,23 @@
+{
+  "province": "省份",
+  "classify": "综合 | 物理 | 历史 | 文科 | 理科",
+  "subjects": "物理,化学,生物",
+  "score": 0,
+  "batch": "本科批",
+  "rank": null,
+  "gradeType": null,
+  "interests": "考生原话，勿概括改写",
+  "family_situation": "考生原话，勿概括改写",
+  "career_direction": "考生原话，勿概括改写",
+  "subject_scores": {
+    "语文": 0,
+    "数学": 0,
+    "英语": 0
+  },
+  "preferred_cities": ["北京", "上海"],
+  "preferred_provinces": ["北京", "上海"],
+  "preferred_universities": ["考生明确提到的校名"],
+  "preferred_tags": ["仅录考生亲口说过的层次，如985"],
+  "preferred_major_classes": ["仅录考生明确提到的专业方向，勿从兴趣推断"],
+  "notes": "考生原话：禁忌、特殊诉求等不适合归入上述字段的内容"
+}

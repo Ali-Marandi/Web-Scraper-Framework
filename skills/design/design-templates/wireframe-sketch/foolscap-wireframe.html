@@ -1,0 +1,1238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>札记日报 — 一日一纸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;700&family=Kalam:wght@400;700&family=Long+Cang&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens ============ */
+:root{
+  --paper:        #FFFFFF;
+  --paper-2:      #F0F0F0;
+  --paper-hi:     #FFFFFF;
+  --paper-card:   #F0F0F0;
+  --ink:          #000000;
+  --ink-soft:     #6E6E6E;
+  --ink-mute:     #C2C2C2;
+  --ink-faint:    rgba(0,0,0,.06);
+  --line:         rgba(0,0,0,.28);
+  --line-soft:    rgba(0,0,0,.10);
+  --grid:         rgba(0,0,0,.02);
+  --accent:       #1A6AFF;   /* Lankri blue (color_18) */
+  --accent-2:     #DCE8FF;   /* pale blue (color_16) */
+  --accent-3:     #094BCC;   /* deep blue (color_19) */
+  --ease:         cubic-bezier(.22,.7,.2,1);
+
+  --hand:    'Ma Shan Zheng', 'Long Cang', 'Caveat', 'Kalam', cursive;
+  --hand-b:  'Long Cang', 'Ma Shan Zheng', 'Kalam', 'Caveat', cursive;
+  --serif:   'Long Cang', 'Ma Shan Zheng', 'Kalam', 'Caveat', cursive;
+  --mono:    'Long Cang', 'Ma Shan Zheng', 'Kalam', 'Caveat', cursive;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family: var(--serif);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+
+/* flat warm off-white — Lankri style, no gradient, no grid */
+body::before{
+  content:""; position: fixed; inset: 0; pointer-events:none; z-index:0;
+  background: var(--paper);
+}
+body::after{ display:none; }
+
+.wrap{position:relative; z-index:1; max-width:1320px; margin:0 auto; padding: 22px 36px 100px}
+
+/* ============ sketch primitives ============ */
+.sketch-rect{
+  position:absolute; inset:0; width:100%; height:100%;
+  pointer-events:none;
+  color: var(--ink);
+}
+.sketch-rect rect, .sketch-rect path, .sketch-rect line{
+  fill: none; stroke: currentColor; stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+.hand-label{
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0;
+  text-transform: uppercase; color: var(--ink-mute); font-weight:500;
+}
+
+/* ============ nav ============ */
+.nav{
+  display:grid; grid-template-columns: auto 1fr auto auto; gap: 24px;
+  align-items:center; padding: 8px 8px 18px; position: relative;
+}
+.nav::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:8px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'><path d='M0 4 C 20 1, 40 7, 60 4 S 100 1, 120 4 S 160 7, 200 4' fill='none' stroke='%231A1816' stroke-width='1.2'/></svg>");
+  background-size: 200px 8px; background-repeat: repeat-x;
+}
+.brand{
+  display:flex; align-items:baseline; gap:10px;
+  font-family: var(--hand); font-weight:700; font-size:30px; line-height:1;
+}
+.brand .mark{position:relative; display:inline-block; width:30px; height:30px}
+.brand .mark svg{display:block; width:100%; height:100%; overflow:visible}
+.brand .tag-tiny{
+  font-family: var(--mono); font-size: 9.5px; color: var(--ink-mute);
+  letter-spacing: 0; text-transform:uppercase; font-weight:500;
+  align-self:end; padding-bottom:4px;
+}
+.nav-links{display:flex; gap:0; justify-self:start}
+.nav-links a{
+  font-family: var(--hand-b); font-weight:400; font-size:15px;
+  color: var(--ink-soft); text-decoration:none;
+  padding:8px 12px; position: relative;
+}
+.nav-links a:hover{color: var(--ink)}
+.nav-links a[aria-current]{color: var(--ink)}
+.nav-links a[aria-current]::after{
+  content:""; position:absolute; left:10px; right:10px; bottom:2px; height:6px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'><path d='M2 4 C 20 1, 40 6, 60 3 S 90 5, 98 3' fill='none' stroke='%231A1816' stroke-width='1.4'/></svg>");
+  background-size: 100% 6px; background-repeat:no-repeat;
+}
+
+/* search */
+.nav-search{
+  position: relative; display: inline-flex; align-items:center; gap:8px;
+  padding: 8px 12px 8px 36px; min-width: 230px;
+}
+.nav-search svg.ico{
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-soft);
+}
+.nav-search input{
+  appearance:none; border:0; background: transparent; outline: none;
+  font-family: var(--hand-b); font-size: 14px; color: var(--ink);
+  width: 100%;
+}
+.nav-search input::placeholder{color: var(--ink-mute); font-style: italic}
+
+.nav-cta{
+  display:inline-flex; align-items:center; gap: 8px;
+  font-family: var(--hand-b); font-weight:400; font-size:14px;
+  color: var(--ink); text-decoration:none;
+  padding: 8px 14px; position: relative; cursor: pointer;
+  background: none; border: 0;
+}
+.nav-cta:hover{transform: translate(-1px,-1px)}
+.nav-cta .count{
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  padding: 2px 5px; border: 1px solid var(--accent);
+}
+
+/* ============ masthead row ============ */
+.masthead{
+  display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 28px;
+  align-items: end;
+  padding: 40px 0 24px;
+  position: relative;
+}
+.masthead::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:6px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><path d='M2 3 C 30 1, 70 5, 110 3 S 200 5, 198 3' fill='none' stroke='%231A1816' stroke-width='1'/></svg>");
+  background-size: 200px 6px; background-repeat: repeat-x; opacity:.6;
+}
+.masthead h1{
+  margin:0; font-family: var(--hand); font-weight:700;
+  font-size: clamp(48px, 6vw, 86px);
+  line-height: .95; letter-spacing: 0;
+  display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+}
+.masthead h1 .day{color: var(--ink)}
+.masthead h1 .num{color: var(--accent); font-style: italic; font-weight: 600}
+.masthead .stamp-col{
+  display:flex; flex-direction:column; gap:6px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+.masthead .stamp-col b{color: var(--ink); font-weight:500}
+.masthead .stamp-col .red{color: var(--accent)}
+.masthead .weather{
+  display:flex; align-items:center; gap:14px; justify-self:end;
+  font-family: var(--hand); font-size: 26px; color: var(--ink);
+}
+.masthead .weather .ico{
+  width: 48px; height: 48px; color: var(--ink);
+}
+
+/* ============ hero feature ============ */
+.hero{
+  display:grid; grid-template-columns: 1.05fr .95fr; gap: 56px;
+  padding: 48px 0 40px;
+  position: relative;
+}
+.hero .meta{
+  display:flex; gap: 14px; align-items:center; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.hero .meta .section-tag{
+  color: var(--accent); border: 1px solid var(--accent); padding: 3px 7px;
+  transform: rotate(-1.5deg);
+}
+.hero .meta .em-dash{display:inline-block; width:24px; height:1px; background: var(--ink-soft)}
+
+.hero-title{
+  margin: 22px 0 18px;
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(38px, 4.2vw, 60px);
+  line-height: 1.02; letter-spacing: 0;
+}
+.hero-title em{
+  font-style: italic; color: var(--ink-soft);
+  position: relative;
+}
+.hero-title .under{
+  position: relative; display: inline-block;
+}
+.hero-title .under::after{
+  content:""; position:absolute; left:-2px; right:-2px; bottom:-6px; height:8px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'><path d='M2 5 C 30 1, 70 7, 110 4 S 180 6, 198 4' fill='none' stroke='%231A1816' stroke-width='1.6'/></svg>");
+  background-size: 100% 8px; background-repeat:no-repeat;
+}
+.hero-dek{
+  margin: 0 0 26px; max-width: 52ch;
+  font-family: var(--serif); font-size: 17px; line-height: 1.75;
+  color: var(--ink-soft); font-style: italic;
+}
+.byline{
+  display:flex; align-items:center; gap: 18px; flex-wrap: wrap;
+  font-family: var(--hand-b); font-size: 14px; color: var(--ink-soft);
+}
+.byline b{color: var(--ink); font-family: var(--hand); font-weight: 700; font-size: 18px}
+.byline .dot{width: 4px; height: 4px; border-radius: 50%; background: var(--ink-mute)}
+.byline .red{color: var(--accent)}
+
+.hero-actions{
+  margin-top: 26px;
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.btn-sketch{
+  position: relative; display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 18px; cursor: pointer; background: transparent;
+  border: 0; font-family: var(--hand); font-weight:700; font-size: 19px;
+  color: var(--ink); text-decoration: none;
+  transition: transform .2s var(--ease);
+}
+.btn-sketch:hover{transform: translate(-2px,-2px)}
+.btn-sketch.is-primary{background: var(--ink); color: var(--paper-hi)}
+.btn-sketch.is-primary .sketch-rect{color: var(--paper-hi)}
+
+/* hero illustration placeholder */
+.hero-illus{
+  position: relative;
+  aspect-ratio: 4 / 3.2;
+  background: var(--paper-hi);
+}
+.hero-illus svg.art{
+  position:absolute; inset: 0; width: 100%; height: 100%;
+  color: var(--ink);
+}
+.hero-illus .corner{
+  position:absolute; font-family: var(--mono); font-size: 9.5px;
+  color: var(--ink-mute); letter-spacing: 0;
+}
+.hero-illus .c-tl{top:8px; left:10px}
+.hero-illus .c-tr{top:8px; right:10px}
+.hero-illus .c-bl{bottom:8px; left:10px}
+.hero-illus .c-br{bottom:8px; right:10px}
+.hero-illus .caption{
+  position: absolute; left: 10px; bottom: 28px;
+  font-family: var(--hand-b); font-size: 13px; color: var(--ink-mute);
+  font-style: italic;
+  max-width: 60%;
+}
+
+/* ============ section heads ============ */
+.section-head{
+  display:flex; align-items: end; justify-content: space-between; gap: 28px;
+  margin: 88px 0 28px;
+  padding-bottom: 14px;
+  position: relative;
+}
+.section-head::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:6px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><path d='M0 3 C 20 1, 40 5, 60 3 S 100 1, 120 3 S 160 5, 200 3' fill='none' stroke='%231A1816' stroke-width='1' opacity='.7'/></svg>");
+  background-size: 200px 6px; background-repeat: repeat-x;
+}
+.section-head h2{
+  margin: 0; font-family: var(--hand); font-weight:700;
+  font-size: clamp(30px, 3.6vw, 48px);
+  letter-spacing: 0; line-height: 1;
+}
+.section-head h2 .scratch{
+  color: var(--ink-mute); text-decoration: line-through;
+  text-decoration-color: var(--accent); text-decoration-thickness: 2px;
+  font-size: .65em; margin-right: 8px;
+}
+.section-head .right{
+  display:flex; align-items:center; gap: 14px;
+}
+.chip-row{display:flex; gap: 8px; flex-wrap: wrap}
+.chip{
+  position: relative;
+  font-family: var(--hand-b); font-size: 13px; color: var(--ink-soft);
+  padding: 6px 12px; cursor: pointer; background: transparent;
+  border: 0;
+}
+.chip[aria-pressed="true"]{background: var(--ink); color: var(--paper-hi)}
+.chip[aria-pressed="true"] .sketch-rect{color: var(--ink)}
+.chip:hover{transform: translate(-1px,-1px)}
+
+/* ============ top stories ============ */
+.top-grid{
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px;
+}
+.story{
+  position: relative;
+  display:flex; flex-direction:column; gap: 14px;
+  padding: 18px;
+  background: var(--paper-card);
+  cursor: pointer;
+  transition: transform .25s var(--ease);
+}
+.story:hover{transform: translate(-2px,-3px)}
+.story .thumb{
+  position: relative;
+  aspect-ratio: 4 / 2.6;
+  background: var(--paper-hi);
+}
+.story .thumb svg.art{
+  position:absolute; inset:0; width:100%; height:100%; color: var(--ink);
+}
+.story .thumb .corner{
+  position:absolute; top:6px; right:8px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0;
+  color: var(--ink-mute);
+}
+.story .meta{
+  display:flex; gap: 12px; align-items:center; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+.story .meta .cat{color: var(--accent); border: 1px solid var(--accent); padding: 2px 6px}
+.story h3{
+  margin: 0; font-family: var(--serif); font-weight: 400;
+  font-size: 23px; line-height: 1.2; letter-spacing: 0;
+}
+.story h3 em{font-style: italic; color: var(--ink-soft)}
+.story .dek{
+  margin: 0; font-family: var(--hand-b); font-size: 14px; line-height: 1.5;
+  color: var(--ink-soft);
+}
+.story .foot{
+  margin-top: auto;
+  display:flex; align-items:center; justify-content:space-between; gap: 10px;
+  padding-top: 12px;
+  position: relative;
+  font-family: var(--hand-b); font-size: 13px; color: var(--ink-mute);
+}
+.story .foot::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:1px;
+  background-image: linear-gradient(90deg, var(--line-soft) 50%, transparent 0);
+  background-size: 6px 1px;
+}
+.save-btn{
+  font-family: var(--hand-b); font-size: 13px; color: var(--ink-soft);
+  background: none; border: 0; cursor: pointer; padding: 4px 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+  position: relative;
+}
+.save-btn:hover{color: var(--ink)}
+.save-btn.is-saved{color: var(--accent)}
+.save-btn svg{width: 14px; height: 14px}
+
+/* ============ brief list ============ */
+.brief{
+  background: var(--paper-card);
+  position: relative;
+}
+.brief-list{
+  list-style: none; padding: 0; margin: 0;
+}
+.brief-list li{
+  display: grid; grid-template-columns: 60px 110px 1fr auto auto;
+  align-items: center; gap: 18px;
+  padding: 16px 24px;
+  position: relative;
+  transition: background .2s var(--ease);
+}
+.brief-list li:hover{background: rgba(26,24,22,.04)}
+.brief-list li::after{
+  content:""; position:absolute; left:24px; right:24px; bottom:0; height:1px;
+  background-image: linear-gradient(90deg, var(--line-soft) 50%, transparent 0);
+  background-size: 6px 1px;
+}
+.brief-list li:last-child::after{display:none}
+.brief-list li[hidden]{display:none}
+.brief-list .no{
+  font-family: var(--hand); font-weight:700; font-size: 28px;
+  color: var(--ink-mute); line-height: 1;
+}
+.brief-list .cat{
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0;
+  text-transform: uppercase; color: var(--ink-soft);
+  border: 1px solid var(--line); padding: 4px 7px;
+  text-align:center;
+}
+.brief-list .cat.red{color: var(--accent); border-color: var(--accent)}
+.brief-list .body{
+  font-family: var(--serif); font-size: 16.5px; line-height: 1.7;
+  color: var(--ink);
+}
+.brief-list .body em{font-style: italic; color: var(--ink-soft)}
+.brief-list .time{
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0;
+  color: var(--ink-mute); text-transform: uppercase;
+}
+.brief-list .src{
+  font-family: var(--hand-b); font-size: 12.5px; color: var(--ink-mute);
+}
+.brief-empty{
+  padding: 40px 24px;
+  font-family: var(--hand); font-size: 22px; color: var(--ink-mute);
+  text-align: center; display: none;
+}
+.brief-empty.is-on{display: block}
+
+/* ============ long reads ============ */
+.long-grid{
+  display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px;
+}
+.long{
+  position: relative;
+  display: grid; grid-template-columns: .9fr 1.1fr; gap: 20px;
+  padding: 22px;
+  background: var(--paper-card);
+  cursor: pointer;
+  transition: transform .25s var(--ease);
+}
+.long:hover{transform: translate(-2px,-3px)}
+.long .illus{
+  position: relative;
+  background: var(--paper-hi);
+  aspect-ratio: 1 / 1.05;
+}
+.long .illus svg.art{position:absolute; inset:0; width:100%; height:100%; color: var(--ink)}
+.long .body{display: flex; flex-direction: column; gap: 14px}
+.long .meta{
+  display:flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0;
+  text-transform: uppercase; color: var(--ink-mute);
+}
+.long .meta .cat{color: var(--accent); border:1px solid var(--accent); padding: 2px 6px}
+.long h3{
+  margin: 0;
+  font-family: var(--serif); font-weight: 400;
+  font-size: 28px; line-height: 1.15; letter-spacing: 0;
+}
+.long h3 em{font-style: italic; color: var(--ink-soft)}
+.long .dek{
+  margin: 0; font-family: var(--serif); font-size: 15.5px; line-height: 1.7;
+  color: var(--ink-soft); font-style: italic;
+}
+.long .foot{
+  margin-top: auto;
+  display:flex; align-items:center; justify-content:space-between; gap: 10px;
+  font-family: var(--hand-b); font-size: 13px; color: var(--ink-mute);
+}
+
+/* ============ most read sidebar (inside long-grid) ============ */
+.most{
+  position: relative; padding: 22px;
+  background: var(--paper-card);
+  display: flex; flex-direction: column;
+}
+.most h4{
+  margin: 0 0 16px; font-family: var(--hand); font-weight: 700; font-size: 24px;
+  display:flex; align-items:baseline; gap: 10px;
+}
+.most h4 small{font-family: var(--mono); font-size: 10px; letter-spacing: 0; color: var(--ink-mute); text-transform: uppercase}
+.most ol{
+  list-style: none; counter-reset: m; padding: 0; margin: 0;
+  display: flex; flex-direction: column;
+}
+.most ol li{
+  counter-increment: m;
+  display: grid; grid-template-columns: 38px 1fr auto; align-items: start; gap: 14px;
+  padding: 14px 2px;
+  position: relative;
+  cursor: pointer;
+}
+.most ol li::before{
+  content: counter(m, decimal-leading-zero);
+  font-family: var(--hand); font-weight: 700; font-size: 28px; color: var(--ink-mute);
+  line-height: 1;
+}
+.most ol li::after{
+  content:""; position:absolute; left:0; right:0; bottom:0; height:1px;
+  background-image: linear-gradient(90deg, var(--line-soft) 50%, transparent 0);
+  background-size: 6px 1px;
+}
+.most ol li:last-child::after{display:none}
+.most ol li .t{
+  font-family: var(--serif); font-size: 16px; line-height: 1.65;
+  color: var(--ink);
+}
+.most ol li .t em{font-style: italic; color: var(--ink-soft)}
+.most ol li .mini{
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0;
+  color: var(--ink-mute); text-transform: uppercase; align-self: end;
+  white-space: nowrap;
+}
+
+/* ============ newsletter ============ */
+.signup{
+  margin-top: 96px;
+  padding: 48px 56px;
+  display: grid; grid-template-columns: 1.2fr .8fr; gap: 36px; align-items: center;
+  position: relative;
+  background: var(--paper-card);
+}
+.signup h3{
+  margin: 0 0 10px;
+  font-family: var(--hand); font-weight: 700;
+  font-size: clamp(30px, 3.6vw, 46px); line-height: 1;
+}
+.signup h3 .accent{
+  color: var(--accent); position: relative;
+}
+.signup h3 .accent::after{
+  content:""; position:absolute; left:0; right:0; bottom:-4px; height:8px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 8' preserveAspectRatio='none'><path d='M2 6 C 30 1, 70 9, 110 4 S 180 8, 198 4' fill='none' stroke='%231A6AFF' stroke-width='2'/></svg>");
+  background-size: 100% 8px; background-repeat:no-repeat;
+}
+.signup p{
+  margin: 0; max-width: 48ch;
+  font-family: var(--serif); font-style: italic;
+  font-size: 16px; line-height: 1.7; color: var(--ink-soft);
+}
+.signup form{
+  display: grid; grid-template-columns: 1fr; gap: 12px;
+}
+.field{
+  position: relative; padding: 14px 16px;
+}
+.field input{
+  appearance:none; border:0; background: transparent; outline: none;
+  font-family: var(--hand-b); font-size: 16px; color: var(--ink);
+  width: 100%;
+}
+.field input::placeholder{color: var(--ink-mute); font-style: italic}
+
+/* footer */
+footer{
+  margin-top: 64px; padding: 22px 0 0;
+  position: relative;
+  display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 28px;
+  color: var(--ink-mute); font-size: 13.5px;
+  font-family: var(--hand-b);
+}
+footer::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:6px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 6' preserveAspectRatio='none'><path d='M0 3 C 20 1, 40 5, 60 3 S 100 1, 120 3 S 160 5, 200 3' fill='none' stroke='%231A1816' stroke-width='1' opacity='.5'/></svg>");
+  background-size: 200px 6px; background-repeat: repeat-x;
+}
+footer h5{
+  margin: 0 0 12px; font-family: var(--hand); font-weight: 700;
+  font-size: 18px; color: var(--ink);
+}
+footer ul{list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px}
+footer a{color: inherit; text-decoration: none}
+footer a:hover{color: var(--ink)}
+footer .colophon{
+  font-family: var(--hand); font-size: 22px; color: var(--ink); margin-bottom: 4px;
+}
+footer .stamp{
+  font-family: var(--mono); font-size: 9.5px; color: var(--accent);
+  border: 1px solid var(--accent); padding: 3px 6px; transform: rotate(-2deg);
+  text-transform: uppercase; letter-spacing: 0; display:inline-block; margin-top: 10px;
+}
+
+/* toast */
+.toast{
+  position: fixed; left: 50%; bottom: 36px;
+  transform: translateX(-50%) translateY(20px); opacity: 0;
+  background: var(--paper-hi); color: var(--ink);
+  padding: 14px 22px;
+  font-family: var(--hand); font-weight:600; font-size: 18px;
+  display: inline-flex; align-items: center; gap: 12px;
+  z-index: 50; pointer-events:none;
+  transition: opacity .25s var(--ease), transform .35s var(--ease);
+}
+.toast.is-on{opacity: 1; transform: translateX(-50%) translateY(0)}
+.toast small{
+  font-family: var(--mono); font-size: 10px; color: var(--ink-mute);
+  letter-spacing: 0; text-transform: uppercase; font-weight:500;
+}
+
+/* responsive */
+@media (max-width: 1080px){
+  .nav{grid-template-columns: auto 1fr auto; row-gap: 12px}
+  .nav-links{display:none}
+  .masthead{grid-template-columns: 1fr; gap: 14px}
+  .hero{grid-template-columns: 1fr; gap: 32px}
+  .top-grid{grid-template-columns: 1fr; gap: 24px}
+  .brief-list li{grid-template-columns: 40px 90px 1fr; gap: 12px}
+  .brief-list .time, .brief-list .src{grid-column: 3 / 4; font-size: 11px}
+  .long-grid{grid-template-columns: 1fr}
+  .signup{grid-template-columns: 1fr; padding: 32px 24px}
+  footer{grid-template-columns: 1fr 1fr; gap: 22px}
+}
+@media (max-width: 640px){
+  .wrap{padding: 18px 18px 60px}
+  .nav-search{min-width: 0}
+  .long{grid-template-columns: 1fr}
+  footer{grid-template-columns: 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- shared filters + symbols -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="wobble" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="3" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="2.6"/>
+    </filter>
+    <filter id="wobble-s" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="5" result="t"/>
+      <feDisplacementMap in="SourceGraphic" in2="t" scale="1.2"/>
+    </filter>
+    <symbol id="i-search" viewBox="0 0 16 16">
+      <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+      <path d="M10.5 10.5 L 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" filter="url(#wobble-s)"/>
+    </symbol>
+    <symbol id="i-bookmark" viewBox="0 0 16 16">
+      <path d="M3 2 V 14 L 8 11 L 13 14 V 2 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" filter="url(#wobble-s)"/>
+    </symbol>
+    <symbol id="i-bookmark-fill" viewBox="0 0 16 16">
+      <path d="M3 2 V 14 L 8 11 L 13 14 V 2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" filter="url(#wobble-s)"/>
+    </symbol>
+    <symbol id="i-arrow" viewBox="0 0 22 14">
+      <path d="M1 7 H 19 M 14 2 L 20 7 L 14 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#wobble-s)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <!-- ============ NAV ============ -->
+  <header class="nav">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 30 30">
+          <rect x="3" y="3" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" filter="url(#wobble)"/>
+          <path d="M9 14 L 15 8 L 21 14 L 15 20 Z" fill="none" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+        </svg>
+      </span>
+      <span>札记</span>
+      <span class="tag-tiny">第 1432 期 · 日刊</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#" aria-current="page">今日</a>
+      <a href="#">国际</a>
+      <a href="#">科技</a>
+      <a href="#">文化</a>
+      <a href="#">深读</a>
+      <a href="#">往期</a>
+    </nav>
+    <label class="nav-search">
+      <svg width="16" height="16" class="ico"><use href="#i-search"/></svg>
+      <input id="search" type="search" placeholder="搜今天的…" autocomplete="off" />
+      <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+    </label>
+    <button class="nav-cta" data-cta="signin">
+      <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+      <span>收藏</span>
+      <span class="count" id="saved-count">0</span>
+    </button>
+  </header>
+
+  <!-- ============ MASTHEAD ============ -->
+  <section class="masthead">
+    <h1>
+      <span class="day">周四</span>
+      <span class="day">五月廿八</span>
+      <span class="num">廿六</span>
+    </h1>
+    <div class="stamp-col">
+      <span>第 <b>1,432</b> 期</span>
+      <span>版次·<b>晨刊</b></span>
+      <span class="red">草稿·印于札记纸</span>
+    </div>
+    <div class="weather">
+      <span class="ico">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path d="M14 28 a 8 7 0 0 1 6 -13 a 9 9 0 0 1 16 4 a 6 6 0 0 1 -2 12 H 14 a 6 6 0 0 1 0 -3 Z"
+            stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" filter="url(#wobble)"/>
+          <path d="M18 38 v 4 M 24 38 v 6 M 30 38 v 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" filter="url(#wobble-s)"/>
+        </svg>
+      </span>
+      <span>伦敦 · 14°<br><small style="font-family:var(--mono);font-size:10px;letter-spacing: 0;color:var(--ink-mute)">小雨，午前转晴</small></span>
+    </div>
+  </section>
+
+  <!-- ============ HERO FEATURE ============ -->
+  <article class="hero">
+    <div>
+      <div class="meta">
+        <span class="section-tag">国际·调查</span>
+        <span class="em-dash"></span>
+        <span>阅读 12 分钟</span>
+        <span class="em-dash"></span>
+        <span>06:24 发稿</span>
+      </div>
+      <h2 class="hero-title">
+        北海那些<em>安静的港口</em>，<span class="under">开始装船的，是什么。</span>
+      </h2>
+      <p class="hero-dek">
+        四个月走访埃斯比约、洛斯托夫特和海德松德三座小港——它们正悄悄改变欧洲的能源版图。我们跟着货轮、起重机，跟着不太愿意开口的船长。
+      </p>
+      <p class="byline">
+        文 / <b>诺拉·奥德里奇</b>
+        <span class="dot"></span>
+        摄影 / <b>费利克斯·霍尔姆</b>
+        <span class="dot"></span>
+        <span class="red">订阅会员专享</span>
+      </p>
+      <div class="hero-actions">
+        <button class="btn-sketch is-primary" data-cta="read-hero">
+          <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+          读全文
+          <svg width="18" height="11"><use href="#i-arrow"/></svg>
+        </button>
+        <button class="btn-sketch" data-cta="listen-hero">
+          <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+          听 · 14 分钟
+        </button>
+      </div>
+    </div>
+
+    <div class="hero-illus">
+      <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+      <svg class="art" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" fill="none">
+        <!-- horizon -->
+        <path d="M20 200 Q 200 195 380 200" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+        <!-- ship hull -->
+        <path d="M70 200 L 90 220 L 300 220 L 320 200 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" filter="url(#wobble)"/>
+        <!-- ship cabin -->
+        <path d="M150 200 V 170 H 260 V 200" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" filter="url(#wobble)"/>
+        <rect x="170" y="180" width="14" height="14" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+        <rect x="194" y="180" width="14" height="14" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+        <rect x="218" y="180" width="14" height="14" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+        <rect x="242" y="180" width="14" height="14" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+        <!-- funnel -->
+        <path d="M210 170 V 140 H 226 V 170" stroke="currentColor" stroke-width="1.5" filter="url(#wobble-s)"/>
+        <!-- mast -->
+        <path d="M120 200 V 100 M 280 200 V 110" stroke="currentColor" stroke-width="1.3" filter="url(#wobble-s)"/>
+        <!-- waves -->
+        <path d="M30 240 q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" filter="url(#wobble-s)"/>
+        <path d="M30 260 q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" filter="url(#wobble-s)" opacity=".7"/>
+        <path d="M30 280 q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" filter="url(#wobble-s)" opacity=".5"/>
+        <!-- gull -->
+        <path d="M70 90 q 6 -8 12 0 q 6 -8 12 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" filter="url(#wobble-s)"/>
+        <path d="M320 110 q 6 -8 12 0 q 6 -8 12 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" filter="url(#wobble-s)"/>
+        <!-- annotation arrow -->
+        <path d="M60 130 q 30 -10 60 -5" stroke="#1A6AFF" stroke-width="1.2" stroke-linecap="round" fill="none" filter="url(#wobble-s)"/>
+        <path d="M115 122 L 122 125 L 116 132" stroke="#1A6AFF" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#wobble-s)"/>
+        <text x="20" y="120" font-family="Caveat" font-size="16" fill="#1A6AFF">26 年 Q1 新增起重机</text>
+      </svg>
+      <span class="corner c-tl">图 01</span>
+      <span class="corner c-tr">插图 / F. Holm</span>
+      <span class="corner c-br">北海 / 400×320</span>
+      <span class="caption">海德松德低潮时分的近海货轮——驾驶舱速写。</span>
+    </div>
+  </article>
+
+  <!-- ============ TOP STORIES ============ -->
+  <section>
+    <div class="section-head">
+      <h2><span class="scratch">新闻.</span>今日要闻</h2>
+      <div class="right">
+        <span class="hand-label">3 篇 · 09:12 更新</span>
+      </div>
+    </div>
+    <div class="top-grid" data-searchable>
+
+      <article class="story" data-title="Apple ships its first truly repairable laptop">
+        <div class="thumb">
+          <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+          <svg class="art" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid meet" fill="none">
+            <path d="M40 28 H 160 V 80 H 40 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" filter="url(#wobble)"/>
+            <path d="M30 80 H 170 L 162 92 H 38 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" filter="url(#wobble)"/>
+            <path d="M86 92 H 114" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" filter="url(#wobble-s)"/>
+            <path d="M52 40 H 148 M 52 48 H 130 M 52 56 H 140 M 52 64 H 110" stroke="currentColor" stroke-width="1.1" filter="url(#wobble-s)" opacity=".75"/>
+            <path d="M150 12 q 14 6 8 18 q -8 -8 -16 -2" stroke="#1A6AFF" stroke-width="1.2" stroke-linecap="round" fill="none" filter="url(#wobble-s)"/>
+            <text x="142" y="16" font-family="Caveat" font-size="14" fill="#1A6AFF">可修！</text>
+          </svg>
+          <span class="corner">图 02</span>
+        </div>
+        <div class="meta">
+          <span class="cat">科技</span>
+          <span>6 分钟</span>
+          <span>· 5月28日</span>
+        </div>
+        <h3>Apple 第一台<em>真正可维修</em>的笔记本。</h3>
+        <p class="dek">意外的规格：MacBook Workshop 内存、固态、电池都可自换。修复权组织谨慎欢迎。</p>
+        <div class="foot">
+          <span>文 / R. Vance</span>
+          <button class="save-btn" data-save="apple"><svg><use href="#i-bookmark"/></svg> 收藏</button>
+        </div>
+      </article>
+
+      <article class="story" data-title="On reading aloud at dinner a small revival">
+        <div class="thumb">
+          <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+          <svg class="art" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid meet" fill="none">
+            <!-- table -->
+            <path d="M20 90 H 180 M 40 90 V 116 M 160 90 V 116" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" filter="url(#wobble-s)"/>
+            <!-- open book -->
+            <path d="M70 86 L 100 78 L 100 86 L 70 94 Z M 100 78 L 130 86 L 130 94 L 100 86 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" filter="url(#wobble)"/>
+            <path d="M78 84 H 96 M 78 88 H 96 M 104 84 H 122 M 104 88 H 122" stroke="currentColor" stroke-width="0.8" filter="url(#wobble-s)" opacity=".7"/>
+            <!-- candle -->
+            <path d="M48 90 V 68 M 44 68 H 52" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" filter="url(#wobble-s)"/>
+            <path d="M48 68 q -3 -5 0 -10 q 3 5 0 10" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+            <!-- plate -->
+            <ellipse cx="155" cy="92" rx="14" ry="3" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+          </svg>
+          <span class="corner">图 03</span>
+        </div>
+        <div class="meta">
+          <span class="cat">文化</span>
+          <span>8 分钟</span>
+          <span>· 5月28日</span>
+        </div>
+        <h3>晚餐时朗读 — <em>小小的复兴</em>。</h3>
+        <p class="dek">布鲁克林和柏林的少数家庭，重新开始在餐桌上朗读。我们试了一周，有些笔记。</p>
+        <div class="foot">
+          <span>文 / E. Marlow</span>
+          <button class="save-btn" data-save="reading"><svg><use href="#i-bookmark"/></svg> 收藏</button>
+        </div>
+      </article>
+
+      <article class="story" data-title="What Indias monsoon promised, in numbers">
+        <div class="thumb">
+          <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+          <svg class="art" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid meet" fill="none">
+            <!-- bar chart sketch -->
+            <path d="M30 100 H 180 M 30 100 V 30" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" filter="url(#wobble-s)"/>
+            <rect x="46" y="72" width="14" height="28" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+            <rect x="70" y="56" width="14" height="44" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+            <rect x="94" y="40" width="14" height="60" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+            <rect x="118" y="62" width="14" height="38" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+            <rect x="142" y="78" width="14" height="22" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+            <!-- rain -->
+            <path d="M50 14 q 12 -8 22 0 q 12 -8 22 0 q 12 -8 22 0 q 12 -8 22 0" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+            <path d="M58 22 V 30 M 78 22 V 32 M 98 22 V 30 M 118 22 V 32 M 138 22 V 30" stroke="currentColor" stroke-width="1" filter="url(#wobble-s)" opacity=".7"/>
+            <path d="M105 30 L 105 36" stroke="#1A6AFF" stroke-width="1.6" filter="url(#wobble-s)"/>
+          </svg>
+          <span class="corner">图 04</span>
+        </div>
+        <div class="meta">
+          <span class="cat">气候</span>
+          <span>5 分钟</span>
+          <span>· 5月28日</span>
+        </div>
+        <h3>印度季风的预报 — <em>用数字说话</em>。</h3>
+        <p class="dek">印度气象局早期预报高于常年 4%。三个邦悄悄准备好迎接湿润的六月。五张图，一个问题。</p>
+        <div class="foot">
+          <span>文 / P. Iyer</span>
+          <button class="save-btn" data-save="monsoon"><svg><use href="#i-bookmark"/></svg> 收藏</button>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ THE BRIEF ============ -->
+  <section>
+    <div class="section-head">
+      <h2>今日简讯，<span style="color:var(--ink-mute);font-style:italic">共八条。</span></h2>
+      <div class="right">
+        <div class="chip-row" id="brief-chips" role="tablist">
+          <button class="chip" aria-pressed="true" data-cat="all">
+            <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+            全部 8 条
+          </button>
+          <button class="chip" aria-pressed="false" data-cat="world">
+            <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+            国际
+          </button>
+          <button class="chip" aria-pressed="false" data-cat="tech">
+            <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+            科技
+          </button>
+          <button class="chip" aria-pressed="false" data-cat="climate">
+            <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+            气候
+          </button>
+          <button class="chip" aria-pressed="false" data-cat="culture">
+            <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+            文化
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="brief">
+      <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+      <ul class="brief-list" id="brief-list" data-searchable>
+        <li data-cat="world" data-title="布鲁塞尔批准雅典铁路走廊">
+          <span class="no">01</span>
+          <span class="cat">国际</span>
+          <span class="body">布鲁塞尔批准长议未决的<em>雅典铁路走廊</em>——秋天前铺第一根枕木。</span>
+          <span class="time">07:02 CET</span>
+          <span class="src">路透社</span>
+        </li>
+        <li data-cat="tech" data-title="OpenAI 取消百万 token 上限">
+          <span class="no">02</span>
+          <span class="cat red">科技</span>
+          <span class="body">OpenAI 悄悄取消开发者账户<em>百万 token 上限</em>；价格不变。</span>
+          <span class="time">06:48 GMT</span>
+          <span class="src">S. Kim 发稿</span>
+        </li>
+        <li data-cat="climate" data-title="南极海冰创五月新低">
+          <span class="no">03</span>
+          <span class="cat">气候</span>
+          <span class="body">南极海冰<em>创五月新低</em>，410 万平方公里——连续第三年。</span>
+          <span class="time">06:30 UTC</span>
+          <span class="src">NSIDC</span>
+        </li>
+        <li data-cat="culture" data-title="戛纳金棕榈授予罗马尼亚静默剧">
+          <span class="no">04</span>
+          <span class="cat">文化</span>
+          <span class="body">戛纳金棕榈授予一部<em>四小时罗马尼亚</em>静默剧；影评人意外，评审团没。</span>
+          <span class="time">05:55 CET</span>
+          <span class="src">A. Petit</span>
+        </li>
+        <li data-cat="world" data-title="日韩共用签证通道">
+          <span class="no">05</span>
+          <span class="cat">国际</span>
+          <span class="body">日韩公布 30 岁以下<em>共用签证通道</em>，东京内阁首件议程。</span>
+          <span class="time">05:12 JST</span>
+          <span class="src">NHK</span>
+        </li>
+        <li data-cat="tech" data-title="Anthropic 推出 Opus 4.7">
+          <span class="no">06</span>
+          <span class="cat red">科技</span>
+          <span class="body">Anthropic 推出 <em>Opus 4.7</em>，百万上下文——价格更低一点。</span>
+          <span class="time">04:30 PT</span>
+          <span class="src">官方博客</span>
+        </li>
+        <li data-cat="climate" data-title="多尼亚纳湿地获欧盟紧急水量">
+          <span class="no">07</span>
+          <span class="cat">气候</span>
+          <span class="body">西班牙多尼亚纳湿地获<em>欧盟紧急水量调配</em>；下游农户提出异议。</span>
+          <span class="time">04:08 CET</span>
+          <span class="src">EFE</span>
+        </li>
+        <li data-cat="culture" data-title="大都会归还柬埔寨 28 件文物">
+          <span class="no">08</span>
+          <span class="cat">文化</span>
+          <span class="body">大都会归还柬埔寨 <em>28 件文物</em>——并开放其余文物的清单。</span>
+          <span class="time">03:50 EST</span>
+          <span class="src">R. Tan 发稿</span>
+        </li>
+      </ul>
+      <div class="brief-empty" id="brief-empty">
+        <span style="display:block;margin-bottom:8px">未匹配——换个关键词试试</span>
+        <small style="font-family:var(--mono);font-size:10px;letter-spacing: 0;color:var(--ink-mute)">回车 ↵ 清空</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LONG READS + MOST READ ============ -->
+  <section>
+    <div class="section-head">
+      <h2>深读，<span style="color:var(--ink-mute);font-style:italic">慢下来的时辰。</span></h2>
+      <div class="right">
+        <span class="hand-label">佐以本周热读</span>
+      </div>
+    </div>
+
+    <div class="long-grid" data-searchable>
+
+      <article class="long" data-title="The quiet rebuilding of analog photography in small European towns">
+        <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+        <div class="illus">
+          <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+          <svg class="art" viewBox="0 0 200 210" preserveAspectRatio="xMidYMid meet" fill="none">
+            <!-- camera body -->
+            <path d="M30 80 H 170 V 160 H 30 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" filter="url(#wobble)"/>
+            <!-- top bump -->
+            <path d="M70 80 V 64 H 130 V 80" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" filter="url(#wobble-s)"/>
+            <!-- lens -->
+            <circle cx="100" cy="120" r="30" stroke="currentColor" stroke-width="1.6" filter="url(#wobble)"/>
+            <circle cx="100" cy="120" r="18" stroke="currentColor" stroke-width="1.4" filter="url(#wobble-s)"/>
+            <circle cx="100" cy="120" r="6" fill="currentColor" filter="url(#wobble-s)"/>
+            <!-- viewfinder -->
+            <rect x="146" y="86" width="14" height="8" stroke="currentColor" stroke-width="1.2" filter="url(#wobble-s)"/>
+            <!-- shutter button -->
+            <circle cx="50" cy="74" r="4" stroke="currentColor" stroke-width="1.3" filter="url(#wobble-s)"/>
+            <!-- strap squiggle -->
+            <path d="M30 96 q -14 -8 -22 -2 q 8 16 22 18" stroke="currentColor" stroke-width="1.2" fill="none" filter="url(#wobble-s)"/>
+            <path d="M170 96 q 14 -8 22 -2 q -8 16 -22 18" stroke="currentColor" stroke-width="1.2" fill="none" filter="url(#wobble-s)"/>
+          </svg>
+        </div>
+        <div class="body">
+          <div class="meta">
+            <span class="cat">深读</span>
+            <span>21 分钟</span>
+            <span>· 长文</span>
+          </div>
+          <h3><em>胶片摄影</em>在欧洲小城里悄悄复兴。</h3>
+          <p class="dek">三个国家，三家暗房。十年前都亏损。如今，周六上午都忙得很。来自暗房的实地报告。</p>
+          <p style="margin:0;font-family:var(--hand-b);font-size:13.5px;color:var(--ink-mute)">文 / H. Ostrowski · 摄影 / 各暗房提供</p>
+          <div class="foot">
+            <span>★ 本周 1,820 人阅读</span>
+            <button class="save-btn" data-save="analog"><svg><use href="#i-bookmark"/></svg> 收藏</button>
+          </div>
+        </div>
+      </article>
+
+      <aside class="most">
+        <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+        <h4>热读 <small>本周</small></h4>
+        <ol data-searchable>
+          <li data-title="A field guide to refusing meetings politely">
+            <span></span>
+            <span class="t"><em>拒绝会议</em>的礼貌指南。</span>
+            <span class="mini">12 分钟</span>
+          </li>
+          <li data-title="Why your tomatoes never tasted like the ones in Sicily">
+            <span></span>
+            <span class="t">为什么你的番茄吃不出<em>西西里味</em>。</span>
+            <span class="mini">7 分钟</span>
+          </li>
+          <li data-title="The case against productivity dashboards">
+            <span></span>
+            <span class="t">反对<em>生产力看板</em>的理由。</span>
+            <span class="mini">9 分钟</span>
+          </li>
+          <li data-title="An afternoon with the last typewriter repairman in Lisbon">
+            <span></span>
+            <span class="t">里斯本<em>最后一位</em>打字机修理工的一个下午。</span>
+            <span class="mini">14 分钟</span>
+          </li>
+          <li data-title="What we got wrong about hybrid work, three years on">
+            <span></span>
+            <span class="t"><em>混合办公</em>三年，我们错在哪里。</span>
+            <span class="mini">11 分钟</span>
+          </li>
+        </ol>
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- ============ NEWSLETTER ============ -->
+  <section class="signup">
+    <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="0.5" y="0.5" width="99" height="99" filter="url(#wobble)"/></svg>
+    <div>
+      <h3>每天清晨，<span class="accent">一张纸。</span></h3>
+      <p>《札记》每早 06:30 抵达邮箱——八条简讯，一篇深读，无自动播放，无无限滚动。一行退订。</p>
+    </div>
+    <form id="signup-form">
+      <div class="field">
+        <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+        <input id="signup-email" type="email" required placeholder="your.name@elsewhere.com" />
+      </div>
+      <button type="submit" class="btn-sketch is-primary" style="justify-content:center">
+        <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+        发我那张早间纸
+        <svg width="18" height="11"><use href="#i-arrow"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <footer>
+    <div>
+      <div class="colophon">dispatch</div>
+      <div>© 2026 札记日报<br>字体：马善政 · 龙藏，印于札记纸。</div>
+      <span class="stamp">草稿 · v0.7</span>
+    </div>
+    <div>
+      <h5>栏目</h5>
+      <ul>
+        <li><a>今日</a></li>
+        <li><a>国际</a></li>
+        <li><a>科技</a></li>
+        <li><a>文化</a></li>
+        <li><a>深读</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>我们</h5>
+      <ul>
+        <li><a>关于</a></li>
+        <li><a>编辑部</a></li>
+        <li><a>编排规范</a></li>
+        <li><a>通讯订阅</a></li>
+        <li><a>读者来信</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>实用</h5>
+      <ul>
+        <li><a>订阅</a></li>
+        <li><a>RSS</a></li>
+        <li><a>条款</a></li>
+        <li><a>隐私</a></li>
+        <li><a>联系</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg class="sketch-rect" preserveAspectRatio="none" viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" filter="url(#wobble)"/></svg>
+  <span id="toast-text">已收入手账。</span>
+  <small id="toast-sub">↵ 撤销</small>
+</div>
+
+<script>
+/* ============================================================
+   helpers
+   ============================================================ */
+function norm(s){ return (s || '').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim() }
+
+const toast = document.getElementById('toast');
+const toastText = document.getElementById('toast-text');
+const toastSub = document.getElementById('toast-sub');
+let toastTimer = 0;
+function showToast(text, sub){
+  toastText.textContent = text;
+  toastSub.textContent = sub || '↵ 撤销';
+  toast.classList.add('is-on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('is-on'), 2600);
+}
+
+/* ============================================================
+   1) SAVE BUTTONS — toggleable, drive the nav counter
+   ============================================================ */
+const savedSet = new Set();
+const savedCount = document.getElementById('saved-count');
+function refreshCount(){ savedCount.textContent = savedSet.size }
+document.querySelectorAll('.save-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const key = btn.dataset.save;
+    const ico = btn.querySelector('svg');
+    if (savedSet.has(key)){
+      savedSet.delete(key);
+      btn.classList.remove('is-saved');
+      ico.innerHTML = '<use href="#i-bookmark"/>';
+      btn.lastChild.textContent = ' 收藏';
+      showToast('已取消收藏。', `${savedSet.size} 件已收藏`);
+    } else {
+      savedSet.add(key);
+      btn.classList.add('is-saved');
+      ico.innerHTML = '<use href="#i-bookmark-fill"/>';
+      btn.lastChild.textContent = ' 已收';
+      showToast('已收藏待读。', `${savedSet.size} 件在手账中`);
+    }
+    refreshCount();
+  });
+});
+
+/* ============================================================
+   2) BRIEF CATEGORY CHIPS — filter the brief list
+   ============================================================ */
+(() => {
+  const chips = document.querySelectorAll('#brief-chips .chip');
+  const items = document.querySelectorAll('#brief-list li');
+  const empty = document.getElementById('brief-empty');
+
+  function applyCat(cat){
+    let visible = 0;
+    items.forEach(li => {
+      const show = cat === 'all' || li.dataset.cat === cat;
+      li.hidden = !show;
+      if (show) visible++;
+    });
+    empty.classList.toggle('is-on', visible === 0);
+  }
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(x => x.setAttribute('aria-pressed', x === c ? 'true' : 'false'));
+    applyCat(c.dataset.cat);
+  }));
+})();
+
+/* ============================================================
+   3) SEARCH — live-filters all cards w/ data-title
+   ============================================================ */
+(() => {
+  const input = document.getElementById('search');
+  const targets = document.querySelectorAll('[data-title]');
+  const briefEmpty = document.getElementById('brief-empty');
+
+  input.addEventListener('input', () => {
+    const q = norm(input.value);
+    let total = 0, briefTotal = 0;
+    targets.forEach(el => {
+      const t = norm(el.dataset.title);
+      const ok = !q || t.includes(q);
+      el.hidden = !ok;
+      if (ok) total++;
+      if (ok && el.matches('#brief-list li')) briefTotal++;
+    });
+    briefEmpty.classList.toggle('is-on', q && briefTotal === 0);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape'){ input.value = ''; input.dispatchEvent(new Event('input')) }
+  });
+})();
+
+/* ============================================================
+   4) NEWSLETTER FORM — toast + clear
+   ============================================================ */
+document.getElementById('signup-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const email = document.getElementById('signup-email').value.trim();
+  if (!email) return;
+  showToast('欢迎订阅《札记》。', `确认邮件已发 · ${email}`);
+  e.target.reset();
+});
+
+/* ============================================================
+   5) CTA / sign in / read / listen — toasts
+   ============================================================ */
+document.querySelectorAll('[data-cta]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const k = btn.dataset.cta;
+    const map = {
+      'signin':     ['登录链接已发送。', '请查收邮件'],
+      'read-hero':  ['正在打开全文…', '12 分钟 · 自动保存进度'],
+      'listen-hero':['音频已加入队列。', '14 分钟 · 诺拉·奥德里奇朗读'],
+    };
+    const [t, s] = map[k] || ['已记下。', '↵ 撤销'];
+    showToast(t, s);
+  });
+});
+
+/* reduced motion */
+if (matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.documentElement.style.setProperty('--ease', 'linear');
+}
+</script>
+
+</body>
+</html>

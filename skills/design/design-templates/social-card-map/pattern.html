@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Social Card Map Pattern</title>
+<style>
+  /* Pattern reference only. Do not copy this file verbatim into final artifacts. */
+  :root{--bg:#eef0e7;--ink:#181a14;--muted:#747769;--line:rgba(24,26,20,.16);--accent:#ff6a3d;--water:#bdd7d5;--park:#d7e7b7}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#ccc;font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.card{width:1080px;height:1440px;background:var(--bg);color:var(--ink);padding:70px;position:relative;overflow:hidden}.header{display:grid;grid-template-columns:1fr 220px;gap:36px;align-items:start}h1{font-size:78px;line-height:1.04;letter-spacing:-.065em;margin:0}.meta{font-size:25px;line-height:1.45;color:var(--muted);text-align:right}.map{margin-top:54px;height:720px;border-radius:42px;background:linear-gradient(0deg,transparent 24px,rgba(24,26,20,.05) 25px),linear-gradient(90deg,transparent 24px,rgba(24,26,20,.05) 25px),#f7f3df;background-size:50px 50px;position:relative;border:2px solid var(--line);overflow:hidden}.water{position:absolute;right:-120px;top:100px;width:470px;height:820px;border-radius:50%;background:var(--water);transform:rotate(16deg)}.park{position:absolute;left:80px;bottom:70px;width:360px;height:250px;border-radius:42% 58% 44% 56%;background:var(--park)}.route{position:absolute;left:220px;top:170px;width:600px;height:360px;border:10px solid var(--accent);border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(12deg)}.pin{position:absolute;width:56px;height:56px;border-radius:50% 50% 50% 0;background:var(--accent);transform:rotate(-45deg);display:grid;place-items:center;color:white;font-weight:900}.pin span{transform:rotate(45deg)}.p1{left:230px;top:190px}.p2{left:520px;top:310px}.p3{left:760px;top:505px}.label{position:absolute;background:white;border:1px solid var(--line);border-radius:18px;padding:14px 18px;font-size:24px;box-shadow:0 10px 30px rgba(0,0,0,.08)}.l1{left:172px;top:125px}.l2{left:510px;top:245px}.l3{left:710px;top:595px}.itinerary{margin-top:40px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.stop{border-top:1px solid var(--line);padding-top:20px}.stop b{display:block;font-size:38px}.stop span{display:block;margin-top:8px;color:var(--muted);font-size:24px;line-height:1.35}.footer{position:absolute;left:70px;right:70px;bottom:54px;color:var(--muted);font-size:24px;display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:22px}
+</style>
+</head>
+<body>
+<main class="card" data-template="social-card-map">
+  <section class="header"><h1>一天走完这条老街路线</h1><div class="meta">CITY GUIDE<br>3 stops / 2.5h<br>Walking route</div></section>
+  <section class="map" aria-label="simplified map">
+    <div class="water"></div><div class="park"></div><div class="route"></div>
+    <div class="pin p1"><span>1</span></div><div class="pin p2"><span>2</span></div><div class="pin p3"><span>3</span></div>
+    <div class="label l1">咖啡馆</div><div class="label l2">旧书店</div><div class="label l3">河边台阶</div>
+  </section>
+  <div class="itinerary"><div class="stop"><b>01</b><span>起点：建立方向感</span></div><div class="stop"><b>02</b><span>中段：保留一个重点</span></div><div class="stop"><b>03</b><span>终点：给出行动建议</span></div></div>
+  <footer class="footer"><span>Pattern: simplified route map + 3 labeled stops.</span><span>Distances are placeholders</span></footer>
+</main>
+</body>
+</html>

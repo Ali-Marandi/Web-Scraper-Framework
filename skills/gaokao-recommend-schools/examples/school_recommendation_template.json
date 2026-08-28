@@ -1,0 +1,13 @@
+{
+  "school_strategy": "院校布局策略：冲/稳/保如何分配、重点院校举例（可用 <strong>）",
+  "recommended_schools": [
+    {
+      "university_name": "必须与 parsed.json 完全一致",
+      "university_code": "必须与 parsed.json 完全一致",
+      "modal": {
+        "title": "学校推荐原因：院校名称",
+        "body": "<h4>推荐原因</h4><ul><li><strong>地域优势：</strong>...</li><li><strong>院校层次：</strong>...</li><li><strong>专业契合：</strong>与 major_recommendation 的关联</li><li><strong>录取性价比：</strong>...</li></ul>"
+      }
+    }
+  ]
+}

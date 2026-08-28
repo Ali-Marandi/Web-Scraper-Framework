@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>栖野 WILD STAY · 户外营地新品发布</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{background:#ffffff;}
+  body{
+    font-family:"Helvetica Neue","Helvetica","Arial","PingFang SC","Hiragino Sans GB",sans-serif;
+    color:#1a1a1a;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:420px;margin:0 auto;background:#fff;zoom:2.381;}
+
+  /* ============ SECTION 1 · HERO ============ */
+  .hero{padding:64px 32px 0;background:#fff;}
+
+  .title-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto auto auto auto;
+    row-gap:6px;
+    margin-bottom:8px;
+  }
+  .ch{
+    font-size:78px;
+    font-weight:500;
+    line-height:1;
+    letter-spacing:0;
+    color:#0d0d0d;
+  }
+  .ch.q1{grid-column:1;grid-row:1;}                       /* 栖 */
+  .ch.q2{grid-column:2;grid-row:2;justify-self:end;}      /* 野 */
+  .ch.q3{grid-column:2;grid-row:3;justify-self:end;}      /* 之 */
+  .ch.q4{grid-column:1;grid-row:4;}                       /* 间 */
+
+  .tag-r{
+    grid-column:2;grid-row:1;
+    align-self:end;justify-self:end;
+    display:flex;align-items:center;gap:8px;
+    font-size:10px;letter-spacing:.22em;color:#1a1a1a;
+    padding-bottom:14px;
+  }
+  .tag-r .bar{width:60px;height:1px;background:#1a1a1a;}
+
+  .tag-diag{
+    grid-column:1;grid-row:2;
+    align-self:end;
+    display:flex;align-items:center;gap:8px;
+    font-size:10px;letter-spacing:.22em;
+    padding-bottom:14px;
+    position:relative;
+  }
+  .tag-diag .bar{
+    flex:1;height:1px;background:#1a1a1a;
+    transform-origin:left center;
+    transform:rotate(-22deg);
+    margin-right:-30px;
+  }
+
+  .fashion{
+    grid-column:2;grid-row:4;
+    text-align:right;
+    align-self:end;
+    padding-bottom:6px;
+  }
+  .fashion .en{
+    font-size:18px;font-weight:700;letter-spacing:.02em;line-height:1.05;
+  }
+  .fashion .zh{
+    font-size:12px;color:#222;margin-top:6px;letter-spacing:.05em;
+  }
+
+  .date-row{
+    margin-top:36px;
+    border-top:1px solid #1a1a1a;
+    border-bottom:1px solid #1a1a1a;
+    padding:18px 0 14px;
+    display:flex;align-items:flex-end;justify-content:space-between;
+  }
+  .date-l{font-size:14px;letter-spacing:.04em;line-height:1.4;}
+  .date-l .small{font-size:12px;color:#444;margin-top:4px;}
+  .date-big{
+    position:relative;
+    font-family:"Helvetica Neue","Arial",sans-serif;
+    font-size:78px;font-weight:900;line-height:.78;
+    margin-right:18px;
+  }
+  .date-big sup{
+    position:absolute;top:6px;right:-46px;
+    font-size:12px;font-weight:700;letter-spacing:.05em;line-height:1.1;text-align:left;
+  }
+  .date-big sup span{display:block;}
+
+  .tagline{
+    display:flex;align-items:flex-start;gap:14px;
+    padding:22px 0 32px;
+  }
+  .arrow-box{
+    width:46px;height:46px;flex:0 0 46px;
+    border:1px solid #1a1a1a;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;line-height:1;
+  }
+  .arrow-box svg{width:18px;height:18px;}
+  .tagline p{font-size:9.5px;line-height:1.65;color:#333;letter-spacing:.02em;}
+
+  .hero-img{
+    width:100%;height:520px;
+    background:#bcb6ab url('https://images.pexels.com/photos/2422915/pexels-photo-2422915.jpeg?auto=compress&cs=tinysrgb&w=900') center/cover no-repeat;
+  }
+
+  .hero-foot{
+    padding:64px 32px 64px;background:#fff;text-align:center;
+  }
+  .hero-foot .ring{
+    display:inline-block;font-size:20px;vertical-align:-2px;margin-right:6px;
+  }
+  .hero-foot h2{
+    font-size:24px;font-weight:800;letter-spacing:.04em;line-height:1.25;
+  }
+  .hero-foot h2 .sub{display:block;}
+  .hero-foot p{
+    margin:22px auto 0;max-width:260px;
+    font-size:10.5px;color:#444;line-height:1.7;
+  }
+  .pill-btn{
+    margin:32px auto 0;width:96px;height:36px;
+    border:1px solid #1a1a1a;display:flex;align-items:center;justify-content:center;
+  }
+  .pill-btn svg{width:14px;height:14px;}
+
+  /* ============ SECTION 2 · ABOUT ============ */
+  .about{background:#eef1f4;padding:48px 28px 64px;}
+
+  .frame{
+    background:#fff;padding:14px 14px 18px;
+    box-shadow:0 1px 0 rgba(0,0,0,.02);
+    position:relative;
+  }
+  .frame-img{
+    width:100%;height:360px;
+    background:#9c9a91 center/cover no-repeat;
+    background-image:url('https://images.pexels.com/photos/3225531/pexels-photo-3225531.jpeg?auto=compress&cs=tinysrgb&w=900');
+    position:relative;
+  }
+  .frame-brand{
+    position:absolute;left:24px;bottom:18px;
+    color:#fff;font-size:22px;font-weight:600;letter-spacing:.02em;
+    text-shadow:0 1px 6px rgba(0,0,0,.18);
+  }
+  .frame-foot{padding:14px 4px 0;}
+  .frame-foot .kw{font-size:11px;font-weight:700;letter-spacing:.22em;}
+  .frame-foot .ds{font-size:9.5px;color:#555;line-height:1.55;margin-top:6px;}
+
+  .about-head{
+    margin-top:52px;position:relative;
+    font-size:38px;font-weight:800;line-height:1.05;letter-spacing:.005em;
+  }
+  .about-head .vbrand{
+    position:absolute;right:-4px;top:6px;
+    writing-mode:vertical-rl;
+    font-size:9px;letter-spacing:.4em;font-weight:500;color:#222;
+  }
+
+  .about-zh{
+    margin-top:54px;text-align:right;
+  }
+  .about-zh .big{font-size:34px;font-weight:500;line-height:1;letter-spacing:.02em;}
+  .about-zh .small{font-size:13px;font-weight:600;margin-top:4px;letter-spacing:.05em;}
+
+  .aboutus{margin-top:64px;}
+  .aboutus h3{
+    font-size:18px;font-weight:700;letter-spacing:.18em;
+    padding-bottom:12px;border-bottom:1px solid #1a1a1a;
+  }
+  .aboutus .p-zh{
+    font-size:11px;color:#222;line-height:2;margin-top:18px;letter-spacing:.02em;
+  }
+  .aboutus .p-en{
+    font-size:10px;color:#555;line-height:1.75;margin-top:16px;
+  }
+  .about-img-b{
+    margin-top:42px;width:100%;height:280px;
+    background:#9c9a91 center/cover no-repeat;
+    background-image:url('https://images.pexels.com/photos/2901209/pexels-photo-2901209.jpeg?auto=compress&cs=tinysrgb&w=900');
+  }
+
+  /* ============ SECTION 3 · HIGHLIGHTS ============ */
+  .high{background:#fff;}
+
+  .high-top{
+    position:relative;height:380px;
+    background:#9c9a91 center/cover no-repeat;
+    background-image:url('https://images.pexels.com/photos/1687678/pexels-photo-1687678.jpeg?auto=compress&cs=tinysrgb&w=900');
+  }
+  .high-top::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.18) 0%,rgba(0,0,0,0) 50%);
+  }
+  .high-top .ovl{
+    position:absolute;left:28px;top:26px;right:28px;color:#fff;z-index:2;
+  }
+  .high-top .ovl .ttl{font-size:22px;font-weight:600;letter-spacing:.02em;}
+  .high-top .ovl .desc{
+    font-size:10px;margin-top:8px;line-height:1.7;opacity:.92;max-width:260px;
+  }
+
+  .high-body{padding:54px 28px 0;}
+  .high-body h2{
+    font-size:32px;font-weight:800;line-height:1.1;letter-spacing:.005em;
+  }
+  .high-body h2 .colon{font-weight:500;}
+
+  .list{margin-top:42px;}
+  .row{
+    display:grid;
+    grid-template-columns:84px 1fr 24px;
+    align-items:center;gap:14px;
+    padding:18px 0;border-bottom:1px solid #e4e1da;
+  }
+  .row:last-child{border-bottom:1px solid #e4e1da;}
+  .row .zh{font-size:13px;font-weight:700;letter-spacing:.18em;}
+  .row .en{font-size:12px;color:#333;letter-spacing:.02em;}
+  .row .ic{
+    width:22px;height:22px;border-radius:50%;
+    background:linear-gradient(135deg,#f1f3f6,#dde2e8);
+    display:flex;align-items:center;justify-content:center;
+    color:#222;font-size:11px;
+  }
+
+  .high-cta{
+    margin-top:42px;font-size:10px;color:#555;line-height:1.7;
+  }
+
+  .webcast{
+    margin-top:48px;position:relative;height:440px;
+    background:#9c9a91 center/cover no-repeat;
+    background-image:url('https://images.pexels.com/photos/691668/pexels-photo-691668.jpeg?auto=compress&cs=tinysrgb&w=900');
+  }
+  .webcast::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.28) 100%);
+  }
+  .webcast .top-label{
+    position:absolute;left:30px;top:120px;color:#fff;z-index:2;
+    font-size:8px;letter-spacing:.5em;line-height:1.4;opacity:.92;
+  }
+  .webcast .top-label span{display:block;}
+  .webcast .ttl{
+    position:absolute;left:30px;top:160px;color:#fff;z-index:2;
+  }
+  .webcast .ttl .en{font-size:26px;font-weight:800;letter-spacing:.02em;line-height:1;}
+  .webcast .ttl .zh{font-size:24px;font-weight:500;letter-spacing:.05em;margin-top:6px;}
+
+  .webcast .side-text{
+    position:absolute;right:30px;top:230px;color:#fff;z-index:2;
+    font-size:9.5px;line-height:1.7;text-align:right;max-width:190px;opacity:.95;
+  }
+
+  .squares{
+    position:absolute;left:30px;bottom:30px;display:flex;gap:14px;z-index:2;
+  }
+  .sq{width:64px;height:38px;background:#fff;}
+
+  .footer{
+    background:#fff;padding:28px 32px 34px;text-align:center;
+    border-top:1px solid #ececec;
+  }
+  .footer .ft-en{font-size:9px;letter-spacing:.4em;color:#888;}
+  .footer .ft-zh{font-size:10px;color:#999;margin-top:6px;}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ============ SECTION 1 ============ -->
+  <section class="hero">
+    <div class="title-grid">
+      <div class="ch q1">栖</div>
+      <div class="tag-r"><span class="bar"></span><span>FIELD&nbsp;CAMP</span></div>
+
+      <div class="tag-diag"><span>UPCOMING&nbsp;RELEASE</span><span class="bar"></span></div>
+      <div class="ch q2">野</div>
+
+      <div></div>
+      <div class="ch q3">之</div>
+
+      <div class="ch q4">间</div>
+      <div class="fashion">
+        <div class="en">OUTDOOR<br>CAMP</div>
+        <div class="zh">户外营地新品发布</div>
+      </div>
+    </div>
+
+    <div class="date-row">
+      <div class="date-l">
+        11/15/26<br>
+        <span class="small">（即将发布）</span>
+      </div>
+      <div class="date-big">5<sup><span>SUN</span><span>11-15</span></sup></div>
+    </div>
+
+    <div class="tagline">
+      <div class="arrow-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M7 17 L17 7"/>
+          <path d="M9 7 L17 7 L17 15"/>
+        </svg>
+      </div>
+      <p>Are you ready to escape the ordinary and immerse yourself in nature? Join us for an exhilarating camping experience that will ignite your spirit and reconnect you with the wonders of the wild.</p>
+    </div>
+  </section>
+
+  <div class="hero-img"></div>
+
+  <section class="hero-foot">
+    <h2>
+      <span class="ring">◎</span>QIYE&nbsp;WILDSTAY
+      <span class="sub">DEAR&nbsp;OUTDOOR&nbsp;DREAMERS</span>
+    </h2>
+    <p>Are you ready to escape the ordinary and immerse yourself in the extraordinary? 栖于山野，息于天地。</p>
+    <div class="pill-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M6 9 L12 15 L18 9"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 ============ -->
+  <section class="about">
+    <div class="frame">
+      <div class="frame-img">
+        <div class="frame-brand">WildStay</div>
+      </div>
+      <div class="frame-foot">
+        <div class="kw">DESIGN</div>
+        <div class="ds">Are you ready to escape the ordinary and immerse yourself in the extraordinary?</div>
+      </div>
+    </div>
+
+    <h2 class="about-head">
+      About<br>WildStay
+      <span class="vbrand">BRAND</span>
+    </h2>
+
+    <div class="about-zh">
+      <div class="big">关于</div>
+      <div class="small">栖野 WildStay</div>
+    </div>
+
+    <div class="aboutus">
+      <h3>ABOUT&nbsp;US</h3>
+      <p class="p-zh">在栖野，我们致力于将营地与自然融为一体，以克制的设计、可持续的材料与真诚的服务，让每一次出走都成为身体与精神的双重栖息。</p>
+      <p class="p-en">At WildStay, we are committed to blending camping with nature — through restrained design, sustainable materials and honest hospitality, so every escape becomes a shelter for both body and mind.</p>
+    </div>
+
+    <div class="about-img-b"></div>
+  </section>
+
+  <!-- ============ SECTION 3 ============ -->
+  <section class="high">
+    <div class="high-top">
+      <div class="ovl">
+        <div class="ttl">WildStay</div>
+        <div class="desc">We design lightweight, modular camps using recyclable aluminum and organic canvas to minimize our footprint on the land.</div>
+      </div>
+    </div>
+
+    <div class="high-body">
+      <h2>Event<br>Highlights<span class="colon">：</span></h2>
+
+      <div class="list">
+        <div class="row">
+          <div class="zh">山系装备</div>
+          <div class="en">Mountain gear</div>
+          <div class="ic">›</div>
+        </div>
+        <div class="row">
+          <div class="zh">营地市集</div>
+          <div class="en">Camp market</div>
+          <div class="ic">›</div>
+        </div>
+        <div class="row">
+          <div class="zh">星空夜话</div>
+          <div class="en">Starlight talk</div>
+          <div class="ic">›</div>
+        </div>
+        <div class="row">
+          <div class="zh">自然食研</div>
+          <div class="en">Wild kitchen</div>
+          <div class="ic">›</div>
+        </div>
+      </div>
+
+      <div class="high-cta">
+        Secure your spot for this unforgettable camping escapade today!<br>
+        即刻预约席位，与我们一同奔赴山野。
+      </div>
+    </div>
+
+    <div class="webcast">
+      <div class="top-label">
+        <span>THIS</span>
+        <span>CONFERENCE</span>
+      </div>
+      <div class="ttl">
+        <div class="en">WEBCAST</div>
+        <div class="zh">直播入口</div>
+      </div>
+      <div class="side-text">
+        Are you ready to escape the ordinary and immerse yourself in the wild?
+      </div>
+      <div class="squares">
+        <div class="sq"></div>
+        <div class="sq"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="ft-en">© 2026 &nbsp; QIYE · WILDSTAY</div>
+    <div class="ft-zh">栖于山野 · 息于天地</div>
+  </footer>
+
+</div>
+
+</body>
+</html>

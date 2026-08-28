@@ -1,0 +1,19 @@
+{
+  "province": "山东",
+  "classify": "综合",
+  "subjects": "物理,化学,生物",
+  "gradeType": null,
+  "score": 650,
+  "rank": null,
+  "batch": "本科批",
+  "universitys": "北京航空航天大学,华东师范大学,中山大学",
+  "provinces": "北京,上海,广东,湖北",
+  "tags": "985,211,双一流",
+  "majorClass": "计算机类,电子信息类,自动化类,临床医学类",
+  "universityNum": 30,
+  "majorNum": 6,
+  "isAdjust": true,
+  "volunteerType": "ACADEMY_GROUP",
+  "returnUniversityNum": 30,
+  "intentionNum": 0
+}

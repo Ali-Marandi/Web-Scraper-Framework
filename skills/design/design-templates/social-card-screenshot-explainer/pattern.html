@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Social Card Screenshot Explainer Pattern</title>
+<style>
+  /* Pattern reference only. Do not copy this file verbatim into final artifacts. */
+  :root {
+    --bg: #f4f1e8;
+    --ink: #111315;
+    --muted: #6f6b61;
+    --line: rgba(17,19,21,.14);
+    --accent: #ff4d2e;
+    --panel: #fffdf7;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #ddd; font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .card { width: 1080px; height: 1440px; background: var(--bg); color: var(--ink); padding: 72px; position: relative; overflow: hidden; }
+  .meta { display: flex; justify-content: space-between; font-size: 28px; letter-spacing: .02em; color: var(--muted); margin-bottom: 36px; }
+  h1 { margin: 0; font-size: 86px; line-height: 0.98; letter-spacing: -.06em; max-width: 850px; }
+  .lead { margin-top: 22px; max-width: 760px; color: var(--muted); font-size: 32px; line-height: 1.45; }
+  .stage { margin-top: 56px; position: relative; height: 650px; border: 2px solid var(--line); border-radius: 36px; background: linear-gradient(180deg, #fff 0%, #f7f7f7 100%); box-shadow: 0 32px 90px rgba(0,0,0,.14); overflow: hidden; }
+  .browser { height: 64px; display: flex; align-items: center; gap: 14px; padding: 0 28px; border-bottom: 1px solid var(--line); background: #f1f1ef; }
+  .dot { width: 16px; height: 16px; border-radius: 50%; background: #bbb; }
+  .ui { display: grid; grid-template-columns: 240px 1fr; height: calc(100% - 64px); }
+  .side { border-right: 1px solid var(--line); padding: 28px; display: grid; gap: 18px; align-content: start; }
+  .pill { height: 34px; border-radius: 12px; background: #e8e8e4; }
+  .main { padding: 34px; display: grid; grid-template-rows: 90px 1fr 120px; gap: 26px; }
+  .hero-row { display: grid; grid-template-columns: 1.3fr .7fr; gap: 20px; }
+  .block { border-radius: 22px; background: #ecece7; border: 1px solid var(--line); }
+  .chart { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .chart .block:nth-child(2) { background: #222; }
+  .callout { position: absolute; display: grid; grid-template-columns: 42px 1fr; gap: 16px; align-items: start; width: 330px; padding: 20px; border-radius: 22px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 16px 50px rgba(0,0,0,.12); font-size: 24px; line-height: 1.28; }
+  .num { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: white; display: grid; place-items: center; font-weight: 800; }
+  .callout.one { right: 42px; top: 145px; }
+  .callout.two { left: 50px; bottom: 78px; }
+  .callout.three { right: 78px; bottom: 42px; }
+  .connector { position: absolute; border-top: 3px solid var(--accent); transform-origin: left center; opacity: .8; }
+  .c1 { width: 130px; right: 360px; top: 250px; transform: rotate(-18deg); }
+  .c2 { width: 110px; left: 235px; bottom: 170px; transform: rotate(16deg); }
+  .footer { position: absolute; left: 72px; right: 72px; bottom: 56px; display: flex; justify-content: space-between; align-items: end; border-top: 1px solid var(--line); padding-top: 26px; color: var(--muted); font-size: 26px; }
+  .takeaway { color: var(--ink); font-size: 34px; font-weight: 760; max-width: 620px; }
+</style>
+</head>
+<body>
+  <main class="card" data-template="social-card-screenshot-explainer">
+    <div class="meta"><span>SCREENSHOT EXPLAINER</span><span>01 / 04</span></div>
+    <h1>这张截图，真正要看的是这 3 处</h1>
+    <p class="lead">截图不是装饰。把界面放进舞台，再用少量标注解释用户应该注意什么。</p>
+    <section class="stage" aria-label="screenshot stage">
+      <div class="browser"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div>
+      <div class="ui">
+        <aside class="side"><div class="pill"></div><div class="pill"></div><div class="pill"></div><div class="pill"></div></aside>
+        <div class="main"><div class="hero-row"><div class="block"></div><div class="block"></div></div><div class="chart"><div class="block"></div><div class="block"></div><div class="block"></div></div><div class="block"></div></div>
+      </div>
+      <div class="connector c1"></div><div class="connector c2"></div>
+      <div class="callout one"><b class="num">1</b><span>先解释主操作，不要标满每个按钮。</span></div>
+      <div class="callout two"><b class="num">2</b><span>截图必须足够大，手机上仍能看清。</span></div>
+      <div class="callout three"><b class="num">3</b><span>结论放在图外，不遮挡关键 UI。</span></div>
+    </section>
+    <footer class="footer"><span class="takeaway">Pattern: large crop + three callouts + one takeaway.</span><span>@account</span></footer>
+  </main>
+</body>
+</html>

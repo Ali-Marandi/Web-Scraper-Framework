@@ -1,0 +1,26 @@
+{
+  "province": "山东",
+  "classify": "综合",
+  "subjects": "物理,化学,生物",
+  "score": 650,
+  "batch": "本科批",
+  "rank": null,
+  "gradeType": null,
+  "interests": "编程、人工智能、电子科技，对生命科学也有兴趣",
+  "family_situation": "父母工作稳定，家庭可支持本科及研究生阶段深造",
+  "career_direction": "优先进入互联网/硬科技行业，兼顾医学等稳定型职业备选",
+  "subject_scores": {
+    "语文": 125,
+    "数学": 138,
+    "英语": 132,
+    "物理": 92,
+    "化学": 88,
+    "生物": 85
+  },
+  "preferred_cities": ["北京", "上海", "深圳", "武汉", "广州"],
+  "preferred_provinces": ["北京", "上海", "广东", "湖北"],
+  "preferred_universities": ["北京航空航天大学", "华东师范大学", "中山大学"],
+  "preferred_tags": ["985", "211", "双一流"],
+  "preferred_major_classes": ["计算机类", "电子信息类", "自动化类", "临床医学类"],
+  "notes": "希望兼顾院校层次与专业就业前景，不接受偏远地区"
+}

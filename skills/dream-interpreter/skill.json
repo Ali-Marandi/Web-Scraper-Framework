@@ -1,0 +1,7 @@
+{
+  "name": "dream-interpreter",
+  "version": "1.0.0",
+  "description": "AI解梦大师。智能追问梦境细节，从周公解梦/心理分析/赛博神棍三视角解读，输出结构化JSON供前端渲染梦境解析卡。",
+  "author": "mingming",
+  "tags": ["entertainment", "dream", "divination", "visualization"]
+}

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>春日松弛感生活提案 · 小红书封面</title>
+<style>
+  :root {
+    --mint: #cfe1cd;          /* 顶部薄荷 */
+    --mint-soft: #e3edd9;     /* 中部柔薄荷 */
+    --cream: #f1ebd9;         /* 底部奶油 */
+    --grass: #8ab28a;         /* 草绿 */
+    --ink: #2d4a3e;           /* 深墨绿 */
+    --ink-soft: #557565;      /* 灰墨绿 */
+    --line: #b8cdb5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #2a2a2a;
+    font-family: 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'Heiti SC', serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--ink);
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 0;
+  }
+
+  /* ===== 画布 1242×1660 ===== */
+  .cover {
+    width: 1242px;
+    height: 1660px;
+    position: relative;
+    background: var(--cream);
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,.4);
+  }
+
+  /* 顶部薄荷绿渐变天空 */
+  .sky {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 900px;
+    background: linear-gradient(180deg,
+      var(--mint) 0%,
+      var(--mint-soft) 55%,
+      var(--cream) 100%);
+    z-index: 0;
+  }
+
+  /* 顶部条:左上日期 + 右上品牌 */
+  .top-bar {
+    position: absolute;
+    top: 60px;
+    left: 60px;
+    right: 60px;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .date-eng {
+    font-family: 'Times New Roman', 'Songti SC', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 32px;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .brand-cn {
+    text-align: right;
+    color: var(--ink);
+  }
+  .brand-cn .line {
+    font-family: 'Songti SC', 'Source Han Serif SC', serif;
+    font-weight: 500;
+    font-size: 34px;
+    letter-spacing: 0.1em;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 4px;
+    display: inline-block;
+  }
+  .brand-cn .sub {
+    font-size: 20px;
+    margin-top: 8px;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+  }
+
+  /* 英文大标题 */
+  .eng-title {
+    position: absolute;
+    top: 130px;
+    left: 60px;
+    z-index: 5;
+    font-family: 'Times New Roman', 'Georgia', serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 92px;
+    line-height: 1.0;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .eng-title .spaced {
+    letter-spacing: 0.18em;
+  }
+  .eng-title .l2 { display: block; margin-top: 6px; }
+
+  /* 中文大标题 */
+  .cn-title {
+    position: absolute;
+    top: 340px;
+    left: 60px;
+    right: 60px;
+    z-index: 5;
+    font-family: 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', serif;
+    font-weight: 700;
+    font-size: 108px;
+    line-height: 1.05;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  /* ===== 中部:云朵 + 主图 ===== */
+  .scene {
+    position: absolute;
+    top: 590px;
+    left: 0; right: 0;
+    height: 640px;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  /* SVG 云朵层(在主图之上,做"插画式"遮罩) */
+  .clouds {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 360px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .clouds svg { display: block; width: 100%; height: 100%; }
+
+  /* 主图:Pexels 春日草甸,带柔光滤镜 */
+  .hero-img {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 520px;
+    overflow: hidden;
+    z-index: 2;
+    /* 顶部柔化:用 mask 让上沿和云朵区融合 */
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.7) 18%, #000 35%, #000 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.7) 18%, #000 35%, #000 100%);
+  }
+  .hero-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 55%;
+    filter: saturate(0.85) brightness(1.05) contrast(0.95);
+    display: block;
+  }
+
+  /* 主图上的薄荷绿色彩叠加,让照片更接近插画调 */
+  .hero-tint {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 520px;
+    background: linear-gradient(180deg,
+      rgba(207, 225, 205, 0.35) 0%,
+      rgba(180, 210, 175, 0.18) 40%,
+      rgba(241, 235, 217, 0.0) 100%);
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  /* 草地装饰:底部一条小草丛剪影 */
+  .grass-deco {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .grass-deco svg { display: block; width: 100%; height: 100%; }
+
+  /* Pexels 标注 */
+  .photo-credit {
+    position: absolute;
+    right: 24px;
+    bottom: 18px;
+    z-index: 6;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.12em;
+    text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  }
+
+  /* ===== 底部:提案块 ===== */
+  .proposals {
+    position: absolute;
+    top: 1255px;
+    left: 60px;
+    right: 60px;
+    z-index: 6;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 56px;
+    row-gap: 22px;
+  }
+  .prop h4 {
+    font-family: 'Songti SC', 'STSong', 'Source Han Serif SC', serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--ink);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .prop h4 .num {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--grass);
+    margin-right: 8px;
+    font-size: 26px;
+  }
+  .prop p {
+    font-family: 'Songti SC', 'Source Han Serif SC', serif;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    max-height: 53px;
+    overflow: hidden;
+  }
+
+  /* ===== 最底栏:日期 / 地点 / 品牌 ===== */
+  .footer {
+    position: absolute;
+    bottom: 50px;
+    left: 60px;
+    right: 60px;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+    background: var(--cream);
+  }
+  .footer-left {
+    color: var(--ink);
+  }
+  .footer-left .date {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 40px;
+    color: var(--grass);
+    line-height: 1;
+  }
+  .footer-left .loc {
+    font-family: 'Songti SC', serif;
+    font-size: 19px;
+    margin-top: 8px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+  }
+  .footer-left .loc b {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 600;
+    margin-right: 6px;
+    color: var(--ink-soft);
+    font-size: 17px;
+    letter-spacing: 0.1em;
+  }
+  .footer-right {
+    text-align: right;
+    color: var(--ink);
+  }
+  .footer-right .brand {
+    font-family: 'Songti SC', 'Source Han Serif SC', serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.18em;
+  }
+  .footer-right .brand .sep {
+    margin: 0 10px;
+    color: var(--grass);
+  }
+  .footer-right .tag {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    margin-top: 6px;
+    letter-spacing: 0.18em;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+
+  <!-- 天空背景 -->
+  <div class="sky"></div>
+
+  <!-- 顶部条 -->
+  <div class="top-bar">
+    <div class="date-eng">Apr. 2026</div>
+    <div class="brand-cn">
+      <span class="line">春和景明</span>
+      <div class="sub">春日生活提案</div>
+    </div>
+  </div>
+
+  <!-- 英文标题 -->
+  <div class="eng-title">
+    <span>Soft</span> <span class="spaced">S p r i n g</span>
+    <span class="l2">&amp; Slow Days</span>
+  </div>
+
+  <!-- 中文标题 -->
+  <div class="cn-title">春日松弛感<br>生活提案</div>
+
+  <!-- 中部场景 -->
+  <div class="scene">
+    <!-- 云朵 -->
+    <div class="clouds">
+      <svg viewBox="0 0 1242 360" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- 三朵云 -->
+        <g fill="#f1ebd9">
+          <path d="M -40,200
+                   C 60,120 180,110 240,160
+                   C 290,90 410,80 470,150
+                   C 540,100 660,120 700,180
+                   C 760,130 870,140 900,210
+                   C 980,180 1100,200 1160,260
+                   C 1220,240 1300,280 1320,360
+                   L 1320,400 L -40,400 Z" opacity="0.92"/>
+          <path d="M 100,100
+                   C 180,40 320,40 380,100
+                   C 440,60 560,80 600,140
+                   C 660,100 780,110 830,170
+                   C 920,140 1020,160 1080,220
+                   L 1080,260 L 100,260 Z" opacity="0.5"/>
+        </g>
+        <!-- 远山轮廓线 -->
+        <path d="M 0,340 L 200,280 L 380,310 L 560,260 L 780,300 L 980,270 L 1242,320"
+              stroke="#8ab28a" stroke-width="1.5" fill="none" opacity="0.55"/>
+      </svg>
+    </div>
+
+    <!-- 主图 -->
+    <div class="hero-img">
+      <img src="https://images.pexels.com/photos/32893151/pexels-photo-32893151.jpeg?auto=compress&cs=tinysrgb&w=1600"
+           alt="dreamy meadow with spring wildflowers from Pexels">
+    </div>
+    <div class="hero-tint"></div>
+
+    <!-- 草地装饰 -->
+    <div class="grass-deco">
+      <svg viewBox="0 0 1242 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="#557565" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round">
+          <path d="M 30 80 Q 28 50 32 30"/>
+          <path d="M 38 80 Q 42 55 36 38"/>
+          <path d="M 90 80 Q 92 52 88 30"/>
+          <path d="M 96 80 Q 94 55 102 35"/>
+          <path d="M 180 80 Q 178 50 184 28"/>
+          <path d="M 188 80 Q 192 52 186 32"/>
+          <path d="M 260 80 Q 258 50 264 30"/>
+          <path d="M 270 80 Q 274 56 268 36"/>
+          <path d="M 340 80 Q 336 48 342 26"/>
+          <path d="M 348 80 Q 352 55 346 32"/>
+          <path d="M 420 80 Q 418 50 424 28"/>
+          <path d="M 430 80 Q 434 55 428 32"/>
+          <path d="M 510 80 Q 506 48 512 26"/>
+          <path d="M 518 80 Q 522 55 516 32"/>
+          <path d="M 600 80 Q 598 50 604 28"/>
+          <path d="M 608 80 Q 612 55 606 32"/>
+          <path d="M 690 80 Q 688 48 694 26"/>
+          <path d="M 700 80 Q 704 55 698 32"/>
+          <path d="M 780 80 Q 776 50 782 28"/>
+          <path d="M 788 80 Q 792 55 786 32"/>
+          <path d="M 870 80 Q 866 50 872 28"/>
+          <path d="M 878 80 Q 882 55 876 32"/>
+          <path d="M 960 80 Q 958 50 964 28"/>
+          <path d="M 968 80 Q 972 55 966 32"/>
+          <path d="M 1050 80 Q 1046 50 1052 28"/>
+          <path d="M 1058 80 Q 1062 55 1056 32"/>
+          <path d="M 1140 80 Q 1138 50 1144 28"/>
+          <path d="M 1150 80 Q 1154 56 1148 32"/>
+          <path d="M 1200 80 Q 1196 50 1202 28"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="photo-credit">PHOTO · PEXELS / FARHAAN PARIMOO</div>
+  </div>
+
+  <!-- 提案列表 -->
+  <div class="proposals">
+    <div class="prop">
+      <h4><span class="num">01</span>城市公园野餐</h4>
+      <p>带一块格子布、半盒草莓,<br>坐到云挪了又挪。</p>
+    </div>
+    <div class="prop">
+      <h4><span class="num">02</span>周末山野徒步</h4>
+      <p>8 公里以内的小路,不打卡,<br>把节奏交还给身体。</p>
+    </div>
+    <div class="prop">
+      <h4><span class="num">03</span>阳台花园种植</h4>
+      <p>从一盆薄荷开始,把"等待"<br>重新放回每一天。</p>
+    </div>
+    <div class="prop">
+      <h4><span class="num">04</span>樱花树下夜读</h4>
+      <p>一本薄薄的随笔,<br>读到天色变蓝,读到困。</p>
+    </div>
+  </div>
+
+  <!-- 底栏 -->
+  <div class="footer">
+    <div class="footer-left">
+      <div class="date">4.04 — 5.20</div>
+      <div class="loc"><b>WHERE</b>城市 · 山野 · 阳台 · 任何有春风的地方</div>
+    </div>
+    <div class="footer-right">
+      <div class="brand">慢 <span class="sep">·</span> 生 <span class="sep">·</span> 活</div>
+      <div class="tag">SLOW LIVING JOURNAL &nbsp;/&nbsp; VOL.04</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -14,29 +14,25 @@ from ui.panels.settings_panel import SettingsPanel
 from ui.panels.log_panel import LogPanel
 from ui.panels.tools_panel import ToolsPanel
 from ui.panels.headers_panel import HeadersPanel
-from ui.panels.history_panel import HistoryPanel
-from ui.panels.explorer_panel import ExplorerPanel
-from ui.panels.analytics_panel import AnalyticsPanel
+from ui.panels.quant_panel import QuantPanel
 
 
 class MainWindow(ctk.CTk):
     """Main application window for WebScraper Pro."""
 
     NAV_ICONS = {
-        "dashboard": "\u2421",
-        "scraper": "\u25c8",
-        "explorer": "\u25c9",
-        "analytics": "\u25c6",
-        "proxies": "\u2295",
-        "tools": "\u2726",
-        "headers": "\u2630",
-        "history": "\u23f0",
-        "logs": "\u2261",
-        "scheduler": "\u23f2",
-        "settings": "\u2699",
+        "dashboard": "⬡",
+        "scraper": "◈",
+        "proxies": "⊕",
+        "tools": "✦",
+        "quant": "◈",
+        "headers": "☰",
+        "logs": "≡",
+        "scheduler": "⏲",
+        "settings": "⚙",
     }
-    NAV_LABELS = ["Scraper", "Explorer", "Analytics", "Proxies", "Tools", "Headers", "History", "Logs", "Scheduler", "Settings"]
-    NAV_KEYS = ["dashboard", "scraper", "explorer", "analytics", "proxies", "tools", "headers", "history", "logs", "scheduler", "settings"]
+    NAV_LABELS = ["Scraper", "Proxies", "Tools", "Quant", "Headers", "Logs", "Scheduler", "Settings"]
+    NAV_KEYS = ["dashboard", "scraper", "proxies", "tools", "quant", "headers", "logs", "scheduler", "settings"]
 
     def __init__(self):
         super().__init__()
@@ -192,6 +188,7 @@ class MainWindow(ctk.CTk):
         self._panels["proxies"] = ProxyPanel(self._content_frame)
         self._panels["tools"] = ToolsPanel(self._content_frame)
         self._panels["headers"] = HeadersPanel(self._content_frame)
+        self._panels["quant"] = QuantPanel(self._content_frame)
         self._panels["scheduler"] = SchedulerPanel(self._content_frame)
         self._panels["settings"] = SettingsPanel(self._content_frame)
         self._panels["logs"] = LogPanel(self._content_frame)
@@ -294,6 +291,7 @@ class MainWindow(ctk.CTk):
             "analytics": "Analytics (Quantitative)",
             "proxies": "Proxy Manager",
             "tools": "Developer Tools",
+            "quant": "Quantitative Finance",
             "headers": "Headers & Cookies",
             "logs": "Logs",
             "scheduler": "Task Scheduler",

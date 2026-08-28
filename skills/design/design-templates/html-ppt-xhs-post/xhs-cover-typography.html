@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>中文排版的呼吸感 · 小红书封面</title>
+<style>
+  :root {
+    --blue: #1652f0;
+    --paper: #e9e6dd;
+    --fold: #cfccc0;
+    --ink: #0a1628;
+    --ink-soft: #2c3849;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #2a2a2a;
+    font-family: 'PingFang SC', 'Helvetica Neue', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: var(--ink);
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 0;
+  }
+
+  /* ===== 画布 1242×1660 (3:4) ===== */
+  .cover {
+    width: 1242px;
+    height: 1660px;
+    position: relative;
+    background: var(--blue);
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,.4);
+  }
+
+  /* ===== 顶部蓝色区:日期与时段 ===== */
+  .top-bar {
+    position: absolute;
+    top: 60px;
+    left: 60px;
+    right: 60px;
+    color: #fff;
+    z-index: 5;
+  }
+  .date-row {
+    font-family: 'Helvetica Neue', 'Arial Black', sans-serif;
+    font-weight: 900;
+    font-size: 108px;
+    line-height: .95;
+    letter-spacing: -0.025em;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .date-row .sep {
+    font-weight: 300;
+    font-size: 100px;
+    transform: translateY(-6px);
+  }
+  .date-row .week {
+    font-family: 'PingFang SC', 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    font-size: 60px;
+    letter-spacing: 0.02em;
+  }
+  .top-sub {
+    margin-top: 22px;
+    font-size: 24px;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .top-sub .dot {
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  /* ===== 米白折纸主体 ===== */
+  .paper {
+    position: absolute;
+    top: 250px;
+    left: 40px;
+    right: 40px;
+    bottom: 150px;
+    background: var(--paper);
+    clip-path: polygon(
+      0% 6%,
+      70% 0%,
+      100% 10%,
+      100% 92%,
+      30% 100%,
+      0% 94%
+    );
+    z-index: 2;
+  }
+
+  /* 右上"被折起的角":一个略深的三角,贴在 paper 右上 */
+  .fold-corner-tr {
+    position: absolute;
+    top: 250px;
+    right: 40px;
+    width: 360px;
+    height: 196px;
+    background: var(--fold);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%);
+    z-index: 3;
+  }
+
+  /* 右上折角的 N°007 编号(顺着折角倾斜) */
+  .issue-tag {
+    position: absolute;
+    top: 296px;
+    right: 86px;
+    transform: rotate(28deg);
+    transform-origin: center;
+    z-index: 4;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    font-size: 70px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .issue-tag sup {
+    font-size: 0.5em;
+    vertical-align: super;
+    font-weight: 600;
+    margin-right: 2px;
+  }
+
+  /* ===== 折纸内文字主体 ===== */
+  .content {
+    position: absolute;
+    top: 320px;
+    left: 90px;
+    right: 90px;
+    bottom: 220px;
+    z-index: 6;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .eng-title {
+    font-family: 'Helvetica Neue', 'Arial Black', sans-serif;
+    font-weight: 900;
+    font-size: 128px;
+    line-height: .9;
+    letter-spacing: -0.035em;
+    color: var(--ink);
+  }
+
+  .cn-title-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .hashtag {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    font-size: 120px;
+    line-height: .9;
+    color: var(--ink);
+  }
+  .cn-title {
+    font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+    font-weight: 900;
+    font-size: 120px;
+    line-height: 1.02;
+    letter-spacing: 0.005em;
+    color: var(--ink);
+  }
+
+  .subtitle {
+    margin-top: 26px;
+    font-size: 34px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .subtitle .pipe {
+    margin: 0 12px;
+    color: var(--ink-soft);
+    opacity: .45;
+  }
+
+  /* ===== Pexels 字体特写图条 ===== */
+  .photo-strip {
+    margin-top: 40px;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+    clip-path: polygon(0 6%, 100% 0%, 100% 94%, 0% 100%);
+  }
+  .photo-strip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 45%;
+    filter: contrast(1.05) saturate(0.85);
+    display: block;
+  }
+  .photo-caption {
+    position: absolute;
+    bottom: 16px;
+    right: 18px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 16px;
+    color: #fff;
+    letter-spacing: 0.1em;
+    text-shadow: 0 1px 4px rgba(0,0,0,.7);
+    z-index: 2;
+  }
+
+  /* ===== 内容点列(2 列) ===== */
+  .points {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 50px;
+    row-gap: 18px;
+  }
+  .point {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    font-size: 28px;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+  .point .num {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--blue);
+    flex-shrink: 0;
+    min-width: 48px;
+  }
+  .point .txt {
+    font-weight: 600;
+  }
+
+  /* ===== 折纸内左下的 logo 区 ===== */
+  .logos {
+    margin-top: 32px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .logo-chip {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--ink);
+    line-height: 1.05;
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+  .logo-text {
+    font-family: 'PingFang SC', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .logo-text small {
+    display: block;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    opacity: .65;
+    margin-top: 3px;
+  }
+
+  /* ===== 底部蓝色区 footer ===== */
+  .bottom-bar {
+    position: absolute;
+    left: 60px;
+    right: 60px;
+    bottom: 50px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 5;
+  }
+  .brand {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    font-size: 22px;
+  }
+  .brand .cn {
+    display: block;
+    font-family: 'PingFang SC', sans-serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: 0.24em;
+    margin-top: 8px;
+  }
+  .meta {
+    text-align: right;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    line-height: 1.6;
+    font-family: 'Helvetica Neue', 'PingFang SC', sans-serif;
+    font-weight: 500;
+  }
+  .meta .big {
+    display: block;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+
+  <!-- 顶部日期 -->
+  <div class="top-bar">
+    <div class="date-row">
+      <span>06.01</span>
+      <span class="sep">|</span>
+      <span>20:00&ndash;22:00</span>
+      <span class="week">(周一)</span>
+    </div>
+    <div class="top-sub">
+      <span class="dot"></span>
+      <span>「设计夜读」第 07 期 &nbsp;·&nbsp; Field Notes on Type</span>
+    </div>
+  </div>
+
+  <!-- 折纸主体 -->
+  <div class="paper"></div>
+  <div class="fold-corner-tr"></div>
+
+  <!-- 右上折角的期号 -->
+  <div class="issue-tag">N<sup>o</sup>007</div>
+
+  <!-- 折纸内的内容 -->
+  <div class="content">
+    <div class="eng-title">Breath of<br>Chinese Type</div>
+
+    <div class="cn-title-wrap">
+      <span class="hashtag">#</span>
+      <div class="cn-title">中文排版的<br>呼吸感</div>
+    </div>
+
+    <div class="subtitle">
+      格律 <span class="pipe">/</span> 留白 <span class="pipe">/</span> 节奏 <span class="pipe">/</span> 灰度
+    </div>
+
+    <!-- Pexels 字体特写图条 -->
+    <div class="photo-strip">
+      <img src="https://images.pexels.com/photos/698327/pexels-photo-698327.jpeg?auto=compress&cs=tinysrgb&w=1600"
+           alt="typewriter close-up by Matej from Pexels">
+      <div class="photo-caption">PHOTO · PEXELS / MATEJ</div>
+    </div>
+
+    <!-- 4 条要点 -->
+    <div class="points">
+      <div class="point"><span class="num">#01</span><span class="txt">模数决定一切节奏</span></div>
+      <div class="point"><span class="num">#02</span><span class="txt">标题按词,不按字数</span></div>
+      <div class="point"><span class="num">#03</span><span class="txt">行长是字号的整数倍</span></div>
+      <div class="point"><span class="num">#04</span><span class="txt">留白本身就是设计</span></div>
+    </div>
+
+    <!-- 折纸左下角的 logo 区 -->
+    <div class="logos">
+      <div class="logo-chip">TYPE<br>NOTES</div>
+      <div class="logo-chip">EST.<br>2026</div>
+      <div class="logo-text">设计夜读<small>DESIGN&nbsp;·&nbsp;READING</small></div>
+    </div>
+  </div>
+
+  <!-- 底部 footer -->
+  <div class="bottom-bar">
+    <div class="brand">
+      DESIGN NOTES
+      <span class="cn">设 计 夜 读</span>
+    </div>
+    <div class="meta">
+      <span class="big">VOL.&nbsp;07&nbsp;/&nbsp;2026</span>
+      ISSN 2026&ndash;007 &nbsp;·&nbsp; SUMMER ISSUE
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

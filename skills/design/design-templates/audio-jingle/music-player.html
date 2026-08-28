@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<!-- Direction: iOS Music — ambient album wash + frosted glass card. Real cover art via iTunes Search API; 30s preview audio. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Now Playing</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+    background: #1a1410;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Ambient backdrop: blurred album art carries the room color */
+  .ambient {
+    position: absolute;
+    inset: -15%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(90px) saturate(1.6);
+    transform: scale(1.5);
+    opacity: 0;
+    transition: opacity 1s ease, background-image 1s ease;
+    z-index: 0;
+  }
+  .ambient.ready { opacity: 0.85; }
+
+  .ambient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.6) 100%);
+  }
+
+  /* Player card — frosted glass over album wash */
+  .player {
+    position: relative;
+    z-index: 2;
+    width: 360px;
+    padding: 16px;
+    border-radius: 32px;
+    background: rgba(40, 30, 25, 0.32);
+    backdrop-filter: blur(40px) saturate(1.6);
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow:
+      0 30px 80px -20px rgba(0, 0, 0, 0.55),
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+  }
+
+  /* ─── Top row ──────────────────────────────────────── */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .artist-pill {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 14px 5px 5px;
+    background: rgba(0, 0, 0, 0.28);
+    border-radius: 999px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    max-width: 200px;
+  }
+
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+  }
+
+  .artist-meta { line-height: 1.15; min-width: 0; }
+  .artist-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 140px;
+  }
+  .artist-handle {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .actions { display: flex; gap: 7px; }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(0, 0, 0, 0.28);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease;
+    backdrop-filter: blur(20px);
+  }
+  .icon-btn:hover { background: rgba(0, 0, 0, 0.4); }
+  .icon-btn:active { transform: scale(0.9); }
+  .icon-btn svg { width: 15px; height: 15px; }
+  .icon-btn.liked { color: #ff4d6a; }
+  .icon-btn.liked svg path { fill: #ff4d6a; stroke: #ff4d6a; }
+
+  /* ─── Album art ────────────────────────────────────── */
+  .album {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+    overflow: hidden;
+    background-color: rgba(255,255,255,0.04);
+    box-shadow:
+      0 12px 28px -6px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  }
+
+  .album img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.5s ease, transform 8s linear;
+    opacity: 0;
+  }
+  .album img.loaded { opacity: 1; }
+  .album.playing img { transform: scale(1.04); }
+
+  .album-skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg,
+      rgba(255,255,255,0.02) 30%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.02) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s infinite;
+    pointer-events: none;
+  }
+  .album.loaded .album-skeleton { display: none; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  /* ─── Track info ───────────────────────────────────── */
+  .track {
+    margin-top: 14px;
+    padding: 0 4px;
+  }
+  .track-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-bottom: 1px;
+  }
+  .track-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* ─── Progress ─────────────────────────────────────── */
+  .prog {
+    margin-top: 12px;
+    padding: 0 4px;
+  }
+  .prog-bar {
+    position: relative;
+    height: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  .prog-bar::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+  .prog-fill {
+    position: absolute;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    transition: width 0.15s linear;
+  }
+  .prog-thumb {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    left: 0;
+    transform: translateX(-50%);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .prog-bar:hover .prog-thumb { opacity: 1; }
+
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 11px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
+  }
+
+  /* ─── Controls ─────────────────────────────────────── */
+  .ctrls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    margin-top: 10px;
+    padding-bottom: 4px;
+  }
+  .ctrl {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.22);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.2s ease;
+    backdrop-filter: blur(20px);
+  }
+  .ctrl:hover { background: rgba(0, 0, 0, 0.36); }
+  .ctrl:active { transform: scale(0.9); }
+  .ctrl svg { width: 18px; height: 18px; fill: #fff; }
+
+  .ctrl.play {
+    width: 56px; height: 56px;
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 6px 18px -4px rgba(0,0,0,0.4);
+  }
+  .ctrl.play:hover { background: #fff; }
+  .ctrl.play svg { width: 22px; height: 22px; fill: #161310; }
+
+  /* ─── Queue strip ──────────────────────────────────── */
+  .queue {
+    position: absolute;
+    z-index: 2;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 18px;
+    background: rgba(40, 30, 25, 0.32);
+    backdrop-filter: blur(30px) saturate(1.4);
+    -webkit-backdrop-filter: blur(30px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 14px 32px -10px rgba(0,0,0,0.4);
+    max-width: 90vw;
+  }
+
+  .q-item {
+    width: 46px; height: 46px;
+    border-radius: 11px;
+    background-size: cover;
+    background-position: center;
+    background-color: rgba(255,255,255,0.06);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset;
+  }
+  .q-item:hover { transform: translateY(-2px); }
+  .q-item.active {
+    box-shadow:
+      0 0 0 2px rgba(255,255,255,0.95),
+      0 0 0 4px rgba(0,0,0,0.35);
+  }
+  .q-item.active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(0,0,0,0.32);
+  }
+  .q-item.active::before {
+    content: '';
+    position: absolute;
+    bottom: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 14px; height: 8px;
+    background:
+      linear-gradient(to top, #fff 100%, #fff 100%) no-repeat 0 100% / 2px 100%,
+      linear-gradient(to top, #fff 100%, #fff 100%) no-repeat 4px 100% / 2px 60%,
+      linear-gradient(to top, #fff 100%, #fff 100%) no-repeat 8px 100% / 2px 90%,
+      linear-gradient(to top, #fff 100%, #fff 100%) no-repeat 12px 100% / 2px 40%;
+    animation: bars 0.9s ease-in-out infinite alternate;
+    z-index: 1;
+  }
+  @keyframes bars {
+    from { background-size: 2px 30%, 2px 70%, 2px 40%, 2px 90%; }
+    to   { background-size: 2px 90%, 2px 30%, 2px 80%, 2px 50%; }
+  }
+
+  /* Hide bars unless playing */
+  body:not(.is-playing) .q-item.active::before { display: none; }
+
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 8px 14px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 12px;
+    border-radius: 999px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 420px) {
+    .player { width: calc(100vw - 32px); }
+    .queue { bottom: 16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="ambient" id="ambient"></div>
+
+  <div class="player">
+    <div class="top">
+      <div class="artist-pill">
+        <div class="avatar" id="avatar"></div>
+        <div class="artist-meta">
+          <div class="artist-name" id="artistName">Loading</div>
+          <div class="artist-handle" id="artistHandle">@—</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="icon-btn" id="shareBtn" aria-label="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v13"/>
+            <path d="m7 8 5-5 5 5"/>
+            <path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="likeBtn" aria-label="Like">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="album" id="album">
+      <div class="album-skeleton"></div>
+      <img id="albumImg" alt="">
+    </div>
+
+    <div class="track">
+      <div class="track-title" id="trackTitle">—</div>
+      <div class="track-sub" id="trackSub">—</div>
+    </div>
+
+    <div class="prog">
+      <div class="prog-bar" id="progBar">
+        <div class="prog-fill" id="progFill"></div>
+        <div class="prog-thumb" id="progThumb"></div>
+      </div>
+      <div class="time-row">
+        <span id="curTime">0:00</span>
+        <span id="remTime">-0:00</span>
+      </div>
+    </div>
+
+    <div class="ctrls">
+      <button class="ctrl" id="prevBtn" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      </button>
+      <button class="ctrl play" id="playBtn" aria-label="Play">
+        <svg viewBox="0 0 24 24" id="playSvg"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="ctrl" id="nextBtn" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M6 18 14.5 12 6 6v12zM16 6h2v12h-2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="queue" id="queue"></div>
+
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+  <audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
+
+<script>
+  const QUERIES = [
+    'blinding lights the weeknd',
+    'bad guy billie eilish',
+    'sicko mode travis scott',
+    'as it was harry styles',
+    'borderline tame impala',
+    'good 4 u olivia rodrigo',
+  ];
+
+  const PLAY_SVG  = '<path d="M8 5v14l11-7z"/>';
+  const PAUSE_SVG = '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>';
+
+  const $ = (id) => document.getElementById(id);
+  const audio = $('audio');
+  const ambient = $('ambient');
+  const album = $('album');
+  const albumImg = $('albumImg');
+  const avatar = $('avatar');
+
+  let tracks = [];
+  let idx = 0;
+  const liked = new Set();
+
+  const fmt = (s) => {
+    if (!isFinite(s) || s < 0) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = String(Math.floor(s % 60)).padStart(2, '0');
+    return `${m}:${sec}`;
+  };
+
+  const hires = (url) => (url || '').replace('100x100bb', '600x600bb');
+
+  const handleFrom = (name) =>
+    '@' + (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+  async function search(q) {
+    try {
+      const r = await fetch(
+        `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=1`
+      );
+      const j = await r.json();
+      const t = j.results && j.results[0];
+      if (!t || !t.previewUrl) return null;
+      return {
+        title: t.trackName,
+        artist: t.artistName,
+        album: t.collectionName,
+        artwork: hires(t.artworkUrl100),
+        preview: t.previewUrl,
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function renderQueue() {
+    const q = $('queue');
+    q.innerHTML = '';
+    tracks.forEach((t, i) => {
+      const d = document.createElement('div');
+      d.className = 'q-item' + (i === idx ? ' active' : '');
+      d.style.backgroundImage = `url("${t.artwork}")`;
+      d.title = `${t.title} — ${t.artist}`;
+      d.onclick = () => load(i, true);
+      q.appendChild(d);
+    });
+  }
+
+  function load(i, play = false) {
+    if (!tracks.length) return;
+    idx = ((i % tracks.length) + tracks.length) % tracks.length;
+    const t = tracks[idx];
+
+    album.classList.remove('loaded');
+    albumImg.classList.remove('loaded');
+    albumImg.onload = () => {
+      album.classList.add('loaded');
+      albumImg.classList.add('loaded');
+    };
+    albumImg.src = t.artwork;
+
+    ambient.style.backgroundImage = `url("${t.artwork}")`;
+    ambient.classList.add('ready');
+    avatar.style.backgroundImage = `url("${t.artwork}")`;
+
+    $('artistName').textContent = t.artist;
+    $('artistHandle').textContent = handleFrom(t.artist);
+    $('trackTitle').textContent = t.title;
+    $('trackSub').textContent = t.album;
+
+    $('likeBtn').classList.toggle('liked', liked.has(idx));
+
+    audio.src = t.preview;
+    renderQueue();
+
+    if (play) {
+      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    } else {
+      setPlaying(false);
+    }
+  }
+
+  function setPlaying(p) {
+    document.body.classList.toggle('is-playing', p);
+    album.classList.toggle('playing', p);
+    $('playSvg').innerHTML = p ? PAUSE_SVG : PLAY_SVG;
+  }
+
+  function toggle() {
+    if (!audio.src) return;
+    if (audio.paused) {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    } else {
+      audio.pause();
+      setPlaying(false);
+    }
+  }
+
+  function showToast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.classList.remove('show'), 1500);
+  }
+
+  /* Events */
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    $('progFill').style.width = pct + '%';
+    $('progThumb').style.left = pct + '%';
+    $('curTime').textContent = fmt(audio.currentTime);
+    $('remTime').textContent = '-' + fmt(audio.duration - audio.currentTime);
+  });
+  audio.addEventListener('ended', () => load(idx + 1, true));
+  audio.addEventListener('play', () => setPlaying(true));
+  audio.addEventListener('pause', () => setPlaying(false));
+
+  $('playBtn').onclick = toggle;
+  $('prevBtn').onclick = () => load(idx - 1, !audio.paused);
+  $('nextBtn').onclick = () => load(idx + 1, !audio.paused);
+
+  $('likeBtn').onclick = () => {
+    if (liked.has(idx)) { liked.delete(idx); showToast('Removed from Liked'); }
+    else { liked.add(idx); showToast('Added to Liked'); }
+    $('likeBtn').classList.toggle('liked', liked.has(idx));
+  };
+
+  $('shareBtn').onclick = async () => {
+    const t = tracks[idx];
+    if (!t) return;
+    const text = `♪ ${t.title} — ${t.artist}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard');
+    } catch {
+      showToast(text);
+    }
+  };
+
+  const seek = (e) => {
+    if (!audio.duration) return;
+    const r = $('progBar').getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    const pct = Math.max(0, Math.min(1, x / r.width));
+    audio.currentTime = pct * audio.duration;
+  };
+  $('progBar').addEventListener('click', seek);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); toggle(); }
+    else if (e.code === 'ArrowRight') load(idx + 1, !audio.paused);
+    else if (e.code === 'ArrowLeft')  load(idx - 1, !audio.paused);
+  });
+
+  /* Boot */
+  (async () => {
+    const results = await Promise.all(QUERIES.map(search));
+    tracks = results.filter(Boolean);
+    if (!tracks.length) {
+      $('trackTitle').textContent = 'Unable to load tracks';
+      $('trackSub').textContent = 'Check your network';
+      return;
+    }
+    load(0, false);
+  })();
+</script>
+</body>
+</html>

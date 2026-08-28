@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>专辑选辑</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100vh; height: 100svh;
+    overflow: hidden;
+    background: #0a0a0a;
+    color: #f4f4f4;
+    /* 中文字体放在前面，避免破折号/引号被英文字体抢走（破折号杀手）。lang="zh-CN" 配合激活字体 locl */
+    font-family: "PingFang SC", "MiSans", "HarmonyOS Sans SC", "Hiragino Sans GB", "Microsoft YaHei UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    overscroll-behavior: none;
+    touch-action: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 中文断行兜底：按词断而非按字硬断 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    line-break: strict;
+  }
+  ::selection { background: #f4f4f4; color: #0a0a0a; }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .lane {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    overflow: hidden;
+    cursor: grab;
+  }
+  .lane.is-dragging { cursor: grabbing; }
+
+  .track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 0 40px;
+    will-change: transform;
+  }
+
+  .card {
+    position: relative;
+    flex: 0 0 auto;
+    width: 360px;
+    height: 540px;
+    background: #fafaf7;
+    color: #111;
+    border-radius: 6px;
+    overflow: hidden;
+    user-select: none;
+  }
+  .card.tall { width: 320px; height: 540px; }
+  .card.wide { width: 420px; height: 540px; }
+
+  .media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  /* ===== 几何切割层 ===== */
+  /* 拱形：底部贴边的拱门遮罩 */
+  .geo-arch {
+    position: absolute;
+    left: 24px; right: 24px; bottom: 0;
+    height: 360px;
+    overflow: hidden;
+    border-top-left-radius: 999px;
+    border-top-right-radius: 999px;
+  }
+  .geo-arch img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 椭圆框 */
+  .geo-oval {
+    position: absolute;
+    left: 28px; right: 28px;
+    top: 60px;
+    height: 380px;
+    overflow: hidden;
+    border-radius: 50%;
+  }
+  .geo-oval img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 圆形剪裁 */
+  .geo-circle {
+    position: absolute;
+    top: 32px; left: 50%;
+    transform: translateX(-50%);
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  .geo-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 半圆贴边（顶部圆形） */
+  .geo-halftop {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 60%;
+    clip-path: ellipse(75% 100% at 50% 100%);
+    overflow: hidden;
+  }
+  .geo-halftop img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 对角切 */
+  .geo-diag {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 65%, 0 100%);
+    overflow: hidden;
+  }
+  .geo-diag img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 满版渐变照片背景 */
+  .geo-full { position: absolute; inset: 0; overflow: hidden; }
+  .geo-full img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 双圆叠加装饰 */
+  .ring {
+    position: absolute;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* ===== 卡片文字 ===== */
+  .title {
+    position: absolute;
+    left: 24px; right: 24px;
+    bottom: 60px;
+    /* 中文宋体栈（编辑/文学气质）。中文优先，避免标点回落到 Latin 字体 */
+    font-family: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", "STSong", "SimSun", "Times New Roman", "Georgia", serif;
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1.22;
+    letter-spacing: 0;
+    color: #111;
+  }
+  .title.light { color: #fafaf7; }
+  .title.center {
+    left: 50%;
+    right: auto;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+    text-align: center;
+    width: 80%;
+  }
+  .title.top {
+    top: 64px;
+    bottom: auto;
+  }
+
+  .mark {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mark svg { width: 100%; height: 100%; }
+  .mark.light { color: #fafaf7; }
+
+  .meta {
+    position: absolute;
+    left: 24px;
+    top: 24px;
+    /* 中文不用合成斜体；改用 sans + 适度字距营造编辑部感 */
+    font-family: "PingFang SC", "MiSans", "HarmonyOS Sans SC", "Hiragino Sans GB", -apple-system, "Helvetica Neue", sans-serif;
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: rgba(17,17,17,.55);
+    font-weight: 500;
+  }
+  .meta.light { color: rgba(250,250,247,.7); }
+  .meta.right { left: auto; right: 24px; }
+
+  @media (max-width: 900px) {
+    .card { width: 280px; height: 440px; }
+    .card.tall { width: 240px; height: 440px; }
+    .card.wide { width: 320px; height: 440px; }
+    .title { font-size: 24px; bottom: 50px; }
+    .geo-arch { height: 280px; }
+    .geo-oval { height: 300px; top: 50px; }
+    .geo-circle { width: 180px; height: 180px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="stage">
+  <div class="lane" id="lane">
+    <div class="track" id="track">
+      <!-- 卡片由 JS 注入，便于轮播循环 -->
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  // ===== 卡片数据：标题 / 图片 / 几何样式 =====
+  // 图片来自 Unsplash 公开 CDN（可直连）
+  const U = (id, w=900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+
+  const CARDS = [
+    {
+      kind: 'arch',
+      bg: '#f3efe6',
+      img: U('1506905925346-21bda4d32df4'),       // 山峦
+      title: '成为\n十倍速设计师',
+      meta: '第 01 辑',
+      titleClass: '',
+    },
+    {
+      kind: 'full',
+      bg: '#e9c3a0',
+      img: U('1554034483-04fda0d3507b'),           // 暖橘渐变
+      title: '为躁动心智\n打造的\n随取工坊',
+      meta: '第 02 辑',
+      titleClass: 'light center',
+      markLight: true,
+    },
+    {
+      kind: 'oval',
+      bg: '#ffffff',
+      img: U('1465146344425-f00d5f5c8f07'),         // 草地花
+      title: '向一株草，\n学习耐心。',
+      meta: '第 03 辑',
+      titleClass: 'top',
+      titleAlign: 'right',
+    },
+    {
+      kind: 'circle',
+      bg: '#eef0ea',
+      img: U('1470071459604-3b5ec3a7fe05'),         // 雾山
+      title: '慢生活\n手帐',
+      meta: '第 04 辑',
+      titleClass: '',
+    },
+    {
+      kind: 'halftop',
+      bg: '#f6f1ea',
+      img: U('1487958449943-2429e8be8625'),         // 建筑
+      title: '都市札记 ——\n2026。',
+      meta: '第 05 辑',
+      titleClass: '',
+    },
+    {
+      kind: 'full',
+      bg: '#c9d4d0',
+      img: U('1502134249126-9f3755a50d78'),         // 暮色山景
+      title: '多做事，\n少说话。',
+      meta: '第 06 辑',
+      titleClass: 'light',
+      markLight: true,
+    },
+    {
+      kind: 'diag',
+      bg: '#efe7dc',
+      img: U('1518837695005-2083093ee35b'),         // 海洋
+      title: '漂流\n状态。',
+      meta: '第 07 辑',
+      titleClass: '',
+    },
+    {
+      kind: 'arch',
+      bg: '#ece6db',
+      img: U('1469474968028-56623f02e42e'),         // 风景
+      title: '一份\n安静工作\n田野指南',
+      meta: '第 08 辑',
+      titleClass: '',
+    },
+  ];
+
+  // ===== 渲染卡片 =====
+  const SHAPES = {
+    arch:   `<div class="geo-arch"><img src="{IMG}" alt=""></div>`,
+    oval:   `<div class="geo-oval"><img src="{IMG}" alt=""></div>`,
+    circle: `<div class="geo-circle"><img src="{IMG}" alt=""></div>`,
+    halftop:`<div class="geo-halftop"><img src="{IMG}" alt=""></div>`,
+    diag:   `<div class="geo-diag"><img src="{IMG}" alt=""></div>`,
+    full:   `<div class="geo-full"><img src="{IMG}" alt=""></div>`,
+  };
+
+  const markSVG = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M7 12c3-5 7-5 10 0M7 12c3 5 7 5 10 0"/>
+    </svg>`;
+
+  function buildCard(c) {
+    const widthCls = c.kind === 'full' ? 'tall' : (c.kind === 'oval' ? 'wide' : '');
+    const shape = SHAPES[c.kind].replace('{IMG}', c.img);
+    const titleHTML = c.title.split('\n').map(l => `<div>${l}</div>`).join('');
+    const metaPos = c.titleAlign === 'right' ? 'right' : '';
+    const metaCls = c.markLight ? 'light' : '';
+    const titleStyle = c.titleAlign === 'right' ? 'text-align:right;' : '';
+    return `
+      <article class="card ${widthCls}" style="background:${c.bg}">
+        ${shape}
+        <div class="meta ${metaCls} ${metaPos}">${c.meta} · 编辑专栏</div>
+        <h2 class="title ${c.titleClass}" style="${titleStyle}">${titleHTML}</h2>
+        <div class="mark ${c.markLight ? 'light' : ''}">${markSVG}</div>
+      </article>
+    `;
+  }
+
+  const track = document.getElementById('track');
+  // 双倍渲染以实现无缝循环
+  const html = CARDS.map(buildCard).join('');
+  track.innerHTML = html + html;
+
+  // ===== 横向轮播：自动滚 + 拖拽 =====
+  const lane = document.getElementById('lane');
+
+  let x = 0;           // 当前位移
+  let vx = -0.45;      // 自动速度（px/帧）
+  let halfWidth = 0;   // 一组卡片宽度（包含 gap 与左 padding）
+  let isDown = false;
+  let lastX = 0;
+  let dragVX = 0;
+  let paused = false;
+
+  function measure() {
+    // 一组卡片的总宽：第二组第一张距 track 左边的距离 = 一组宽度
+    const cards = track.children;
+    if (cards.length < CARDS.length + 1) return;
+    const first = cards[0];
+    const secondGroupFirst = cards[CARDS.length];
+    halfWidth = secondGroupFirst.offsetLeft - first.offsetLeft;
+  }
+
+  function tick() {
+    if (!isDown && !paused) {
+      x += vx;
+    }
+    // 无缝循环
+    if (halfWidth > 0) {
+      if (x <= -halfWidth) x += halfWidth;
+      if (x > 0) x -= halfWidth;
+    }
+    track.style.transform = `translate3d(${x}px,0,0)`;
+    requestAnimationFrame(tick);
+  }
+
+  // 拖拽
+  lane.addEventListener('pointerdown', e => {
+    isDown = true;
+    lastX = e.clientX;
+    dragVX = 0;
+    lane.classList.add('is-dragging');
+    lane.setPointerCapture(e.pointerId);
+  });
+  lane.addEventListener('pointermove', e => {
+    if (!isDown) return;
+    const dx = e.clientX - lastX;
+    lastX = e.clientX;
+    x += dx;
+    dragVX = dx;
+  });
+  function endDrag(e){
+    if (!isDown) return;
+    isDown = false;
+    lane.classList.remove('is-dragging');
+    // 惯性：把最后一次拖拽速度带入自动速度，再缓慢回到默认
+    const target = -0.45;
+    let v = Math.max(-12, Math.min(12, dragVX));
+    const ease = () => {
+      v = v * 0.92 + target * 0.08;
+      vx = v;
+      if (Math.abs(v - target) > 0.02) requestAnimationFrame(ease);
+      else vx = target;
+    };
+    ease();
+  }
+  lane.addEventListener('pointerup', endDrag);
+  lane.addEventListener('pointercancel', endDrag);
+  lane.addEventListener('pointerleave', endDrag);
+
+  // 滚轮横向滚动（鼠标横滑或竖滚都映射到 x）
+  lane.addEventListener('wheel', e => {
+    const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    x -= dx * 0.6;
+    e.preventDefault();
+  }, { passive:false });
+
+  // 悬停轻微减速
+  lane.addEventListener('mouseenter', () => { paused = false; vx = -0.2; });
+  lane.addEventListener('mouseleave', () => { vx = -0.45; });
+
+  // 等图片加载好再测量
+  const imgs = track.querySelectorAll('img');
+  let loaded = 0;
+  const onReady = () => { if (++loaded >= imgs.length) measure(); };
+  imgs.forEach(img => {
+    if (img.complete) onReady();
+    else { img.addEventListener('load', onReady); img.addEventListener('error', onReady); }
+  });
+  // 兜底，1.2s 后强制测量一次
+  setTimeout(measure, 1200);
+  window.addEventListener('resize', measure);
+
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

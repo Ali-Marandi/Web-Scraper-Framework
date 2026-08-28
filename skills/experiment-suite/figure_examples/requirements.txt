@@ -1,0 +1,5 @@
+# Dependencies for the publication-figure example scripts.
+# Install:  pip install -r requirements.txt
+matplotlib>=3.7
+numpy>=1.24
+seaborn>=0.13

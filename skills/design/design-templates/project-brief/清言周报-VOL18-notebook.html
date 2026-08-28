@@ -1,0 +1,945 @@
+<!-- Design direction: Editorial Notebook / Scrapbook Collage
+     Typography: Image 2 editorial serif (Noto Serif SC light/regular)
+     Layout: Image 1 notebook collage (cobalt tape, mint tab, spiral holes, receipt overlay) -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=900, initial-scale=1">
+<title>清言产品更新周报 · VOL.18</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  /* 飞花宋体 FlyFlowerSong — ZeoSeven Fonts CDN（已分包，按需加载） */
+  @import url("https://fontsapi.zeoseven.com/11/main/result.css");
+</style>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ink:        #0a0a0a;
+    --ink-mute:   #5a5648;
+    --ink-soft:   #8a8470;
+    --paper:      #f3eede;
+    --paper-deep: #ebe4cf;
+    --rule:       #b9cfe6;
+    --cobalt:     #1a3ce8;
+    --cobalt-dk:  #1530c4;
+    --mint:       #c8dca5;
+    --receipt:    #ece2c4;
+    --receipt-ln: #beb18d;
+  }
+
+  html, body {
+    background: #050505;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    word-break: keep-all;
+    line-break: strict;
+    font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+  }
+
+  .frame {
+    width: 900px;
+    margin: 0 auto;
+    background: #050505;
+    padding: 36px 24px 44px;
+  }
+
+  /* ---------- Notebook paper ---------- */
+  .paper {
+    position: relative;
+    width: 100%;
+    background-color: var(--paper);
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 31px,
+        var(--rule) 31px,
+        var(--rule) 31.6px
+      );
+    background-position: 0 80px;
+    padding: 72px 64px 100px 132px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      8px 12px 0 -2px rgba(0,0,0,0.45);
+  }
+
+  /* Mint folder tab */
+  .paper::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 280px;
+    width: 56px;
+    height: 260px;
+    background: var(--mint);
+    border-left: 1px solid rgba(0,0,0,0.08);
+    z-index: 0;
+  }
+
+  /* Spiral holes */
+  .holes {
+    position: absolute;
+    left: 38px;
+    top: 80px;
+    bottom: 100px;
+    width: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+  }
+  .hole {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #050505;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.06);
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    position: relative;
+    z-index: 3;
+    margin-bottom: 36px;
+  }
+
+  .vol-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--ink);
+    margin-bottom: 28px;
+  }
+  .vol-line .sep { margin: 0 10px; color: var(--ink-soft); }
+
+  h1.display {
+    font-family: 'FlyFlowerSong', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
+    font-weight: normal;
+    font-size: 100px;
+    line-height: 1.08;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+  h1.display .row { display: block; }
+
+  .subtitle-en {
+    font-family: 'Playfair Display', 'Noto Serif SC', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+
+  .hairline {
+    width: 60px;
+    height: 1.5px;
+    background: var(--ink);
+    border: 0;
+    margin: 24px 0 28px;
+  }
+
+  .intro {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--ink);
+    max-width: 480px;
+    margin-bottom: 0;
+  }
+
+  /* Field list (publication credits) */
+  .fields {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    row-gap: 12px;
+    column-gap: 24px;
+    max-width: 560px;
+    margin-top: 32px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(10,10,10,0.18);
+  }
+  .fields dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-mute);
+    padding-top: 3px;
+  }
+  .fields dd {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .fields .addr {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    margin-top: 2px;
+  }
+
+  /* ---------- Blue tape ---------- */
+  .tape {
+    position: absolute;
+    top: 152px;
+    right: -18px;
+    width: 168px;
+    background: var(--cobalt);
+    color: #f5f0db;
+    padding: 22px 18px 24px;
+    transform: rotate(2deg);
+    z-index: 4;
+    box-shadow: 5px 7px 0 rgba(0,0,0,0.16);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.0;
+  }
+  .tape::before, .tape::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 6px;
+    background-image:
+      linear-gradient(135deg, var(--cobalt) 25%, transparent 25%),
+      linear-gradient(225deg, var(--cobalt) 25%, transparent 25%);
+    background-size: 12px 12px;
+  }
+  .tape::before { top: -6px; }
+  .tape::after { bottom: -6px; transform: scaleY(-1); }
+
+  /* Binder clip */
+  .clip {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 78px;
+    height: 32px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    z-index: 5;
+  }
+  .clip::before {
+    content: '';
+    position: absolute;
+    inset: 4px 8px;
+    border: 1.2px solid #444;
+    border-radius: 1px;
+  }
+  .clip::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 16px;
+    right: 16px;
+    height: 20px;
+    border: 2px solid #2a2a2a;
+    border-bottom: none;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  }
+
+  .tape .t-vol {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.7;
+    margin-bottom: 6px;
+    letter-spacing: 0.22em;
+  }
+  .tape .t-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 76px;
+    line-height: 0.85;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+  .tape .t-date {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .tape .t-foot {
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.65;
+    margin-top: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  /* ---------- Divider ---------- */
+  .divider {
+    border: 0;
+    border-top: 1px dashed rgba(10,10,10,0.4);
+    margin: 32px 0 24px;
+    position: relative;
+    z-index: 3;
+  }
+
+  /* ---------- TOC ---------- */
+  .toc {
+    position: relative;
+    z-index: 3;
+    margin-bottom: 8px;
+  }
+  .toc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--cobalt);
+    margin-bottom: 14px;
+  }
+  .toc-label .note {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--ink-mute);
+    letter-spacing: 0;
+    margin-left: 12px;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .toc-cell {
+    border-top: 1px solid var(--ink);
+    padding-top: 10px;
+  }
+  .toc-cell .name {
+    font-family: 'FlyFlowerSong', 'Noto Serif SC', serif;
+    font-weight: normal;
+    font-size: 26px;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .toc-cell .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--ink-mute);
+    letter-spacing: 0.06em;
+  }
+  .toc-cell .count .arrow { color: var(--cobalt); margin-right: 6px; }
+
+  /* ---------- Section header ---------- */
+  .section-head {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin: 56px 0 18px;
+  }
+  .section-kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--cobalt);
+  }
+  .section-name {
+    font-family: 'FlyFlowerSong', 'Noto Serif SC', serif;
+    font-weight: normal;
+    font-size: 40px;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+  .section-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.12em;
+  }
+
+  /* ---------- Feature item (5 new) ---------- */
+  .feat {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 18px;
+    padding: 16px 0 18px;
+    border-top: 1px solid rgba(10,10,10,0.16);
+  }
+  .feat:first-of-type { border-top: 1px solid var(--ink); }
+  .feat:last-of-type { border-bottom: 1px solid rgba(10,10,10,0.16); }
+  .feat .idx {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+    padding-top: 5px;
+  }
+  .feat .body { padding-top: 0; }
+  .feat .name {
+    font-family: 'FlyFlowerSong', 'Noto Serif SC', serif;
+    font-weight: normal;
+    font-size: 23px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .feat .desc {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink-mute);
+    max-width: 480px;
+  }
+  .feat .desc .arrow {
+    color: var(--cobalt);
+    font-weight: 500;
+    margin-right: 6px;
+  }
+  .feat .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--paper);
+    background: var(--cobalt);
+    padding: 3px 7px 4px;
+    margin-left: 10px;
+    vertical-align: 4px;
+  }
+  .feat .badge.alt {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 2px 6px 3px;
+  }
+
+  /* ---------- Optimizations: receipt block ---------- */
+  .receipt {
+    position: relative;
+    z-index: 3;
+    margin: 22px 0 0;
+    background: var(--receipt);
+    background-image:
+      repeating-linear-gradient(to right, transparent 0 26px, var(--receipt-ln) 26px 26.4px),
+      repeating-linear-gradient(to bottom, transparent 0 22px, var(--receipt-ln) 22px 22.4px);
+    background-blend-mode: multiply;
+    padding: 24px 28px 28px;
+    transform: rotate(-0.5deg);
+    box-shadow:
+      0 4px 0 -1px rgba(0,0,0,0.05),
+      6px 10px 14px -8px rgba(0,0,0,0.28);
+  }
+  .receipt::before {
+    content: '';
+    position: absolute;
+    top: -16px;
+    left: 50px;
+    width: 16px;
+    height: 50px;
+    border: 1.8px solid #888;
+    border-radius: 8px;
+    transform: rotate(-12deg);
+  }
+  .receipt-head {
+    display: flex;
+    align-items: baseline;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+  .receipt-head .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--cobalt);
+    margin-right: 14px;
+  }
+  .receipt-head .t {
+    font-family: 'FlyFlowerSong', 'Noto Serif SC', serif;
+    font-weight: normal;
+    font-size: 20px;
+  }
+  .receipt-head .n {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+  }
+  .opt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 28px;
+    row-gap: 0;
+  }
+  .opt {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    column-gap: 10px;
+    padding: 8px 0 9px;
+    border-bottom: 1px dotted rgba(10,10,10,0.3);
+    align-items: start;
+  }
+  .opt .o-i {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-mute);
+  }
+  .opt .o-t {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  /* ---------- Bug fixes ---------- */
+  .bugs {
+    position: relative;
+    z-index: 3;
+    margin-top: 42px;
+  }
+  .bug-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 28px;
+  }
+  .bug {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    column-gap: 12px;
+    padding: 12px 0 14px;
+    border-bottom: 1px solid rgba(10,10,10,0.18);
+  }
+  .bug:first-of-type, .bug:nth-of-type(2) { border-top: 1px solid var(--ink); }
+  .bug .b-i {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--cobalt);
+    padding-top: 2px;
+  }
+  .bug .b-t {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  /* ---------- Lockup ---------- */
+  .lockup {
+    position: relative;
+    z-index: 3;
+    margin: 56px 0 28px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .lockup-inner {
+    text-align: right;
+    line-height: 0.95;
+  }
+  .lockup-inner .l1 {
+    font-family: 'FlyFlowerSong', 'Noto Serif SC', serif;
+    font-weight: normal;
+    font-size: 88px;
+    letter-spacing: 0.01em;
+    line-height: 0.95;
+    color: var(--ink);
+  }
+  .lockup-inner .l1 .de {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 52px;
+    margin: 0 8px;
+    color: var(--cobalt);
+    vertical-align: 6px;
+  }
+  .lockup-inner .l2 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 22px;
+    margin-top: 14px;
+    color: var(--ink-mute);
+    letter-spacing: 0.01em;
+  }
+
+  /* ---------- QR + meta ---------- */
+  .bottom-row {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-top: 8px;
+  }
+
+  .qr-block {
+    display: inline-flex;
+    align-items: stretch;
+  }
+  .qr-label {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    padding: 10px 12px;
+    line-height: 1.5;
+    align-self: flex-start;
+    text-transform: uppercase;
+  }
+  .qr {
+    width: 108px;
+    height: 108px;
+    background: #fff;
+    padding: 7px;
+  }
+  .qr svg { display: block; width: 100%; height: 100%; }
+  .qr-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+  }
+
+  .ticket-meta {
+    text-align: right;
+  }
+  .ticket-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .ticket-row .b {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-soft);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .ticket-row .a {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  /* ---------- Footer ---------- */
+  .footer-brand {
+    position: relative;
+    z-index: 3;
+    margin-top: 44px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-brand .left {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .footer-brand .badges {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .footer-brand .bdg {
+    border: 1px solid var(--ink);
+    padding: 4px 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="paper">
+
+    <!-- Spiral binding holes -->
+    <div class="holes" aria-hidden="true">
+      <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div>
+    </div>
+
+    <!-- Blue tape with binder clip -->
+    <div class="tape">
+      <div class="clip"></div>
+      <div class="t-vol">VOL</div>
+      <div class="t-num">18</div>
+      <div class="t-date">05.18<br>– 05.22</div>
+      <div class="t-foot">2025 · WEEK 21</div>
+    </div>
+
+    <!-- Masthead -->
+    <header class="masthead">
+      <div class="vol-line">VOL.18<span class="sep">·</span>2025.05.18<span class="sep">—</span>05.22<span class="sep">·</span>WEEKLY</div>
+
+      <h1 class="display">
+        <span class="row">清言</span>
+        <span class="row row-2">产品更新周报</span>
+      </h1>
+      <div class="subtitle-en">Product Update Weekly</div>
+      <hr class="hairline">
+      <p class="intro">本周共 5 项新功能上线，14 项体验优化，4 项问题修复。<br>AgentMore 技能广场正式开放，覆盖同城旅游、AMiner、东方财富等服务。</p>
+
+      <dl class="fields">
+        <dt>OUTPUT</dt>
+        <dd>
+          清言产品团队
+          <div class="addr">Zhipu AI · Beijing · 中关村融科资讯中心</div>
+        </dd>
+
+        <dt>EDITORIAL</dt>
+        <dd>AgentMore 编辑组</dd>
+
+        <dt>PUBLISHED</dt>
+        <dd>
+          2025 年 5 月 22 日
+          <div class="addr">本期覆盖 05 / 18 — 05 / 22 · 共 23 项更新</div>
+        </dd>
+      </dl>
+    </header>
+
+    <hr class="divider">
+
+    <!-- TOC -->
+    <div class="toc">
+      <div class="toc-label">EXPOSICIONES<span class="note">本期三大板块</span></div>
+      <div class="toc-grid">
+        <div class="toc-cell">
+          <div class="name">新功能</div>
+          <div class="count"><span class="arrow">→</span>5 项 / New Features</div>
+        </div>
+        <div class="toc-cell">
+          <div class="name">体验优化</div>
+          <div class="count"><span class="arrow">→</span>14 项 / Optimizations</div>
+        </div>
+        <div class="toc-cell">
+          <div class="name">问题修复</div>
+          <div class="count"><span class="arrow">→</span>4 项 / Bug Fixes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ NEW FEATURES ============ -->
+    <div class="section-head">
+      <span class="section-kicker">NUEVAS FUNCIONES</span>
+      <span class="section-name">本周五项新功能</span>
+      <span class="section-count">01 — 05</span>
+    </div>
+
+    <div class="feat">
+      <div class="idx">01</div>
+      <div class="body">
+        <div class="name">AgentMore 技能广场<span class="badge">重磅</span></div>
+        <div class="desc"><span class="arrow">→</span>正式上线，为用户提供更丰富的技能选择和体验</div>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="idx">02</div>
+      <div class="body">
+        <div class="name">AgentMore 新上线 Skills<span class="badge alt">新增</span></div>
+        <div class="desc"><span class="arrow">→</span>同城旅游、AMiner、东方财富，丰富平台服务内容</div>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="idx">03</div>
+      <div class="body">
+        <div class="name">积分明细新增下月到账时间提示</div>
+        <div class="desc"><span class="arrow">→</span>增强积分变动的透明度，提前知晓资金到账</div>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="idx">04</div>
+      <div class="body">
+        <div class="name">积分明细增加积分发放提示</div>
+        <div class="desc"><span class="arrow">→</span>提供更详细的积分变动信息，发放节点清晰可追溯</div>
+      </div>
+    </div>
+
+    <div class="feat">
+      <div class="idx">05</div>
+      <div class="body">
+        <div class="name">新增礼品卡批量购买逻辑</div>
+        <div class="desc"><span class="arrow">→</span>支持 SVIP 和积分包类型的礼品卡批量购买</div>
+      </div>
+    </div>
+
+    <!-- ============ OPTIMIZATIONS — receipt ============ -->
+    <div class="section-head">
+      <span class="section-kicker">OPTIMIZACIONES</span>
+      <span class="section-name">十四项体验优化</span>
+      <span class="section-count">01 — 14</span>
+    </div>
+
+    <div class="receipt">
+      <div class="receipt-head">
+        <span class="k">RECEIPT · 体验</span>
+        <span class="t">Optimization Log</span>
+        <span class="n">14 ITEMS · NO. 2025-21</span>
+      </div>
+
+      <div class="opt-grid">
+        <div class="opt"><span class="o-i">01</span><span class="o-t">AgentMore 页面样式优化，提升侧边栏与 Skills 头像的视觉一致性</span></div>
+        <div class="opt"><span class="o-i">02</span><span class="o-t">AgentMore 引导弹窗小屏适配优化，提升小屏设备体验</span></div>
+        <div class="opt"><span class="o-i">03</span><span class="o-t">AgentMore 域名安全相关问题优化，提升系统安全性</span></div>
+        <div class="opt"><span class="o-i">04</span><span class="o-t">前端断网提示优化，提升网络异常情况下的用户反馈体验</span></div>
+        <div class="opt"><span class="o-i">05</span><span class="o-t">Agent 模式使用次数与积分展示逻辑优化，额度信息更清晰</span></div>
+        <div class="opt"><span class="o-i">06</span><span class="o-t">主 Chat 历史记录异步对话续传逻辑变更，优化长对话体验</span></div>
+        <div class="opt"><span class="o-i">07</span><span class="o-t">输入框上传文件个数限制调整为 50 个，满足多文件处理需求</span></div>
+        <div class="opt"><span class="o-i">08</span><span class="o-t">页面跳转链接优化，提升导航的流畅度和准确性</span></div>
+        <div class="opt"><span class="o-i">09</span><span class="o-t">清言企业版自动续费逻辑优化，改善续费流程的便捷性</span></div>
+        <div class="opt"><span class="o-i">10</span><span class="o-t">PC 会员购买界面设计优化，提升购买流程的流畅性</span></div>
+        <div class="opt"><span class="o-i">11</span><span class="o-t">Markdown 水平分隔线展示效果优化，增强内容可读性</span></div>
+        <div class="opt"><span class="o-i">12</span><span class="o-t">消息时间展示格式优化，提升信息清晰度</span></div>
+        <div class="opt"><span class="o-i">13</span><span class="o-t">群聊创建弹窗招募区域布局优化，提升创建流程的友好性</span></div>
+        <div class="opt"><span class="o-i">14</span><span class="o-t">清言 H5 端心跳 Loading 样式优化，改善加载动画效果</span></div>
+      </div>
+    </div>
+
+    <!-- ============ BUG FIXES ============ -->
+    <div class="bugs">
+      <div class="section-head" style="margin:36px 0 14px">
+        <span class="section-kicker">BUG FIXES</span>
+        <span class="section-name">四项问题修复</span>
+        <span class="section-count">01 — 04</span>
+      </div>
+
+      <div class="bug-grid">
+        <div class="bug">
+          <span class="b-i">01</span>
+          <span class="b-t">AgentMore 修复部分 Agent 共用 Skill 的问题，提升技能兼容性和稳定性</span>
+        </div>
+        <div class="bug">
+          <span class="b-i">02</span>
+          <span class="b-t">AgentMore 修复 Skill 卸载过程中的异常问题，确保功能正常运行</span>
+        </div>
+        <div class="bug">
+          <span class="b-i">03</span>
+          <span class="b-t">修复历史记录进入和 APP 后台切换时的打字效果异常问题</span>
+        </div>
+        <div class="bug">
+          <span class="b-i">04</span>
+          <span class="b-t">修复线上图稳定性问题，确保图片正常加载和显示</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lockup -->
+    <div class="lockup">
+      <div class="lockup-inner">
+        <div class="l1">清言<span class="de">·</span>周报</div>
+        <div class="l2">todo el día · 全天都在更新</div>
+      </div>
+    </div>
+
+    <!-- Bottom row: QR + ticket meta -->
+    <div class="bottom-row">
+      <div>
+        <div class="qr-block">
+          <div class="qr-label">SCAN<br>订阅</div>
+          <div class="qr">
+            <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <rect width="21" height="21" fill="#fff"/>
+              <g fill="#0a0a0a">
+                <rect x="0" y="0" width="7" height="7"/>
+                <rect x="14" y="0" width="7" height="7"/>
+                <rect x="0" y="14" width="7" height="7"/>
+              </g>
+              <g fill="#fff">
+                <rect x="1" y="1" width="5" height="5"/>
+                <rect x="15" y="1" width="5" height="5"/>
+                <rect x="1" y="15" width="5" height="5"/>
+              </g>
+              <g fill="#0a0a0a">
+                <rect x="2" y="2" width="3" height="3"/>
+                <rect x="16" y="2" width="3" height="3"/>
+                <rect x="2" y="16" width="3" height="3"/>
+              </g>
+              <g fill="#0a0a0a">
+                <rect x="8" y="0" width="1" height="1"/><rect x="10" y="0" width="1" height="1"/><rect x="13" y="0" width="1" height="1"/>
+                <rect x="9" y="1" width="2" height="1"/><rect x="12" y="1" width="1" height="1"/>
+                <rect x="8" y="2" width="1" height="1"/><rect x="11" y="2" width="2" height="1"/>
+                <rect x="9" y="3" width="1" height="1"/><rect x="12" y="3" width="1" height="1"/>
+                <rect x="8" y="4" width="2" height="1"/><rect x="11" y="4" width="1" height="1"/><rect x="13" y="4" width="1" height="1"/>
+                <rect x="10" y="5" width="1" height="1"/><rect x="12" y="5" width="2" height="1"/>
+                <rect x="8" y="6" width="1" height="1"/><rect x="11" y="6" width="1" height="1"/>
+                <rect x="0" y="8" width="1" height="1"/><rect x="2" y="8" width="2" height="1"/><rect x="5" y="8" width="1" height="1"/><rect x="7" y="8" width="2" height="1"/><rect x="10" y="8" width="1" height="1"/><rect x="13" y="8" width="2" height="1"/><rect x="16" y="8" width="1" height="1"/><rect x="18" y="8" width="2" height="1"/>
+                <rect x="1" y="9" width="1" height="1"/><rect x="3" y="9" width="1" height="1"/><rect x="6" y="9" width="1" height="1"/><rect x="9" y="9" width="2" height="1"/><rect x="12" y="9" width="1" height="1"/><rect x="14" y="9" width="2" height="1"/><rect x="17" y="9" width="1" height="1"/><rect x="20" y="9" width="1" height="1"/>
+                <rect x="0" y="10" width="2" height="1"/><rect x="4" y="10" width="1" height="1"/><rect x="6" y="10" width="2" height="1"/><rect x="9" y="10" width="1" height="1"/><rect x="11" y="10" width="1" height="1"/><rect x="14" y="10" width="1" height="1"/><rect x="16" y="10" width="2" height="1"/><rect x="19" y="10" width="1" height="1"/>
+                <rect x="2" y="11" width="1" height="1"/><rect x="5" y="11" width="2" height="1"/><rect x="8" y="11" width="1" height="1"/><rect x="10" y="11" width="2" height="1"/><rect x="13" y="11" width="1" height="1"/><rect x="15" y="11" width="1" height="1"/><rect x="18" y="11" width="2" height="1"/>
+                <rect x="0" y="12" width="1" height="1"/><rect x="3" y="12" width="2" height="1"/><rect x="7" y="12" width="1" height="1"/><rect x="9" y="12" width="1" height="1"/><rect x="12" y="12" width="2" height="1"/><rect x="15" y="12" width="2" height="1"/><rect x="18" y="12" width="1" height="1"/><rect x="20" y="12" width="1" height="1"/>
+                <rect x="1" y="13" width="2" height="1"/><rect x="4" y="13" width="1" height="1"/><rect x="6" y="13" width="1" height="1"/><rect x="8" y="13" width="2" height="1"/><rect x="11" y="13" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/><rect x="16" y="13" width="1" height="1"/><rect x="19" y="13" width="2" height="1"/>
+                <rect x="8" y="14" width="1" height="1"/><rect x="10" y="14" width="2" height="1"/><rect x="13" y="14" width="1" height="1"/><rect x="15" y="14" width="1" height="1"/><rect x="17" y="14" width="2" height="1"/><rect x="20" y="14" width="1" height="1"/>
+                <rect x="9" y="15" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/><rect x="14" y="15" width="2" height="1"/><rect x="18" y="15" width="1" height="1"/>
+                <rect x="8" y="16" width="2" height="1"/><rect x="12" y="16" width="1" height="1"/><rect x="14" y="16" width="1" height="1"/><rect x="16" y="16" width="2" height="1"/><rect x="19" y="16" width="2" height="1"/>
+                <rect x="10" y="17" width="1" height="1"/><rect x="13" y="17" width="2" height="1"/><rect x="17" y="17" width="1" height="1"/><rect x="19" y="17" width="1" height="1"/>
+                <rect x="8" y="18" width="1" height="1"/><rect x="11" y="18" width="2" height="1"/><rect x="14" y="18" width="1" height="1"/><rect x="16" y="18" width="1" height="1"/><rect x="18" y="18" width="2" height="1"/>
+                <rect x="9" y="19" width="2" height="1"/><rect x="13" y="19" width="1" height="1"/><rect x="15" y="19" width="2" height="1"/><rect x="18" y="19" width="1" height="1"/><rect x="20" y="19" width="1" height="1"/>
+                <rect x="8" y="20" width="1" height="1"/><rect x="10" y="20" width="1" height="1"/><rect x="12" y="20" width="2" height="1"/><rect x="15" y="20" width="1" height="1"/><rect x="17" y="20" width="2" height="1"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+        <div class="qr-meta">SCAN TO SUBSCRIBE · 清言产品周报</div>
+      </div>
+
+      <div class="ticket-meta">
+        <div class="ticket-row"><span class="b">PUBLISHED</span><span class="a">2025.05.22 / 18:00</span></div>
+        <div class="ticket-row"><span class="b">CHANNEL</span><span class="a">公众号 · 清言产品</span></div>
+        <div class="ticket-row"><span class="b">CONTACT</span><span class="a">product@qingyan.team</span></div>
+      </div>
+    </div>
+
+    <footer class="footer-brand">
+      <div class="left">清言产品团队 · QingYan Product</div>
+      <div class="badges">
+        <span class="bdg">PRODUCT</span>
+        <span class="bdg">WEEKLY</span>
+        <span class="bdg">VOL.18</span>
+      </div>
+    </footer>
+
+  </div>
+</div>
+</body>
+</html>

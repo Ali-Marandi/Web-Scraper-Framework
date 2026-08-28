@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- 🔧 SWAP-1: <title> = "{STUDIO_NAME_CN} — {STUDIO_TYPE} · Index {YEAR}" -->
+<title>虚白 — 设计工作室 · Index 2026</title>
+
+<!-- 🔧 SWAP-OPT-COLOR: 默认深色「材料工作室」配色。改 :root 的四个变量切风格：
+     - 亮色杂志感: bg #f4f1ec / ink #1a1714 / accent #8a4a1a
+     - 极简白:    bg #ffffff / ink #0a0a0a / accent #666666
+     - 赛博紫:    bg #0a0612 / ink #e8d8ff / accent #9b6dff
+     - 暖棕复古:  bg #1f1610 / ink #e8d4b6 / accent #c8895a
+     CSS 变量在下面 <style> 块顶部 --bg / --ink / --ink-soft / --accent 处 -->
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0d0c0b;
+    --ink: #f1ece2;
+    --ink-soft: #7a7268;
+    --ink-mid: #a8a094;
+    --line: #2a2622;
+    --line-soft: #1a1816;
+    --pill: #f1ece2;
+    --pill-ink: #0d0c0b;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    width:100%;height:100%;
+    overflow:hidden;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Inter","PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size:13px;
+    letter-spacing:.01em;
+    -webkit-font-smoothing:antialiased;
+    user-select:none;
+  }
+  body{ cursor: grab; }
+  body.dragging{ cursor: grabbing; }
+
+  /* —— 顶栏 —— */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:22px 26px 16px;
+    z-index:150;
+    pointer-events:none;
+    font-family:"JetBrains Mono","Noto Serif SC", monospace;
+    font-size:11px;
+    letter-spacing:.03em;
+    color:var(--ink);
+    transition: opacity .3s ease;
+  }
+  body.overlay-open .topbar{ opacity:0; pointer-events:none; }
+  body.overlay-open .topbar > *{ pointer-events:none; }
+  .topbar::before{
+    content:""; position:absolute; left:0;right:0;top:0;height:120px;
+    background:linear-gradient(to bottom, rgba(13,12,11,.7), rgba(13,12,11,0));
+    pointer-events:none; z-index:-1;
+  }
+  .topbar > *{ pointer-events:auto; }
+
+  .brand-block{ display:flex; align-items:center; gap:18px; }
+  .logo{
+    width:48px;height:48px;
+    background:var(--pill);
+    display:grid; place-items:center;
+    border-radius:6px;
+    cursor:pointer;
+    overflow:hidden;
+    transition: transform .25s ease, box-shadow .25s ease;
+    box-shadow:0 4px 14px -6px rgba(0,0,0,.55);
+  }
+  .logo:hover{ transform: rotate(-3deg) scale(1.05); }
+  .logo svg{ display:block; width:38px; height:38px; }
+  .sound-toggle{
+    color:var(--ink-soft);
+    font-family:"Noto Serif SC", serif;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .sound-toggle:hover{ color:var(--ink); }
+
+  .tagline{
+    max-width:340px;
+    color:var(--ink);
+    line-height:1.55;
+    font-family:"Noto Serif SC","PingFang SC", serif;
+    font-size:12.5px;
+    font-weight:400;
+    padding-top:6px;
+  }
+
+  .col-meta, .col-times{
+    line-height:1.7;
+    color:var(--ink);
+    font-family:"Noto Serif SC", serif;
+    font-size:12px;
+    padding-top:8px;
+  }
+  .col-times{ font-family:"JetBrains Mono", monospace; font-size:11px; }
+  .col-meta .row{ display:flex; align-items:center; gap:8px; }
+  .loc-dot{
+    display:inline-block;width:7px;height:7px;border-radius:50%;
+  }
+  .loc-dot.live{ background:var(--ink); box-shadow:0 0 8px rgba(241,236,226,.7); }
+  .loc-dot.night{ background:transparent; border:1px solid var(--ink-soft); }
+
+  .cta{
+    background:var(--pill); color:var(--pill-ink);
+    border:none; border-radius:999px;
+    padding:14px 24px;
+    font-family:"Noto Serif SC", serif;
+    font-size:14px; font-weight:500;
+    cursor:pointer;
+    transition: transform .25s, opacity .2s;
+    box-shadow:0 6px 18px -8px rgba(0,0,0,.5);
+  }
+  .cta:hover{ transform:scale(1.03); }
+
+  /* —— 底栏 —— */
+  .bottombar{
+    position:fixed; bottom:22px; left:26px; right:26px;
+    display:flex; justify-content:center; align-items:center;
+    z-index:150;
+    pointer-events:none;
+  }
+  .bottombar .filter-pill{
+    position:absolute; right:0; bottom:0;
+  }
+  .bottombar::before{
+    content:""; position:fixed; left:0;right:0;bottom:0;height:120px;
+    background:linear-gradient(to top, rgba(13,12,11,.6), rgba(13,12,11,0));
+    pointer-events:none; z-index:-1;
+  }
+  .bottombar > *{ pointer-events:auto; }
+
+  .icon-group, .tabs, .filter-pill{
+    background:var(--pill);
+    border-radius:999px;
+    padding:6px;
+    display:flex; gap:2px;
+    box-shadow:0 6px 18px -8px rgba(0,0,0,.5);
+    pointer-events:auto;
+  }
+  .icon-btn{
+    background:transparent; border:none;
+    width:36px; height:36px;
+    border-radius:999px;
+    display:grid; place-items:center;
+    cursor:pointer;
+    color:var(--pill-ink);
+    opacity:.45;
+    pointer-events:auto;
+    transition: opacity .2s, background .2s, transform .2s;
+  }
+  .icon-btn:hover{ opacity:1; background:rgba(13,12,11,.10); transform:scale(1.06); }
+  .icon-btn.active{ opacity:1; background:rgba(13,12,11,.12); }
+
+  .tab{
+    background:transparent; border:none;
+    padding:10px 26px;
+    border-radius:999px;
+    font-family:"Noto Serif SC", serif;
+    font-size:14px; font-weight:500;
+    color:rgba(13,12,11,.5);
+    cursor:pointer;
+    pointer-events:auto;
+    transition: background .2s, color .2s;
+  }
+  .tab:hover{ color:var(--pill-ink); background:rgba(13,12,11,.06); }
+  .tab.active{
+    background:#fff; color:var(--pill-ink);
+    box-shadow:0 1px 4px rgba(0,0,0,.08);
+  }
+
+  .filter-pill{
+    padding:14px 26px;
+    border:none;
+    font-family:"Noto Serif SC", serif;
+    font-size:14px; font-weight:500;
+    color:var(--pill-ink);
+    cursor:pointer;
+    align-items:center; gap:8px;
+  }
+  .filter-pill:hover{ opacity:.9; }
+
+  /* —— 视口 / 球面（经纬网）—— */
+  .viewport{
+    position:fixed; inset:0; overflow:hidden; z-index:10;
+    perspective: 1500px;
+    perspective-origin: 50% 50%;
+  }
+  /* 边缘虚化 vignette */
+  .viewport::after{
+    content:""; position:fixed; inset:0;
+    pointer-events:none; z-index:50;
+    background:
+      radial-gradient(ellipse 80% 70% at center,
+        transparent 40%,
+        rgba(13,12,11,0.45) 76%,
+        rgba(13,12,11,0.94) 100%);
+  }
+  /* 整个球面：定位到屏幕中心，所有 cell 都挂在它上面 */
+  .sphere{
+    position:absolute;
+    left:50%; top:50%;
+    width:0; height:0;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  /* —— 作品格子（正方形，跟相邻 cell 在球面上共享边）—— */
+  .work{
+    position:absolute;
+    left:0; top:0;
+    width:  var(--cell, 320px);
+    height: var(--cell, 320px);
+    margin-left: calc(var(--cell, 320px) * -0.5);
+    margin-top:  calc(var(--cell, 320px) * -0.5);
+    transform-style: preserve-3d;
+    will-change: transform;
+    cursor: pointer;
+    backface-visibility: hidden;
+  }
+  /* frame 填满整个 cell — 相邻 cell 的图片直接接触 */
+  .frame{
+    position:absolute; inset:0;
+    overflow:hidden;
+    background:#1a1816;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.04);
+    transition: filter .25s ease;
+  }
+  .work:hover .frame{ filter: brightness(1.08); }
+  .frame img{
+    display:block; width:100%; height:100%;
+    object-fit:cover;
+    pointer-events:none;
+    -webkit-user-drag:none;
+  }
+  .frame .num{
+    position:absolute; top:14px; left:18px;
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:.12em;
+    color:rgba(241,236,226,.85);
+    background:rgba(13,12,11,.4);
+    padding:3px 8px;
+    border-radius:3px;
+    backdrop-filter: blur(6px);
+    z-index:6;
+  }
+  /* cell-head / cell-foot 浮在 frame 顶部和底部，带渐变保证文字可读 */
+  .cell-head, .cell-foot{
+    position:absolute; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px;
+    z-index:5;
+    pointer-events:none;
+    height:auto;
+  }
+  .cell-head{
+    top:0;
+    background: linear-gradient(to bottom, rgba(13,12,11,.55), rgba(13,12,11,0));
+  }
+  .cell-foot{
+    bottom:0;
+    background: linear-gradient(to top, rgba(13,12,11,.65), rgba(13,12,11,0));
+  }
+  .cell-head .brand{
+    color:rgba(241,236,226,.92);
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    text-shadow: 0 1px 4px rgba(0,0,0,.6);
+  }
+  .cell-head .proj{
+    color:#fff;
+    font-family:"Noto Serif SC", serif;
+    font-size:14px;
+    font-weight:500;
+    letter-spacing:.04em;
+    text-shadow: 0 1px 6px rgba(0,0,0,.7);
+  }
+  .cell-foot .year{
+    color:#fff;
+    font-family:"JetBrains Mono", monospace;
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-shadow: 0 1px 4px rgba(0,0,0,.6);
+  }
+  .cell-foot .tags{ display:flex; gap:4px; }
+  .cell-foot .tags em{
+    font-style:normal;
+    display:inline-block;
+    border:1px solid rgba(241,236,226,.32);
+    border-radius:999px;
+    padding:2px 9px;
+    font-family:"JetBrains Mono", monospace;
+    font-size:9px; letter-spacing:.12em;
+    color:rgba(241,236,226,.92);
+    text-transform:uppercase;
+    background: rgba(13,12,11,.32);
+    backdrop-filter: blur(4px);
+  }
+
+  /* HUD */
+  .hud{
+    position:fixed; left:26px; bottom:80px;
+    z-index:55;
+    font-family:"JetBrains Mono", monospace;
+    font-size:9.5px; color:var(--ink-soft);
+    letter-spacing:.04em; line-height:1.7;
+    pointer-events:none;
+    text-transform:uppercase;
+  }
+  .hud span{ color:var(--ink); }
+
+  .tile{ animation: fadeIn .55s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+  .splash{
+    position:fixed; inset:0; z-index:200;
+    background:var(--bg);
+    transition: opacity .6s, visibility .6s;
+  }
+  .splash.hide{ opacity:0; visibility:hidden; }
+
+  /* —— 二级页面 / Overlay —— */
+  .overlay{
+    position:fixed; inset:0;
+    background:var(--bg);
+    z-index:120;
+    overflow-y:auto;
+    overflow-x:hidden;
+    opacity:0;
+    visibility:hidden;
+    transition: opacity .35s ease, visibility .35s ease;
+    cursor:auto;
+  }
+  .overlay.show{ opacity:1; visibility:visible; }
+
+  .overlay-close{
+    position:fixed; top:22px; right:26px;
+    background:var(--pill); color:var(--pill-ink);
+    border:none; border-radius:999px;
+    padding:12px 20px;
+    font-family:"Noto Serif SC", serif;
+    font-size:13px; font-weight:500;
+    cursor:pointer;
+    z-index:160;
+    box-shadow:0 6px 18px -8px rgba(0,0,0,.5);
+    display:flex; align-items:center; gap:8px;
+    transition:transform .2s;
+  }
+  .overlay-close:hover{ transform:scale(1.04); }
+
+  /* Detail page */
+  .detail{ padding: 80px 60px 120px; max-width: 1400px; margin: 0 auto; }
+  .detail-num{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:.12em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-bottom: 14px;
+  }
+  .detail-brand{
+    font-family:"JetBrains Mono", monospace;
+    font-size:12px; letter-spacing:.1em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-bottom: 18px;
+  }
+  .detail-title{
+    font-family:"Noto Serif SC", serif;
+    font-size:72px; line-height:1.05; font-weight:600;
+    color:var(--ink);
+    letter-spacing:.01em;
+    margin-bottom: 24px;
+  }
+  .detail-tags{
+    display:flex; gap:6px; flex-wrap:wrap;
+    margin-bottom:60px;
+  }
+  .detail-tags em{
+    font-style:normal;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:5px 14px;
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:.12em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .detail-hero{
+    width:100%;
+    aspect-ratio: 16 / 10;
+    background:#1a1816;
+    overflow:hidden;
+    margin-bottom:80px;
+  }
+  .detail-hero img{ display:block;width:100%;height:100%;object-fit:cover; }
+  .detail-body{
+    display:grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 80px;
+    margin-bottom:100px;
+  }
+  .detail-desc{
+    font-family:"Noto Serif SC","PingFang SC", serif;
+    font-size:17px; line-height:1.85;
+    color:var(--ink);
+    font-weight:400;
+    white-space:pre-line;
+  }
+  .detail-spec{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:.06em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    line-height:1.85;
+  }
+  .detail-spec .row{
+    display:flex; justify-content:space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .detail-spec .row .v{ color:var(--ink); }
+  .detail-gallery{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 100px;
+  }
+  .detail-gallery div{
+    background:#1a1816;
+    aspect-ratio: 4 / 3;
+    overflow:hidden;
+  }
+  .detail-gallery img{ display:block;width:100%;height:100%;object-fit:cover; }
+  .detail-nav{
+    display:flex; justify-content:space-between;
+    border-top: 1px solid var(--line);
+    padding-top: 30px;
+  }
+  .detail-nav a{
+    color:var(--ink-soft);
+    text-decoration:none;
+    font-family:"Noto Serif SC", serif;
+    font-size:14px;
+    display:flex; flex-direction:column; gap:4px;
+    cursor:pointer;
+  }
+  .detail-nav a:hover{ color:var(--ink); }
+  .detail-nav .label{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px; letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .detail-nav .next{ text-align:right; align-items:flex-end; }
+
+  /* Generic info overlay (about / cv / contact / filter) */
+  .info-pane{ padding:100px 60px 120px; max-width: 1100px; margin:0 auto; }
+  .info-eyebrow{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:.14em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .info-title{
+    font-family:"Noto Serif SC", serif;
+    font-size:80px; line-height:1; font-weight:600;
+    color:var(--ink);
+    margin-bottom:60px;
+    letter-spacing:.02em;
+  }
+  .info-body{
+    font-family:"Noto Serif SC","PingFang SC", serif;
+    font-size:18px; line-height:1.85;
+    color:var(--ink);
+    max-width:760px;
+    margin-bottom:80px;
+    white-space:pre-line;
+  }
+  .info-section{ margin-bottom:60px; }
+  .info-section h3{
+    font-family:"JetBrains Mono", monospace;
+    font-size:11px; letter-spacing:.14em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-bottom:20px;
+    font-weight:500;
+  }
+  .info-list{
+    display:grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 30px;
+    font-family:"Noto Serif SC", serif;
+    font-size:15px; line-height:1.8;
+    color:var(--ink);
+  }
+  .info-list .y{
+    color:var(--ink-soft);
+    font-family:"JetBrains Mono", monospace;
+    font-size:12px; letter-spacing:.06em;
+  }
+  .contact-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px 60px;
+  }
+  .contact-cell h4{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10.5px; letter-spacing:.14em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  .contact-cell p{
+    font-family:"Noto Serif SC", serif;
+    font-size:18px; line-height:1.6;
+    color:var(--ink);
+  }
+  .contact-cell a{ color:var(--ink); text-decoration:underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
+  .contact-cell a:hover{ text-decoration-color: var(--ink); }
+
+  /* Filter pane */
+  .filter-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:50px;
+  }
+  .filter-grid h4{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10.5px; letter-spacing:.14em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    font-weight:500;
+    margin-bottom:18px;
+  }
+  .filter-grid label{
+    display:flex; align-items:center; gap:10px;
+    font-family:"Noto Serif SC", serif;
+    font-size:14px;
+    color:var(--ink);
+    padding: 7px 0;
+    cursor:pointer;
+  }
+  .filter-grid label input{ accent-color: var(--ink); }
+
+  @media (max-width: 900px){
+    .tagline{ display:none; }
+    .col-meta, .col-times{ font-size:10.5px; }
+    .detail-title{ font-size:48px; }
+    .detail-body{ grid-template-columns:1fr; gap:40px; }
+    .info-title{ font-size:48px; }
+    .filter-grid, .contact-grid{ grid-template-columns:1fr; }
+    .detail{ padding:80px 28px 100px; }
+    .info-pane{ padding:100px 28px 120px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="splash" id="splash"></div>
+
+<header class="topbar">
+  <!-- 🔧 SWAP-2: brand-block — logo SVG 可保留这个手刻方框（默认）或换成自定义 SVG。
+       「声音 [关闭]」可保留可改（如 "VR · ON" / "Demo Reel" / 工作室英文名缩写） -->
+  <div class="brand-block">
+    <div class="logo" data-nav="home" title="返回首页">
+      <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <filter id="ink" x="-15%" y="-15%" width="130%" height="130%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="6" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.8"/>
+          </filter>
+        </defs>
+        <g filter="url(#ink)" fill="#1d3a8c" stroke="#1d3a8c">
+          <!-- 略微歪斜的方框（手刻印章） -->
+          <path d="M 8 9 L 72 7 L 73 71 L 9 72 Z" fill="none" stroke-width="3" stroke-linejoin="round"/>
+          <!-- 三个抽象立人 -->
+          <g stroke="none">
+            <!-- person 1 -->
+            <circle cx="22" cy="26" r="3.2"/>
+            <path d="M 22 30 L 22 50 M 22 35 L 16 42 M 22 35 L 28 42 M 22 50 L 17 62 M 22 50 L 27 62" stroke-width="2.6" stroke="#1d3a8c" fill="none" stroke-linecap="round"/>
+            <!-- person 2 -->
+            <circle cx="40" cy="24" r="3.2"/>
+            <path d="M 40 28 L 40 50 M 40 33 L 33 28 M 40 33 L 47 28 M 40 50 L 35 62 M 40 50 L 45 62" stroke-width="2.6" stroke="#1d3a8c" fill="none" stroke-linecap="round"/>
+            <!-- person 3 -->
+            <circle cx="58" cy="26" r="3.2"/>
+            <path d="M 58 30 L 58 50 M 58 35 L 52 42 M 58 35 L 64 42 M 58 50 L 53 62 M 58 50 L 63 62" stroke-width="2.6" stroke="#1d3a8c" fill="none" stroke-linecap="round"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <span class="sound-toggle">声音 [关闭]</span>
+  </div>
+
+  <!-- 🔧 SWAP-3: tagline — 工作室一句话介绍。两行：长句 + <br> + 短结论 -->
+  <div class="tagline">
+    虚白是一家以材料与场景为方法的中文设计工作室，<br>
+    致力于在品牌、视觉与空间之间寻找静止的位置。
+  </div>
+
+  <!-- 🔧 SWAP-4: col-meta — 1—2 个城市。loc-dot 加 .live (默认) 或 .night (夜间) -->
+  <div class="col-meta">
+    <div class="row"><span class="loc-dot live"></span>中国 · 上海</div>
+    <div class="row"><span class="loc-dot night"></span>日本 · 京都</div>
+  </div>
+
+  <!-- 🔧 SWAP-5: col-times — 时区标题（第一行）。time1 / time2 由 JS 自动填实时时间，保留 id 不要改 -->
+  <div class="col-times">
+    <div>北京时间 UTC+8</div>
+    <div id="time1">17:30</div>
+    <div id="time2">18:30 JST</div>
+  </div>
+
+  <!-- 🔧 SWAP-6: cta — 联系按钮文字。data-nav="contact" 必须保留 -->
+  <button class="cta" data-nav="contact">我们来聊聊吧。</button>
+</header>
+
+<!-- 球面：所有作品 cell 都贴在这个球面上，相邻 cell 沿经纬线共享边 -->
+<div class="viewport" id="viewport">
+  <div class="sphere" id="sphere"></div>
+</div>
+
+<div class="hud">
+  POS  <span id="pos">0°, 0°</span><br>
+  ZOOM <span id="zoom">1.00×</span> · 拖拽旋转球面 / 滚轮缩放 / <span>0</span> 回中心 / 点击查看
+</div>
+
+<div class="bottombar">
+  <!-- 🔧 SWAP-7: tabs — 三个 tab 文字（默认「作品 / 关于 / 履历」）。data-nav 必须保留 -->
+  <div class="tabs">
+    <button class="tab active" data-nav="home">作品</button>
+    <button class="tab" data-nav="about">关于</button>
+    <button class="tab" data-nav="cv">履历</button>
+  </div>
+
+  <button class="filter-pill" data-nav="filter">
+    <svg width="11" height="11" viewBox="0 0 11 11" style="opacity:.55"><path d="M0.5 1.5h10M2 5.5h7M3.5 9.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    筛选
+  </button>
+</div>
+
+<!-- ============ 二级页面 ============ -->
+<div class="overlay" id="overlay-detail">
+  <button class="overlay-close" data-nav="home">← 返回</button>
+  <div class="detail" id="detail-content"></div>
+</div>
+
+<div class="overlay" id="overlay-about">
+  <button class="overlay-close" data-nav="home">← 返回</button>
+  <!-- 🔧 SWAP-8: about overlay 整段。包含：eyebrow / 大标题 / 正文 3 段 / 能力领域 / 团队成员
+       结构：保留 .info-eyebrow / .info-title / .info-body / .info-section / .info-list / .y span 全部 class
+       内容：用用户工作室的真实信息替换。能力 4—5 项；团队 3—5 行（个人作品集就只一行） -->
+  <div class="info-pane">
+    <div class="info-eyebrow">关于 · About the Studio</div>
+    <h1 class="info-title">在材料与场景<br>之间，构造静止。</h1>
+    <div class="info-body">虚白成立于 2017 年的上海，是一家由六位设计师组成的小型工作室。我们关心一件作品在最终落地之前，材料、场景与时间如何共同塑造它的样貌——而非追逐某种风格的表层。
+
+我们服务过博物馆、出版机构、艺术空间、独立品牌与艺术家个体。无论项目规模与媒介如何变化，我们倾向于先观察、再回应；先减法、再装饰。
+
+从 2020 年起，我们在京都设立了第二个工作站，与一位驻地匠人合作完成所有的物料与原型工作。</div>
+
+    <div class="info-section">
+      <h3>能力领域</h3>
+      <div class="info-list">
+        <span class="y">01</span><span>品牌系统 / 视觉识别 / 字体定制</span>
+        <span class="y">02</span><span>编辑设计 / 出版物 / 印刷品</span>
+        <span class="y">03</span><span>数字产品 / 网站 / 互动体验</span>
+        <span class="y">04</span><span>空间装置 / 展览 / 临时建筑</span>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>团队成员</h3>
+      <div class="info-list">
+        <span class="y">主理人</span><span>沈白 · 创意总监</span>
+        <span class="y">设计</span><span>陆青、林一川、何予安</span>
+        <span class="y">技术</span><span>周野</span>
+        <span class="y">工艺</span><span>松本健（驻京都）</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-cv">
+  <button class="overlay-close" data-nav="home">← 返回</button>
+  <!-- 🔧 SWAP-9: cv overlay 整段。包含：eyebrow / 大标题（如「2017 — 2026 / 九年的工作」）/
+       正文导语 / 多个 .info-section（每个 <h3> 是年份分组，下面 .info-list 列项目）
+       结构：年份倒序排列；末尾加一个「展览与奖项」section -->
+  <div class="info-pane">
+    <div class="info-eyebrow">履历 · Selected Works</div>
+    <h1 class="info-title">2017 — 2026<br>九年的工作。</h1>
+    <div class="info-body">下面是我们认为值得被记录的 32 个项目，按照时间倒序排列。完整作品列表与未公开案例，请联系工作室索取作品集 PDF。</div>
+
+    <div class="info-section">
+      <h3>2025</h3>
+      <div class="info-list">
+        <span class="y">2025</span><span>水镜 — 苏州博物馆 / 装置</span>
+        <span class="y">2025</span><span>数字诗集 v.02 — 个人 / Web</span>
+        <span class="y">2025</span><span>字非字 — 实验字体 / 独立</span>
+        <span class="y">2025</span><span>字图 #047 — 个人 / 创作</span>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>2024</h3>
+      <div class="info-list">
+        <span class="y">2024</span><span>东方观象台 — 上海天文馆 / 品牌</span>
+        <span class="y">2024</span><span>方圆律所 — 方圆所 / 品牌</span>
+        <span class="y">2024</span><span>沉影官网 — 沉影空间 / Web</span>
+        <span class="y">2024</span><span>白盒子艺廊 — 白盒子 / Web</span>
+        <span class="y">2024</span><span>无名之地 — 上海西岸 / 装置</span>
+        <span class="y">2024</span><span>静物 · 光谱 — 个展 / 海报</span>
+        <span class="y">2024</span><span>声音地形 — 上海当代 / 装置</span>
+        <span class="y">2024</span><span>夜半笔记 — 个人 / 速写</span>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>2023</h3>
+      <div class="info-list">
+        <span class="y">2023</span><span>南山诗刊 — 三联书店 / 编辑</span>
+        <span class="y">2023</span><span>明月几时有 — 中央美院 / 互动</span>
+        <span class="y">2023</span><span>呼吸的墙 — 北京 798 / 装置</span>
+        <span class="y">2023</span><span>时间的褶皱 — 上海双年展 / 海报</span>
+        <span class="y">2023</span><span>空亭 — 西塘古镇 / 临时建筑</span>
+        <span class="y">2023</span><span>青木茶寮 — 青木茶寮 / 品牌</span>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>2022 及更早</h3>
+      <div class="info-list">
+        <span class="y">2022</span><span>无声电台 — 独立播客 / 品牌</span>
+        <span class="y">2022</span><span>冬日影像志 — 三联生活周刊 / 编辑</span>
+        <span class="y">2021</span><span>未发表作品 12 项</span>
+        <span class="y">2017</span><span>工作室成立 · 上海</span>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>展览与奖项</h3>
+      <div class="info-list">
+        <span class="y">2025</span><span>东京字体艺术指导俱乐部年鉴 · 入选</span>
+        <span class="y">2024</span><span>上海平面设计大展 · 银奖</span>
+        <span class="y">2024</span><span>D&AD Wood Pencil · 编辑设计</span>
+        <span class="y">2023</span><span>北京设计周 · 客座工作坊</span>
+        <span class="y">2022</span><span>东京 TDC 字形入围</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-contact">
+  <button class="overlay-close" data-nav="home">← 返回</button>
+  <!-- 🔧 SWAP-10: contact overlay 整段。包含：eyebrow / 大标题 / 正文导语 / .contact-grid 内 4—6 个 .contact-cell
+       每个 cell 用 <h4> 小标题 + <p> 内容（邮件用 <a href="mailto:..."> 包裹）
+       推荐分类：新项目咨询 / 媒体写作 / 工作室地址（1—2 个）/ 社交（IG, 微信等）/ 招聘 -->
+  <div class="info-pane">
+    <div class="info-eyebrow">联系 · Get in touch</div>
+    <h1 class="info-title">我们来<br>聊聊吧。</h1>
+    <div class="info-body">如果你有一个尚不清晰、但值得认真对待的想法，写信给我们。
+我们一年只接 8—10 个项目，回信平均需要 3 个工作日。</div>
+
+    <div class="contact-grid">
+      <div class="contact-cell">
+        <h4>新项目咨询</h4>
+        <p><a href="mailto:hello@xubai.studio">hello@xubai.studio</a></p>
+      </div>
+      <div class="contact-cell">
+        <h4>媒体 · 写作</h4>
+        <p><a href="mailto:press@xubai.studio">press@xubai.studio</a></p>
+      </div>
+      <div class="contact-cell">
+        <h4>上海工作室</h4>
+        <p>中国上海市黄浦区建国中路 10 号<br>3 号楼 4F<br>邮编 200025</p>
+      </div>
+      <div class="contact-cell">
+        <h4>京都驻地</h4>
+        <p>日本京都市左京区净土寺西田町<br>3-12 二楼</p>
+      </div>
+      <div class="contact-cell">
+        <h4>社交</h4>
+        <p><a href="#">Instagram @xubai.studio</a><br><a href="#">微信公众号 · 虚白工作室</a></p>
+      </div>
+      <div class="contact-cell">
+        <h4>招聘</h4>
+        <p>2026 春季招聘 1 位品牌设计师 · 1 位前端工程师。简历投至 <a href="mailto:join@xubai.studio">join@xubai.studio</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-filter">
+  <button class="overlay-close" data-nav="home">← 返回</button>
+  <!-- 🔧 SWAP-11: filter overlay 整段。装饰性（不接 JS），但选项要从你的 WORKS 派生：
+       类别：从 WORKS[].tags 去重得到（最多 6—8 项）
+       年份：从 WORKS[].year 去重倒序
+       客户类型：从 WORKS[].brand 推断分类（如 文化机构 / 商业品牌 / 独立 个人） -->
+  <div class="info-pane">
+    <div class="info-eyebrow">筛选 · Filter</div>
+    <h1 class="info-title">查找作品。</h1>
+
+    <div class="filter-grid">
+      <div>
+        <h4>类别</h4>
+        <label><input type="checkbox" checked> 品牌设计</label>
+        <label><input type="checkbox" checked> 编辑 / 印刷</label>
+        <label><input type="checkbox" checked> 网页 / 互动</label>
+        <label><input type="checkbox" checked> 装置 / 空间</label>
+        <label><input type="checkbox" checked> 字体 / 实验</label>
+        <label><input type="checkbox" checked> 海报 / 视觉</label>
+      </div>
+      <div>
+        <h4>年份</h4>
+        <label><input type="checkbox" checked> 2025</label>
+        <label><input type="checkbox" checked> 2024</label>
+        <label><input type="checkbox" checked> 2023</label>
+        <label><input type="checkbox" checked> 2022</label>
+        <label><input type="checkbox"> 2021 及更早</label>
+      </div>
+      <div>
+        <h4>客户类型</h4>
+        <label><input type="checkbox" checked> 文化机构</label>
+        <label><input type="checkbox" checked> 商业品牌</label>
+        <label><input type="checkbox" checked> 独立 / 个人</label>
+        <label><input type="checkbox" checked> 艺术家合作</label>
+        <label><input type="checkbox"> 自发项目</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== 作品数据 ======
+// 🔧 SWAP-12: WORKS 数组——核心内容。
+// 模板里保留 20 个虚白工作室的示例作品作为参考，输出最终 HTML 时全部替换为用户的真实作品。
+// 每件作品必填字段：id (两位字符串) / brand / title / year / tags (1—3 个英文一词) /
+//                  img (1080×1080 正方形封面) / hero (1600×1000 横版) / g1 g2 (800×600) /
+//                  desc (一句话 ~30 字) / long (2—3 段每段 60—120 字) /
+//                  spec ([['Client','xxx'],['Year','xxx'],['Scope','xxx'],['Duration','xxx']])
+// 数量推荐 15—25 件，最少 8 件（球面太空会显得稀疏）。
+// 图片来源：模式 A 用相对路径 'images/work-NN.jpg'；模式 B (GLM) 用 picsum 占位或用户给的 URL。
+const WORKS = [
+  {
+    id:'01', brand:'上海天文馆', title:'东方观象台', year:2024,
+    tags:['Identity','Wayfinding','System'],
+    img:'images/p-01-color-macro.jpg',
+    hero:'images/p-02-typography.jpg',
+    g1:'images/p-03-packaging.jpg',
+    g2:'images/p-04-paint-stroke.jpg',
+    desc:'为新落成的天文馆设计的视觉识别系统。基于天体运行的几何节律，构建一套动态生长的标识与导视语言。',
+    long:'整套视觉系统从天体运行的几何节律出发，构建出一套可生长的标识与导视语言。我们设计了 12 套围绕节气的动态标识，以及覆盖整馆的模块化导视体系，让观众在馆内的每一次抬头都能感知到时间的流动。\n\n项目跨越了 11 个月，包括标识研发、字体定制、空间导视、网站、印刷品与数字物料。最终的视觉系统已在全馆 18,000 平方米的空间内全面落地。',
+    spec:[['Client','上海天文馆'],['Year','2024'],['Scope','品牌系统 · 导视'],['Duration','11 个月']]
+  },
+  {
+    id:'02', brand:'青木茶寮', title:'青木茶寮 VI', year:2023,
+    tags:['Identity','Packaging'],
+    img:'images/p-05-brand-flatlay.jpg',
+    hero:'images/p-06-studio-portrait.jpg',
+    g1:'images/p-07-gradient.jpg',
+    g2:'images/p-08-editorial.jpg',
+    desc:'京都风格茶寮的整套视觉。从手写题字到木刻包装，回到工艺与时间本身。',
+    long:'青木茶寮是京都左京区的一家小型茶馆。我们用六个月时间，与店主一同重新整理了它的视觉系统：标识由当地书法家书写后木刻；包装统一回到未漂白的素纸；菜单印刷采用活字工艺。\n\n品牌的核心不在新意，而在于一种克制的、可持续被使用的安静感。',
+    spec:[['Client','青木茶寮'],['Year','2023'],['Scope','标识 · 包装 · 物料'],['Location','日本京都']]
+  },
+  {
+    id:'03', brand:'独立播客', title:'无声电台', year:2022,
+    tags:['Identity','Sound','Cover'],
+    img:'images/p-09-ceramic.jpg',
+    hero:'images/p-10-urban.jpg',
+    g1:'images/p-11-ink-paper.jpg',
+    g2:'images/p-12-botanical.jpg',
+    desc:'一档关注城市深夜声音的独立播客。VI 与 60 多期节目封面均由工作室设计。',
+    long:'无声电台是一档由两位编辑制作的城市夜间声音播客。从 2022 年至今已发布 64 期。\n\n我们为节目设计了一套可生长的封面系统：每期封面都基于一段录音波形，自动派生出一个抽象图形。播客的标识与名片亦由同一套规则生成。',
+    spec:[['Client','独立播客'],['Year','2022'],['Scope','VI · 64 期封面'],['Format','Spotify · Apple']]
+  },
+  {
+    id:'04', brand:'西岸艺术中心', title:'无名之地', year:2024,
+    tags:['Installation','Light'],
+    img:'images/p-13-risograph.jpg',
+    hero:'images/p-14-gallery-wall.jpg',
+    g1:'images/p-15-light-motion.jpg',
+    g2:'images/p-16-interior.jpg',
+    desc:'沿旧厂房梁柱排布的低强度光带，黄昏后才真正显形，把一段被忽略的空间归还给人的目光。',
+    long:'《无名之地》是为上海西岸艺术中心北侧旧厂房做的临时灯光介入。我们沿着 18 米长的钢梁布置了一组低强度暖白色光带，光带在白天几乎不可见，唯有在黄昏后逐渐显形。\n\n作品不指向任何主题——它的目的是让那段被人长期忽略的工业空间，被重新看到一次。展期结束后所有材料被回收。',
+    spec:[['Client','西岸艺术中心'],['Year','2024'],['Scope','灯光装置'],['Duration','42 天']]
+  },
+  {
+    id:'05', brand:'个人项目', title:'静物 · 光谱', year:2024,
+    tags:['Poster','Exhibition'],
+    img:'images/p-17-color-block.jpg',
+    hero:'images/p-18-magazine.jpg',
+    g1:'images/p-01-color-macro.jpg',
+    g2:'images/p-02-typography.jpg',
+    desc:'个人展览的二十张海报，记录光在桌面上的不同时刻。',
+    long:'《静物 · 光谱》是 2024 年 9 月在上海一处独立画廊举办的小型海报个展，展出 20 张丝印海报。\n\n每张海报都基于同一张静物照片——一杯水、一片纸、一颗石——只是色温随时间被逐渐分解。这是一次关于"时间是否可以被印刷"的提问。',
+    spec:[['Client','个展'],['Year','2024'],['Scope','20 张海报 · 丝印'],['Edition','30 套']]
+  },
+  {
+    id:'06', brand:'三联书店', title:'南山诗刊', year:2023,
+    tags:['Editorial','Print','Series'],
+    img:'images/p-03-packaging.jpg',
+    hero:'images/p-04-paint-stroke.jpg',
+    g1:'images/p-05-brand-flatlay.jpg',
+    g2:'images/p-06-studio-portrait.jpg',
+    desc:'季度诗刊的整体设计。每期围绕一座山展开，文字、图像与白纸之间相互让位。',
+    long:'《南山诗刊》是三联书店出版的一本独立诗刊，季度发行，每期约 80 页。\n\n我们设计了刊物的整体识别、版式、印刷工艺。每一期围绕一座中国境内的山展开，封面由一张山的轮廓图与刊名构成。内文极少装饰，主要是诗与白纸之间的呼吸。',
+    spec:[['Client','三联书店'],['Year','2023'],['Scope','整刊设计 · 4 期'],['Pages','80 / 期']]
+  },
+  {
+    id:'07', brand:'独立项目', title:'字非字', year:2025,
+    tags:['Type','Experiment'],
+    img:'images/p-07-gradient.jpg',
+    hero:'images/p-08-editorial.jpg',
+    g1:'images/p-09-ceramic.jpg',
+    g2:'images/p-10-urban.jpg',
+    desc:'关于"汉字之外"的字形实验，探索笔画解构后剩下的结构性沉默。',
+    long:'《字非字》是工作室 2024–2025 年的一项内部实验，共制作了 286 个字形。\n\n这些字形并不"成字"——它们是汉字结构被解构、抽离、再保留的部分。整套字形以可变字体形式公开发布，供研究使用。',
+    spec:[['Client','独立项目'],['Year','2025'],['Scope','286 字形 · 可变字体'],['License','非商用']]
+  },
+  {
+    id:'08', brand:'方圆律师事务所', title:'方圆律所', year:2024,
+    tags:['Identity','Legal'],
+    img:'images/p-11-ink-paper.jpg',
+    hero:'images/p-12-botanical.jpg',
+    g1:'images/p-13-risograph.jpg',
+    g2:'images/p-14-gallery-wall.jpg',
+    desc:'在严肃与可亲之间寻找平衡。"方圆"二字成为整个视觉的几何核心。',
+    long:'方圆律师事务所是一家专注于商业并购的中型律所。我们为他们重新设计了品牌系统——以"方"与"圆"两个汉字的几何关系作为视觉核心，覆盖了名片、文书、签约用品、官网与办公空间标识。\n\n核心理念是：让一家律所的品牌既有专业感，也有人在其中。',
+    spec:[['Client','方圆所'],['Year','2024'],['Scope','VI · 名片 · 文书系统'],['Coverage','45 项物料']]
+  },
+  {
+    id:'09', brand:'三联生活周刊', title:'冬日影像志', year:2022,
+    tags:['Editorial','Photo'],
+    img:'images/p-15-light-motion.jpg',
+    hero:'images/p-16-interior.jpg',
+    g1:'images/p-17-color-block.jpg',
+    g2:'images/p-18-magazine.jpg',
+    desc:'一本冬季摄影特辑。无装饰的网格与留白节奏承载所有图像的重量。',
+    long:'《冬日影像志》是三联生活周刊在 2022 年冬天出版的一本 168 页摄影 mook，收录了 9 位中国摄影师的冬季作品。\n\n我们设计了刊物的版式与印刷规格——所有图像采用三色印刷，以增强冬天特有的灰度层次。版式上几乎不出现任何文字装饰，只让图像与图像之间留白。',
+    spec:[['Client','三联生活周刊'],['Year','2022'],['Scope','版式 · 印制规范'],['Pages','168']]
+  },
+  {
+    id:'10', brand:'个人项目', title:'数字诗集 v.02', year:2025,
+    tags:['Web','WebGL','Poetry'],
+    img:'images/p-01-color-macro.jpg',
+    hero:'images/p-02-typography.jpg',
+    g1:'images/p-03-packaging.jpg',
+    g2:'images/p-04-paint-stroke.jpg',
+    desc:'网页诗集的第二版。每一首都是一段可被读者扰动的动态文本。',
+    long:'《数字诗集》是工作室自 2022 年开始的实验性出版项目。第二版收录了 24 首当代汉语诗，每一首都由 WebGL 着色器重写为一段可被读者交互的动态文本。\n\n读者可以拖动、悬停、吹动屏幕，文字随之飘散或重组。它是一次关于"诗在浏览器里如何继续被读"的练习。',
+    spec:[['Client','个人项目'],['Year','2025'],['Scope','24 首 · WebGL'],['URL','poetry.xubai.studio']]
+  },
+  {
+    id:'11', brand:'中央美术学院', title:'明月几时有', year:2023,
+    tags:['Interactive','Narrative'],
+    img:'images/p-05-brand-flatlay.jpg',
+    hero:'images/p-06-studio-portrait.jpg',
+    g1:'images/p-07-gradient.jpg',
+    g2:'images/p-08-editorial.jpg',
+    desc:'以宋词为脚本的互动叙事实验。鼠标的每一次停顿都改变下一行的语意。',
+    long:'《明月几时有》是与中央美术学院实验艺术学院合作的一次互动叙事项目。我们以苏轼的同名宋词为基底，重新解构成 28 个语义单元。\n\n读者通过鼠标在屏幕上的停留时间影响叙事路径——停留越久，下一行的语境越偏向静；越快滑过，越偏向动。每一次阅读都是一次独立的版本。',
+    spec:[['Client','中央美院'],['Year','2023'],['Scope','互动叙事 · 毕设'],['Tech','Three.js']]
+  },
+  {
+    id:'12', brand:'沉影空间', title:'沉影 · 官方网站', year:2024,
+    tags:['Web','Slow'],
+    img:'images/p-09-ceramic.jpg',
+    hero:'images/p-10-urban.jpg',
+    g1:'images/p-11-ink-paper.jpg',
+    g2:'images/p-12-botanical.jpg',
+    desc:'影像艺术空间的官方网站。整站围绕慢速滚动展开，让浏览本身成为一种观看。',
+    long:'沉影是一家以影像作品为主的当代艺术空间，每年策划 4–6 个展览。我们为他们设计了官方网站——整站不使用任何弹窗、模态、悬停动画。一切只通过滚动展开。\n\n滚动速度被刻意降低 40%，使观众无法快速浏览，必须停下来。这与他们的展览理念是同构的。',
+    spec:[['Client','沉影空间'],['Year','2024'],['Scope','整站 · 18 页'],['Tech','Astro · GSAP']]
+  },
+  {
+    id:'13', brand:'白盒子艺廊', title:'白盒子艺廊', year:2024,
+    tags:['Web','Gallery','CMS'],
+    img:'images/p-13-risograph.jpg',
+    hero:'images/p-14-gallery-wall.jpg',
+    g1:'images/p-15-light-motion.jpg',
+    g2:'images/p-16-interior.jpg',
+    desc:'极简画廊网站。模块化 CMS 让画廊主自己管理展览、艺术家与作品。',
+    long:'白盒子艺廊是上海一家成立于 2018 年的小型当代艺术空间。我们设计并开发了它的官方网站与后台 CMS。\n\n前台界面几乎只有图像、艺术家姓名与展览年份；后台允许画廊主每周自行更新内容、调整顺序、管理馆藏。',
+    spec:[['Client','白盒子'],['Year','2024'],['Scope','整站 · CMS'],['Tech','Next · Sanity']]
+  },
+  {
+    id:'14', brand:'北京 798', title:'呼吸的墙', year:2023,
+    tags:['Installation','Textile'],
+    img:'images/p-17-color-block.jpg',
+    hero:'images/p-18-magazine.jpg',
+    g1:'images/p-01-color-macro.jpg',
+    g2:'images/p-02-typography.jpg',
+    desc:'由温感面料构成的可呼吸墙体。当观众靠近，墙以体温的频率起伏。',
+    long:'《呼吸的墙》是 2023 年在北京 798 艺术区一个临时空间内展示的作品。墙体由一种温感面料构成，覆盖了 6×3 米的墙面。\n\n墙后藏有 24 个微型气泵——当红外线感知到观众靠近时，气泵以观众心率的近似频率为墙体充放气。墙开始"呼吸"。',
+    spec:[['Client','北京 798'],['Year','2023'],['Scope','装置 · 6m × 3m'],['Sensors','24 ch']]
+  },
+  {
+    id:'15', brand:'上海当代艺术馆', title:'声音地形', year:2024,
+    tags:['Sound','Spatial'],
+    img:'images/p-03-packaging.jpg',
+    hero:'images/p-04-paint-stroke.jpg',
+    g1:'images/p-05-brand-flatlay.jpg',
+    g2:'images/p-06-studio-portrait.jpg',
+    desc:'由 96 个微型扬声器构成的声音地形。每走一步路，都在改变地图。',
+    long:'《声音地形》是为上海当代艺术馆 2024 年秋季群展所做的一件 17 分钟的步行式声音装置。\n\n我们在展厅地面下方布设了 96 个独立通道的微型扬声器，每个扬声器播放一段不超过 2 秒的环境录音。观众的脚步触发不同区域的扬声器组合——同一段路在不同的步频下听起来完全不同。',
+    spec:[['Client','上海当代'],['Year','2024'],['Scope','96 通道 · 17 min'],['Area','220 m²']]
+  },
+  {
+    id:'16', brand:'苏州博物馆', title:'水镜', year:2025,
+    tags:['Sculpture','Water'],
+    img:'images/p-07-gradient.jpg',
+    hero:'images/p-08-editorial.jpg',
+    g1:'images/p-09-ceramic.jpg',
+    g2:'images/p-10-urban.jpg',
+    desc:'置于苏州博物馆庭院中的镜面水池。倒影成为一种安静的雕塑。',
+    long:'《水镜》是受苏州博物馆邀请，为其新落成的庭院设计的一件永久性装置。一块 12 平方米、深仅 5 毫米的镜面水池，被嵌入庭院南端的青石平台中。\n\n池水从一侧极缓慢地循环流入，使水面始终保持镜面状态。倒影所映出的，是博物馆白墙、屋脊与远处一树梅花。',
+    spec:[['Client','苏州博物馆'],['Year','2025'],['Scope','永久装置 · 12 m²'],['Material','不锈钢 · 水']]
+  },
+  {
+    id:'17', brand:'上海双年展', title:'时间的褶皱', year:2023,
+    tags:['Poster','Biennale'],
+    img:'images/p-11-ink-paper.jpg',
+    hero:'images/p-12-botanical.jpg',
+    g1:'images/p-13-risograph.jpg',
+    g2:'images/p-14-gallery-wall.jpg',
+    desc:'为上海双年展所做的主视觉系统。一张纸被反复折叠，留下不可逆的地理。',
+    long:'《时间的褶皱》是 2023 上海双年展的主视觉与海报系统。我们的方法是字面意义的——把 36 张全开纸反复手工折叠后铺平，扫描后作为视觉的基底。\n\n每一道折痕代表一次时间的介入。最终的主视觉由 6 张被选中的"折痕地图"演变而成，覆盖了海报、画册、导视与衍生品。',
+    spec:[['Client','上海双年展'],['Year','2023'],['Scope','主视觉 · 海报系统'],['Posters','12 张']]
+  },
+  {
+    id:'18', brand:'西塘古镇', title:'空亭', year:2023,
+    tags:['Architecture','Temporary'],
+    img:'images/p-15-light-motion.jpg',
+    hero:'images/p-16-interior.jpg',
+    g1:'images/p-17-color-block.jpg',
+    g2:'images/p-18-magazine.jpg',
+    desc:'由 36 根白色钢管搭建的临时亭子。三个月后拆除，只留下一组照片。',
+    long:'《空亭》是为西塘古镇 2023 年秋季艺术周设计的一处临时建筑。结构由 36 根白色无缝钢管以最少节点连接而成，形成一个 3.6 米见方的开放亭子，无墙、无顶、无装饰。\n\n它被放置在古镇南面的水边，三个月后被完整拆除。我们刻意没有为它做任何视觉设计或标识——它的价值就在于它存在过的那一段时间。',
+    spec:[['Client','西塘古镇艺术周'],['Year','2023'],['Scope','临时建筑'],['Footprint','3.6 × 3.6 m']]
+  },
+  {
+    id:'19', brand:'个人创作', title:'字图 #047', year:2025,
+    tags:['Diary','Type'],
+    img:'images/p-01-color-macro.jpg',
+    hero:'images/p-02-typography.jpg',
+    g1:'images/p-03-packaging.jpg',
+    g2:'images/p-04-paint-stroke.jpg',
+    desc:'每日字图练习的第 047 号。墨与纸之间的对话。',
+    long:'《字图》是工作室主理人沈白自 2024 年开始的每日练习，每天一张，用毛笔与宣纸记录一个字或一组笔画。这是 047 号。\n\n练习的目的不是书法，而是观察——观察墨在纸上的扩散与停止，观察手势与呼吸的关系。完整的 365 张已开始计划在 2027 年集结出版。',
+    spec:[['Client','个人创作'],['Year','2025'],['Scope','日课 · 第 047 号'],['Material','宣纸 · 墨']]
+  },
+  {
+    id:'20', brand:'个人创作', title:'夜半笔记', year:2024,
+    tags:['Sketch','Ink'],
+    img:'images/p-05-brand-flatlay.jpg',
+    hero:'images/p-06-studio-portrait.jpg',
+    g1:'images/p-07-gradient.jpg',
+    g2:'images/p-08-editorial.jpg',
+    desc:'失眠时的速写练习。未发表，仅作记录。',
+    long:'《夜半笔记》是一组在 2024 年间断续记录的速写，多数完成于深夜。题材并不指向具体——一段对话残片、一个尚未存在的物件、一种未被命名的情绪。\n\n它们没有被装订成册，也没有发表过，但工作室认为它们是这一年里最诚实的工作。',
+    spec:[['Client','个人创作'],['Year','2024'],['Scope','速写 · 38 张'],['Status','未发表']]
+  },
+];
+
+// ====== 球面投影：把作品按经纬网铺在一个球面上 ======
+// 思路：每个 cell 在球面上有固定的 (col, row) → (经度, 纬度)。
+// 相邻 cell 沿经线 / 纬线共享角点，所以边自然贴合，像地球仪上的经纬网。
+// 拖拽 = 转动相机经纬度；缩放 = 球面整体 scale。
+(() => {
+  const SPHERE_R   = 1700;                                    // 圆柱半径
+  const STEP_DEG   = 11;                                      // 每格经/纬跨度
+  const STEP_RAD   = STEP_DEG * Math.PI / 180;
+  const CELL       = Math.round(SPHERE_R * STEP_RAD);         // ≈ 326
+  const TOTAL_COLS = Math.round(360 / STEP_DEG);              // 经度方向无限循环：用 mod 取作品
+  const ROW_HALF   = 6;                                       // 上下各 6 行 ≈ ±66°，避开极区严重畸变
+  const ROW_MIN    = -ROW_HALF, ROW_MAX = ROW_HALF;
+
+  document.documentElement.style.setProperty('--cell', CELL + 'px');
+
+  const viewport = document.getElementById('viewport');
+  const sphere   = document.getElementById('sphere');
+  const posEl    = document.getElementById('pos');
+  const zoomEl   = document.getElementById('zoom');
+
+  // 相机：经度（可无限旋转）、纬度（夹紧）、缩放
+  let camLon = 0, camLat = 0, camZoom = 1;
+  const MIN_Z = 0.6, MAX_Z = 1.8;
+
+  // 鼠标视角微转：根据鼠标在屏幕的位置，整个球面轻微 yaw / pitch
+  const TILT_Y_AMP = 6;     // 左右最大旋转角度（度）
+  const TILT_X_AMP = 4;     // 上下最大旋转角度（度）
+  let tiltY = 0, tiltX = 0;                 // 当前实际值（写到 sphere transform）
+  let tiltTargetY = 0, tiltTargetX = 0;     // 目标值（鼠标位置算出来）
+  let tiltAnimating = false;
+
+  const cellEls = new Map();   // key "col,row" → element
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function tagHTML(tags){ return tags.map(t => `<em>${t}</em>`).join(''); }
+
+  // (col, row) → 选哪个作品。混合两个素数避免明显重复
+  function workFor(col, row){
+    const colN = ((col % TOTAL_COLS) + TOTAL_COLS) % TOTAL_COLS;
+    const rowN = row + ROW_HALF;
+    const idx  = (colN * 7 + rowN * 13) % WORKS.length;
+    return WORKS[idx];
+  }
+
+  function ensureCell(col, row){
+    const key = col + ',' + row;
+    let el = cellEls.get(key);
+    if(el) return el;
+    const w = workFor(col, row);
+    el = document.createElement('div');
+    el.className = 'work';
+    el.dataset.id  = w.id;
+    el.dataset.col = col;
+    el.dataset.row = row;
+    el.innerHTML = `
+      <div class="cell-head"><span class="brand">${w.brand}</span><span class="proj">${w.title}</span></div>
+      <div class="frame"><span class="num">${w.id}</span>
+        <img src="${w.img}" alt="${w.title}" loading="lazy">
+      </div>
+      <div class="cell-foot"><span class="year">${w.year}</span>
+        <span class="tags">${tagHTML(w.tags)}</span>
+      </div>`;
+    sphere.appendChild(el);
+    cellEls.set(key, el);
+    return el;
+  }
+
+  function placeCell(el, col, row){
+    // cell 在圆柱坐标：横向绕圈（经度），纵向走直线（行号）
+    const lonDeg = col * STEP_DEG - camLon;
+    const yPos   = (row * STEP_DEG - camLat) / STEP_DEG * CELL;
+    // 内凹圆柱：相机在轴心，cell 贴在圆柱内壁
+    // 横向：rotateY 绕中轴卷起 → 纬线向中心凹
+    // 纵向：直接 translateY → 经线是直线（不再赤道外凸）
+    // 单 cell 略放大 1.008 吸收浮点缝隙
+    el.style.transform =
+      `rotateY(${-lonDeg}deg) translateZ(${-SPHERE_R}px) translateY(${yPos}px) scale(1.008)`;
+  }
+
+  function visibleRange(){
+    // 视野半角：屏幕越大、缩放越小，可见角度越大
+    const halfH = (Math.atan2(window.innerWidth / 2, 1500) * 180 / Math.PI) / camZoom + STEP_DEG;
+    const halfV = (Math.atan2(window.innerHeight / 2, 1500) * 180 / Math.PI) / camZoom + STEP_DEG;
+    const c0 = Math.floor((camLon - halfH) / STEP_DEG);
+    const c1 = Math.ceil ((camLon + halfH) / STEP_DEG);
+    const r0 = Math.max(ROW_MIN, Math.floor((camLat - halfV) / STEP_DEG));
+    const r1 = Math.min(ROW_MAX, Math.ceil ((camLat + halfV) / STEP_DEG));
+    return [c0, c1, r0, r1];
+  }
+
+  function render(){
+    const [c0, c1, r0, r1] = visibleRange();
+    const need = new Set();
+    for(let col = c0; col <= c1; col++){
+      for(let row = r0; row <= r1; row++){
+        const key = col + ',' + row;
+        need.add(key);
+        const el = ensureCell(col, row);
+        placeCell(el, col, row);
+      }
+    }
+    for(const [key, el] of cellEls){
+      if(!need.has(key)){ el.remove(); cellEls.delete(key); }
+    }
+    sphere.style.transform = `translate(-50%, -50%) rotateY(${tiltY}deg) rotateX(${tiltX}deg) scale(${camZoom})`;
+    if(posEl)  posEl.textContent  = `${Math.round(((camLon % 360) + 360) % 360)}°, ${Math.round(camLat)}°`;
+    if(zoomEl) zoomEl.textContent = camZoom.toFixed(2) + '×';
+  }
+
+  function recenter(){
+    camLon = 0; camLat = 0; camZoom = 1;
+    render();
+  }
+
+  recenter();
+  window.addEventListener('resize', render);
+
+  // —— 拖拽 / 点击 ——
+  let isDown = false, sx = 0, sy = 0, oLon = 0, oLat = 0;
+  let vx = 0, vy = 0, lastX = 0, lastY = 0, lastT = 0;
+  let dragMoved = 0, downTarget = null;
+
+  // 像素 → 度的灵敏度：80 px ≈ 1 格
+  const SENS = STEP_DEG / 80;
+
+  function down(x, y, target){
+    isDown = true; sx = x; sy = y; oLon = camLon; oLat = camLat;
+    lastX = x; lastY = y; lastT = performance.now();
+    vx = vy = 0; dragMoved = 0; downTarget = target;
+    document.body.classList.add('dragging');
+  }
+  function move(x, y){
+    if(!isDown) return;
+    camLon = oLon - (x - sx) * SENS / camZoom;
+    camLat = clamp(oLat + (y - sy) * SENS / camZoom, ROW_MIN * STEP_DEG, ROW_MAX * STEP_DEG);
+    dragMoved += Math.abs(x - lastX) + Math.abs(y - lastY);
+    render();
+    const now = performance.now();
+    const dt = Math.max(1, now - lastT);
+    vx = (x - lastX) / dt;
+    vy = (y - lastY) / dt;
+    lastX = x; lastY = y; lastT = now;
+  }
+  function up(){
+    if(!isDown) return;
+    isDown = false;
+    document.body.classList.remove('dragging');
+    if(dragMoved < 8 && downTarget){
+      const work = downTarget.closest('.work');
+      if(work){
+        const id = work.dataset.id;
+        if(id){ location.hash = '#work/' + id; }
+      }
+    }
+    // 惯性
+    const decay = 0.93, minV = 0.02;
+    function step(){
+      if(Math.abs(vx) < minV && Math.abs(vy) < minV) return;
+      camLon -= vx * 16 * SENS / camZoom;
+      camLat = clamp(camLat + vy * 16 * SENS / camZoom, ROW_MIN * STEP_DEG, ROW_MAX * STEP_DEG);
+      vx *= decay; vy *= decay;
+      render();
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  viewport.addEventListener('mousedown', e => { if(e.button !== 0) return; down(e.clientX, e.clientY, e.target); });
+  window.addEventListener('mousemove',  e => {
+    move(e.clientX, e.clientY);
+    if(!isDown) setMouseTilt(e.clientX, e.clientY);
+  });
+  window.addEventListener('mouseup', up);
+
+  function setMouseTilt(x, y){
+    // 屏幕中心为 0，左右 ±1
+    const nx = (x / window.innerWidth  - 0.5) * 2;
+    const ny = (y / window.innerHeight - 0.5) * 2;
+    tiltTargetY =  nx * TILT_Y_AMP;   // 鼠标在右 → 球面向右转一点
+    tiltTargetX = -ny * TILT_X_AMP;   // 鼠标在下 → 球面向下俯一点（-ny 让方向更自然）
+    if(!tiltAnimating){ tiltAnimating = true; requestAnimationFrame(tickTilt); }
+  }
+  function tickTilt(){
+    tiltY += (tiltTargetY - tiltY) * 0.08;
+    tiltX += (tiltTargetX - tiltX) * 0.08;
+    render();
+    if(Math.abs(tiltTargetY - tiltY) > 0.02 || Math.abs(tiltTargetX - tiltX) > 0.02){
+      requestAnimationFrame(tickTilt);
+    } else {
+      tiltAnimating = false;
+    }
+  }
+
+  viewport.addEventListener('touchstart', e => { if(e.touches.length === 1) down(e.touches[0].clientX, e.touches[0].clientY, e.target); }, { passive: true });
+  window.addEventListener('touchmove',  e => { if(e.touches.length === 1) move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  window.addEventListener('touchend', up);
+
+  viewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    if(e.ctrlKey || e.metaKey){
+      camZoom = clamp(camZoom * Math.exp(-e.deltaY * 0.01), MIN_Z, MAX_Z);
+      render();
+    } else {
+      const isTrackpad = (Math.abs(e.deltaY) < 50 && !Number.isInteger(e.deltaY)) || Math.abs(e.deltaX) > 0;
+      if(isTrackpad){
+        camLon += e.deltaX * SENS / camZoom;
+        camLat = clamp(camLat + e.deltaY * SENS / camZoom, ROW_MIN * STEP_DEG, ROW_MAX * STEP_DEG);
+        render();
+      } else {
+        camZoom = clamp(camZoom * Math.exp(-e.deltaY * 0.0015), MIN_Z, MAX_Z);
+        render();
+      }
+    }
+  }, { passive: false });
+
+  window.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ if(location.hash){ location.hash = ''; } return; }
+    if(location.hash) return;
+    if(e.key === '0' || e.key === 'r' || e.key === 'R'){ recenter(); return; }
+    if(e.key === '+' || e.key === '='){ camZoom = clamp(camZoom * 1.15, MIN_Z, MAX_Z); render(); return; }
+    if(e.key === '-' || e.key === '_'){ camZoom = clamp(camZoom * 0.87, MIN_Z, MAX_Z); render(); return; }
+    const K = STEP_DEG;
+    if(e.key === 'ArrowLeft'){  camLon -= K; render(); }
+    if(e.key === 'ArrowRight'){ camLon += K; render(); }
+    if(e.key === 'ArrowUp'){    camLat = clamp(camLat - K, ROW_MIN * STEP_DEG, ROW_MAX * STEP_DEG); render(); }
+    if(e.key === 'ArrowDown'){  camLat = clamp(camLat + K, ROW_MIN * STEP_DEG, ROW_MAX * STEP_DEG); render(); }
+  });
+
+  // 入场：从一个稍微偏的角度滑回中心
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+    setTimeout(() => {
+      const start = performance.now();
+      const dur = 1400;
+      const dLon = -8, dLat = -3;
+      const startLon = camLon, startLat = camLat;
+      camLon = startLon - dLon; camLat = startLat - dLat;
+      function tick(t){
+        const k = Math.min(1, (t - start) / dur);
+        const ee = 1 - Math.pow(1 - k, 3);
+        camLon = startLon - dLon * (1 - ee);
+        camLat = startLat - dLat * (1 - ee);
+        render();
+        if(k < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }, 200);
+  }, 800);
+})();
+
+// ====== 时钟 ======
+function updateClock(){
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const t1 = document.getElementById('time1');
+  const t2 = document.getElementById('time2');
+  if(t1) t1.textContent = `${h}:${m}`;
+  const jH = String((now.getHours() + 1) % 24).padStart(2, '0');
+  if(t2) t2.textContent = `${jH}:${m} JST`;
+}
+updateClock(); setInterval(updateClock, 30000);
+
+// ====== 二级页面 / 路由 ======
+const overlays = {
+  about:   document.getElementById('overlay-about'),
+  cv:      document.getElementById('overlay-cv'),
+  contact: document.getElementById('overlay-contact'),
+  filter:  document.getElementById('overlay-filter'),
+  detail:  document.getElementById('overlay-detail'),
+};
+const detailContent = document.getElementById('detail-content');
+
+function specHTML(spec){ return spec.map(([k,v])=>`<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join(''); }
+function detailTagsHTML(tags){ return tags.map(t=>`<em>${t}</em>`).join(''); }
+
+function renderDetail(id){
+  const idx = WORKS.findIndex(w => w.id === id);
+  if(idx === -1) return false;
+  const w = WORKS[idx];
+  const prev = WORKS[(idx - 1 + WORKS.length) % WORKS.length];
+  const next = WORKS[(idx + 1) % WORKS.length];
+  detailContent.innerHTML = `
+    <div class="detail-num">作品 ${w.id} · ${w.year}</div>
+    <div class="detail-brand">${w.brand}</div>
+    <h1 class="detail-title">${w.title}</h1>
+    <div class="detail-tags">${detailTagsHTML(w.tags)}</div>
+    <div class="detail-hero"><img src="${w.hero}" alt="${w.title}"></div>
+    <div class="detail-body">
+      <div class="detail-desc">${w.long.replace(/\n/g,'<br><br>')}</div>
+      <div class="detail-spec">${specHTML(w.spec)}</div>
+    </div>
+    <div class="detail-gallery">
+      <div><img src="${w.g1}" alt="${w.title}"></div>
+      <div><img src="${w.g2}" alt="${w.title}"></div>
+    </div>
+    <div class="detail-nav">
+      <a data-nav-to="work/${prev.id}">
+        <span class="label">← 上一件</span>
+        <span>${prev.title}</span>
+      </a>
+      <a data-nav-to="work/${next.id}" class="next">
+        <span class="label">下一件 →</span>
+        <span>${next.title}</span>
+      </a>
+    </div>`;
+  detailContent.querySelectorAll('[data-nav-to]').forEach(a => {
+    a.addEventListener('click', () => { location.hash = '#' + a.dataset.navTo; });
+  });
+  return true;
+}
+
+function showOverlay(name){
+  for(const k in overlays) overlays[k].classList.remove('show');
+  if(overlays[name]) overlays[name].classList.add('show');
+  document.body.classList.toggle('overlay-open', !!name);
+  document.body.style.overflow = name ? 'hidden' : '';
+}
+
+function applyRoute(){
+  const h = location.hash.replace(/^#/, '');
+  const m = h.match(/^work\/(.+)$/);
+  if(m){
+    if(renderDetail(m[1])){ showOverlay('detail'); window.scrollTo(0,0); }
+    else showOverlay(null);
+    setActiveTab(null);
+    return;
+  }
+  if(['about','cv','contact','filter'].includes(h)){
+    showOverlay(h);
+    setActiveTab(h);
+    return;
+  }
+  showOverlay(null);
+  setActiveTab('home');
+}
+
+function setActiveTab(name){
+  document.querySelectorAll('.tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.nav === name);
+  });
+}
+
+window.addEventListener('hashchange', applyRoute);
+
+// nav clicks
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    const target = el.dataset.nav;
+    if(target === 'home' || target === 'list'){
+      if(location.hash) { location.hash = ''; }
+    } else {
+      location.hash = '#' + target;
+    }
+  });
+});
+
+applyRoute();
+</script>
+</body>
+</html>

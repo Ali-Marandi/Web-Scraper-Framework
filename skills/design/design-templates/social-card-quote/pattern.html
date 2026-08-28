@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Social Card Quote Pattern</title>
+<style>
+  /* Pattern reference only. Do not copy this file verbatim into final artifacts. */
+  :root{--bg:#f7f2e8;--ink:#17120d;--muted:#776c5f;--line:rgba(23,18,13,.18);--accent:#7a3cff}
+  *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#ddd;font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.card{width:1080px;height:1440px;background:var(--bg);color:var(--ink);padding:84px 78px;position:relative;overflow:hidden}
+  .issue{display:grid;grid-template-columns:1fr auto;gap:30px;align-items:start;font-size:28px;color:var(--muted);padding-bottom:34px;border-bottom:1px solid var(--line);letter-spacing:.04em}.issue b{color:var(--ink)}
+  .mark{position:absolute;right:72px;top:178px;font-size:260px;line-height:.7;color:rgba(122,60,255,.13);font-family:Georgia,serif}.quote{margin-top:170px;font-size:92px;line-height:1.08;letter-spacing:-.07em;font-weight:820;max-width:870px}.quote em{font-style:normal;color:var(--accent)}
+  .note{margin-top:64px;display:grid;grid-template-columns:120px 1fr;gap:28px;align-items:start}.label{font-size:24px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}.context{font-size:32px;line-height:1.48;max-width:660px;color:#3a332d}
+  .anchors{position:absolute;left:78px;right:78px;bottom:82px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.anchor{border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:24px;line-height:1.35}.anchor b{display:block;color:var(--ink);font-size:30px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<main class="card" data-template="social-card-quote">
+  <div class="issue"><span><b>THESIS</b> / 观点卡</span><span>02</span></div>
+  <div class="mark">“</div>
+  <section class="quote">真正有用的 AI，不是帮你写更多字，<em>而是减少你必须处理的信息。</em></section>
+  <div class="note"><div class="label">Context</div><div class="context">用一句话承载整张卡，再用小注释说明语境。不要把长段落伪装成 quote。</div></div>
+  <div class="anchors">
+    <div class="anchor"><b>01</b>一句主张</div>
+    <div class="anchor"><b>02</b>一个上下文</div>
+    <div class="anchor"><b>03</b>一个可记住的重音</div>
+  </div>
+</main>
+</body>
+</html>

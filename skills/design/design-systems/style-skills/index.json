@@ -1,0 +1,1151 @@
+{
+  "agentic": {
+    "slug": "agentic",
+    "name": "Agentic",
+    "skillPath": "skills/agentic/SKILL.md",
+    "designPath": "skills/agentic/DESIGN.md",
+    "mood": [
+      "极简",
+      "技术感",
+      "克制"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Conversational AI-first interface with minimal controls, cle"
+  },
+  "artistic": {
+    "slug": "artistic",
+    "name": "Artistic",
+    "skillPath": "skills/artistic/SKILL.md",
+    "designPath": "skills/artistic/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "High-contrast, expressive style with creative typography and"
+  },
+  "bold": {
+    "slug": "bold",
+    "name": "Bold",
+    "skillPath": "skills/bold/SKILL.md",
+    "designPath": "skills/bold/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Strong visual presence with heavyweight typography, high-con"
+  },
+  "brutalism": {
+    "slug": "brutalism",
+    "name": "Brutalism",
+    "skillPath": "skills/brutalism/SKILL.md",
+    "designPath": "skills/brutalism/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "技术感",
+      "复古/玩味"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Raw, anti-design aesthetic inspired by concrete architecture"
+  },
+  "cafe": {
+    "slug": "cafe",
+    "name": "Cafe",
+    "skillPath": "skills/cafe/SKILL.md",
+    "designPath": "skills/cafe/DESIGN.md",
+    "mood": [
+      "极简",
+      "温暖"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Cozy cafe-inspired interface with warm tones, soft typograph"
+  },
+  "claymorphism": {
+    "slug": "claymorphism",
+    "name": "Claymorphism",
+    "skillPath": "skills/claymorphism/SKILL.md",
+    "designPath": "skills/claymorphism/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "亲和/友好",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Soft, rounded 3D-like shapes mimicking malleable clay with p"
+  },
+  "clean": {
+    "slug": "clean",
+    "name": "Clean",
+    "skillPath": "skills/clean/SKILL.md",
+    "designPath": "skills/clean/DESIGN.md",
+    "mood": [
+      "极简",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Simplicity-focused design with ample whitespace, legible typ"
+  },
+  "colorful": {
+    "slug": "colorful",
+    "name": "Colorful",
+    "skillPath": "skills/colorful/SKILL.md",
+    "designPath": "skills/colorful/DESIGN.md",
+    "mood": [
+      "奢华",
+      "戏剧化",
+      "亲和/友好",
+      "活力/明亮",
+      "渐变氛围"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Vibrant, high-contrast palettes and gradients for engaging, "
+  },
+  "contemporary": {
+    "slug": "contemporary",
+    "name": "Contemporary",
+    "skillPath": "skills/contemporary/SKILL.md",
+    "designPath": "skills/contemporary/DESIGN.md",
+    "mood": [
+      "极简",
+      "精密/工程感",
+      "戏剧化",
+      "暗黑原生",
+      "亲和/友好"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Current-era minimalist design with bento grids, dark mode su"
+  },
+  "corporate": {
+    "slug": "corporate",
+    "name": "Corporate",
+    "skillPath": "skills/corporate/SKILL.md",
+    "designPath": "skills/corporate/DESIGN.md",
+    "mood": [
+      "极简",
+      "精密/工程感",
+      "奢华",
+      "企业/可信"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Professional, brand-aligned design with structured grids, mi"
+  },
+  "cosmic": {
+    "slug": "cosmic",
+    "name": "Cosmic",
+    "skillPath": "skills/cosmic/SKILL.md",
+    "designPath": "skills/cosmic/DESIGN.md",
+    "mood": [
+      "未来/科幻",
+      "戏剧化",
+      "暗黑原生"
+    ],
+    "scheme": "dark",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Futuristic sci-fi aesthetic with dark themes, vibrant neon a"
+  },
+  "creative": {
+    "slug": "creative",
+    "name": "Creative",
+    "skillPath": "skills/creative/SKILL.md",
+    "designPath": "skills/creative/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "亲和/友好"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Playful, character-driven design with expressive typography "
+  },
+  "dithered": {
+    "slug": "dithered",
+    "name": "Dithered",
+    "skillPath": "skills/dithered/SKILL.md",
+    "designPath": "skills/dithered/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "复古/玩味"
+    ],
+    "scheme": "light",
+    "era": "复古",
+    "formality": "medium",
+    "best_for": "Dot-pattern rendering technique that simulates shades with a"
+  },
+  "doodle": {
+    "slug": "doodle",
+    "name": "Doodle",
+    "skillPath": "skills/doodle/SKILL.md",
+    "designPath": "skills/doodle/DESIGN.md",
+    "mood": [
+      "亲和/友好",
+      "插画丰富"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Hand-drawn, sketch-like style with doodles, handwritten font"
+  },
+  "dramatic": {
+    "slug": "dramatic",
+    "name": "Dramatic",
+    "skillPath": "skills/dramatic/SKILL.md",
+    "designPath": "skills/dramatic/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "影像优先"
+    ],
+    "scheme": "dark",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "High-contrast, theatrical design with bold layouts, immersiv"
+  },
+  "editorial": {
+    "slug": "editorial",
+    "name": "Editorial",
+    "skillPath": "skills/editorial/SKILL.md",
+    "designPath": "skills/editorial/DESIGN.md",
+    "mood": [
+      "克制",
+      "精密/工程感",
+      "奢华",
+      "编辑/杂志感",
+      "内容优先"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Magazine-inspired editorial layout with refined serif typogr"
+  },
+  "elegant": {
+    "slug": "elegant",
+    "name": "Elegant",
+    "skillPath": "skills/elegant/SKILL.md",
+    "designPath": "skills/elegant/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "奢华"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Graceful, refined aesthetic with delicate typography, minima"
+  },
+  "energetic": {
+    "slug": "energetic",
+    "name": "Energetic",
+    "skillPath": "skills/energetic/SKILL.md",
+    "designPath": "skills/energetic/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Dynamic, vibrant style with thick borders, geometric shapes,"
+  },
+  "enterprise": {
+    "slug": "enterprise",
+    "name": "Enterprise",
+    "skillPath": "skills/enterprise/SKILL.md",
+    "designPath": "skills/enterprise/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "企业/可信"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Clean, high-contrast enterprise design for data-driven workf"
+  },
+  "expressive": {
+    "slug": "expressive",
+    "name": "Expressive",
+    "skillPath": "skills/expressive/SKILL.md",
+    "designPath": "skills/expressive/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "亲和/友好",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Vibrant, personality-driven design with bold colors, playful"
+  },
+  "fantasy": {
+    "slug": "fantasy",
+    "name": "Fantasy",
+    "skillPath": "skills/fantasy/SKILL.md",
+    "designPath": "skills/fantasy/DESIGN.md",
+    "mood": [
+      "奢华",
+      "戏剧化"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Game-inspired fantasy aesthetic with bold, premium visuals, "
+  },
+  "flat": {
+    "slug": "flat",
+    "name": "Flat",
+    "skillPath": "skills/flat/SKILL.md",
+    "designPath": "skills/flat/DESIGN.md",
+    "mood": [
+      "极简",
+      "亲和/友好",
+      "活力/明亮",
+      "企业/可信"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Two-dimensional minimalist style with vibrant colors, clean "
+  },
+  "friendly": {
+    "slug": "friendly",
+    "name": "Friendly",
+    "skillPath": "skills/friendly/SKILL.md",
+    "designPath": "skills/friendly/DESIGN.md",
+    "mood": [
+      "极简",
+      "奢华",
+      "戏剧化",
+      "亲和/友好",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "未来",
+    "formality": "high",
+    "best_for": "Approachable, intuitive design with rounded elements, ample "
+  },
+  "futuristic": {
+    "slug": "futuristic",
+    "name": "Futuristic",
+    "skillPath": "skills/futuristic/SKILL.md",
+    "designPath": "skills/futuristic/DESIGN.md",
+    "mood": [
+      "未来/科幻",
+      "技术感",
+      "精密/工程感"
+    ],
+    "scheme": "dark",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Forward-looking design with tech-inspired typography, modern"
+  },
+  "glassmorphism": {
+    "slug": "glassmorphism",
+    "name": "Glassmorphism",
+    "skillPath": "skills/glassmorphism/SKILL.md",
+    "designPath": "skills/glassmorphism/DESIGN.md",
+    "mood": [
+      "渐变氛围",
+      "未来/科幻",
+      "克制"
+    ],
+    "scheme": "light",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Frosted glass effect with translucent layers, subtle blur, a"
+  },
+  "gradient": {
+    "slug": "gradient",
+    "name": "Gradient",
+    "skillPath": "skills/gradient/SKILL.md",
+    "designPath": "skills/gradient/DESIGN.md",
+    "mood": [
+      "亲和/友好",
+      "渐变氛围"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Smooth color transitions and gradient-rich surfaces for mode"
+  },
+  "luxury": {
+    "slug": "luxury",
+    "name": "Luxury",
+    "skillPath": "skills/luxury/SKILL.md",
+    "designPath": "skills/luxury/DESIGN.md",
+    "mood": [
+      "奢华",
+      "戏剧化",
+      "暗黑原生"
+    ],
+    "scheme": "dark",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "High-end dark aesthetic with bold headings, monochromatic pa"
+  },
+  "material": {
+    "slug": "material",
+    "name": "Material",
+    "skillPath": "skills/material/SKILL.md",
+    "designPath": "skills/material/DESIGN.md",
+    "mood": [
+      "企业/可信",
+      "极简",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Google's Material Design with layered surfaces, dynamic them"
+  },
+  "minimal": {
+    "slug": "minimal",
+    "name": "Minimal",
+    "skillPath": "skills/minimal/SKILL.md",
+    "designPath": "skills/minimal/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "内容优先"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Stripped-back design emphasizing whitespace, clean typograph"
+  },
+  "modern": {
+    "slug": "modern",
+    "name": "Modern",
+    "skillPath": "skills/modern/SKILL.md",
+    "designPath": "skills/modern/DESIGN.md",
+    "mood": [
+      "极简",
+      "编辑/杂志感"
+    ],
+    "scheme": "dark",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Contemporary editorial style with serif typography, minimal "
+  },
+  "mono": {
+    "slug": "mono",
+    "name": "Mono",
+    "skillPath": "skills/mono/SKILL.md",
+    "designPath": "skills/mono/DESIGN.md",
+    "mood": [
+      "极简",
+      "技术感",
+      "戏剧化",
+      "亲和/友好",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Monospace-driven, matrix-inspired design with high-contrast "
+  },
+  "neobrutalism": {
+    "slug": "neobrutalism",
+    "name": "Neobrutalism",
+    "skillPath": "skills/neobrutalism/SKILL.md",
+    "designPath": "skills/neobrutalism/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "温暖"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Modern take on brutalism with bold borders, vivid accent col"
+  },
+  "neon": {
+    "slug": "neon",
+    "name": "Neon",
+    "skillPath": "skills/neon/SKILL.md",
+    "designPath": "skills/neon/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "未来/科幻",
+      "渐变氛围"
+    ],
+    "scheme": "dark",
+    "era": "未来",
+    "formality": "low",
+    "best_for": "Electric neon glow effects with high-contrast color pairings"
+  },
+  "neumorphism": {
+    "slug": "neumorphism",
+    "name": "Neumorphism",
+    "skillPath": "skills/neumorphism/SKILL.md",
+    "designPath": "skills/neumorphism/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "亲和/友好",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Soft, extruded UI elements with inner and outer shadows on m"
+  },
+  "pacman": {
+    "slug": "pacman",
+    "name": "Pacman",
+    "skillPath": "skills/pacman/SKILL.md",
+    "designPath": "skills/pacman/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "亲和/友好",
+      "复古/玩味"
+    ],
+    "scheme": "dark",
+    "era": "复古",
+    "formality": "low",
+    "best_for": "Retro arcade-inspired design with pixel fonts, dotted border"
+  },
+  "paper": {
+    "slug": "paper",
+    "name": "Paper",
+    "skillPath": "skills/paper/SKILL.md",
+    "designPath": "skills/paper/DESIGN.md",
+    "mood": [
+      "温暖",
+      "编辑/杂志感",
+      "内容优先"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Paper-textured, print-inspired design with minimal colors, c"
+  },
+  "perspective": {
+    "slug": "perspective",
+    "name": "Perspective",
+    "skillPath": "skills/perspective/SKILL.md",
+    "designPath": "skills/perspective/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Spatial depth design with isometric views, vanishing points,"
+  },
+  "premium": {
+    "slug": "premium",
+    "name": "Premium",
+    "skillPath": "skills/premium/SKILL.md",
+    "designPath": "skills/premium/DESIGN.md",
+    "mood": [
+      "克制",
+      "精密/工程感",
+      "奢华"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Apple-inspired premium aesthetic with precise spacing, moder"
+  },
+  "professional": {
+    "slug": "professional",
+    "name": "Professional",
+    "skillPath": "skills/professional/SKILL.md",
+    "designPath": "skills/professional/DESIGN.md",
+    "mood": [
+      "企业/可信",
+      "克制",
+      "极简"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Polished, business-ready design with modern typography, stru"
+  },
+  "publication": {
+    "slug": "publication",
+    "name": "Publication",
+    "skillPath": "skills/publication/SKILL.md",
+    "designPath": "skills/publication/DESIGN.md",
+    "mood": [
+      "精密/工程感",
+      "戏剧化",
+      "编辑/杂志感"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Print-inspired visual language for books, magazines, and rep"
+  },
+  "refined": {
+    "slug": "refined",
+    "name": "Refined",
+    "skillPath": "skills/refined/SKILL.md",
+    "designPath": "skills/refined/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "奢华"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Carefully curated, modern minimal style with elegant serif t"
+  },
+  "retro": {
+    "slug": "retro",
+    "name": "Retro",
+    "skillPath": "skills/retro/SKILL.md",
+    "designPath": "skills/retro/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "复古/玩味"
+    ],
+    "scheme": "light",
+    "era": "复古",
+    "formality": "low",
+    "best_for": "Throwback design with vintage-inspired typography, high-cont"
+  },
+  "shadcn": {
+    "slug": "shadcn",
+    "name": "Shadcn",
+    "skillPath": "skills/shadcn/SKILL.md",
+    "designPath": "skills/shadcn/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "技术感"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Shadcn/ui-inspired design with minimal, clean components, mo"
+  },
+  "simple": {
+    "slug": "simple",
+    "name": "Simple",
+    "skillPath": "skills/simple/SKILL.md",
+    "designPath": "skills/simple/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "亲和/友好"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Straightforward, no-frills design with clean typography, neu"
+  },
+  "skeumorphism": {
+    "slug": "skeumorphism",
+    "name": "Skeumorphism",
+    "skillPath": "skills/skeumorphism/SKILL.md",
+    "designPath": "skills/skeumorphism/DESIGN.md",
+    "mood": [
+      "复古/玩味",
+      "插画丰富"
+    ],
+    "scheme": "light",
+    "era": "复古",
+    "formality": "low",
+    "best_for": "Real-world mimicry with textured surfaces, 3D effects, and f"
+  },
+  "sleek": {
+    "slug": "sleek",
+    "name": "Sleek",
+    "skillPath": "skills/sleek/SKILL.md",
+    "designPath": "skills/sleek/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Modern minimalist aesthetic with clean lines, intentional co"
+  },
+  "spacious": {
+    "slug": "spacious",
+    "name": "Spacious",
+    "skillPath": "skills/spacious/SKILL.md",
+    "designPath": "skills/spacious/DESIGN.md",
+    "mood": [
+      "极简",
+      "精密/工程感",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Generous whitespace, consistent padding, and grid-based layo"
+  },
+  "storytelling": {
+    "slug": "storytelling",
+    "name": "Storytelling",
+    "skillPath": "skills/storytelling/SKILL.md",
+    "designPath": "skills/storytelling/DESIGN.md",
+    "mood": [
+      "编辑/杂志感",
+      "亲和/友好",
+      "内容优先"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Narrative-driven design using visuals, copy, and interaction"
+  },
+  "tetris": {
+    "slug": "tetris",
+    "name": "Tetris",
+    "skillPath": "skills/tetris/SKILL.md",
+    "designPath": "skills/tetris/DESIGN.md",
+    "mood": [
+      "奢华",
+      "戏剧化",
+      "亲和/友好"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Classic block-game inspired design with playful colors, bold"
+  },
+  "vibrant": {
+    "slug": "vibrant",
+    "name": "Vibrant",
+    "skillPath": "skills/vibrant/SKILL.md",
+    "designPath": "skills/vibrant/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "温暖",
+      "亲和/友好",
+      "活力/明亮"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Lively, colorful design with bold playful typography, warm a"
+  },
+  "vintage": {
+    "slug": "vintage",
+    "name": "Vintage",
+    "skillPath": "skills/vintage/SKILL.md",
+    "designPath": "skills/vintage/DESIGN.md",
+    "mood": [
+      "极简",
+      "复古/玩味"
+    ],
+    "scheme": "light",
+    "era": "复古",
+    "formality": "medium",
+    "best_for": "1950s-1990s nostalgia with skeuomorphic touches, grainy text"
+  },
+  "levels": {
+    "slug": "levels",
+    "name": "Levels",
+    "skillPath": "skills/levels/SKILL.md",
+    "designPath": "skills/levels/DESIGN.md",
+    "mood": [
+      "极简",
+      "企业/可信"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Conversion-focused design that removes friction and guides u"
+  },
+  "bento": {
+    "slug": "bento",
+    "name": "Bento",
+    "skillPath": "skills/bento/SKILL.md",
+    "designPath": "skills/bento/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "精密/工程感"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Modular grid layout with card-like blocks, clear hierarchy, "
+  },
+  "lingo": {
+    "slug": "lingo",
+    "name": "Lingo",
+    "skillPath": "skills/lingo/SKILL.md",
+    "designPath": "skills/lingo/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "亲和/友好",
+      "活力/明亮",
+      "插画丰富"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Playful, minimal design with bright colors, rounded shapes, "
+  },
+  "dashboard": {
+    "slug": "dashboard",
+    "name": "Dashboard",
+    "skillPath": "skills/dashboard/SKILL.md",
+    "designPath": "skills/dashboard/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "精密/工程感",
+      "暗黑原生",
+      "渐变氛围"
+    ],
+    "scheme": "dark",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Dark-themed cloud-platform aesthetic with modular grids, gla"
+  },
+  "application": {
+    "slug": "application",
+    "name": "Application",
+    "skillPath": "skills/application/SKILL.md",
+    "designPath": "skills/application/DESIGN.md",
+    "mood": [
+      "极简",
+      "技术感",
+      "戏剧化"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "App dashboard with purple-themed aesthetic, top-bar navigati"
+  },
+  "ant": {
+    "slug": "ant",
+    "name": "Ant",
+    "skillPath": "skills/ant/SKILL.md",
+    "designPath": "skills/ant/DESIGN.md",
+    "mood": [
+      "企业/可信",
+      "精密/工程感",
+      "极简"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "high",
+    "best_for": "Structured, enterprise-focused design system emphasizing cla"
+  },
+  "claude": {
+    "slug": "claude",
+    "name": "Claude",
+    "skillPath": "skills/claude/SKILL.md",
+    "designPath": "skills/claude/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制",
+      "暗黑原生",
+      "编辑/杂志感",
+      "温暖"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Research-journal aesthetic on warm stone with near-black ink"
+  },
+  "codex": {
+    "slug": "codex",
+    "name": "Codex",
+    "skillPath": "skills/codex/SKILL.md",
+    "designPath": "skills/codex/DESIGN.md",
+    "mood": [
+      "极简",
+      "暗黑原生",
+      "技术感"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Radically minimal blank-canvas interface where black carries"
+  },
+  "fiction": {
+    "slug": "fiction",
+    "name": "Fiction",
+    "skillPath": "skills/fiction/SKILL.md",
+    "designPath": "skills/fiction/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "温暖",
+      "亲和/友好",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "low",
+    "best_for": "Playful, storybook-inspired interface with warm surfaces, ch"
+  },
+  "immersive": {
+    "slug": "immersive",
+    "name": "Immersive",
+    "skillPath": "skills/immersive/SKILL.md",
+    "designPath": "skills/immersive/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Exhibit-style interface that blends storytelling and game-li"
+  },
+  "impeccable": {
+    "slug": "impeccable",
+    "name": "Impeccable",
+    "skillPath": "skills/impeccable/SKILL.md",
+    "designPath": "skills/impeccable/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "编辑/杂志感",
+      "温暖"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Graphic editorial-poster aesthetic with warm cream and burnt"
+  },
+  "matrix": {
+    "slug": "matrix",
+    "name": "Matrix",
+    "skillPath": "skills/matrix/SKILL.md",
+    "designPath": "skills/matrix/DESIGN.md",
+    "mood": [
+      "技术感",
+      "戏剧化",
+      "暗黑原生",
+      "未来/科幻"
+    ],
+    "scheme": "light",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": "Dark cyber-terminal visual language with mono typography, de"
+  },
+  "riso": {
+    "slug": "riso",
+    "name": "Riso",
+    "skillPath": "skills/riso/SKILL.md",
+    "designPath": "skills/riso/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "温暖",
+      "亲和/友好",
+      "复古/玩味"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Playful two-color risograph-inspired system with paper-like "
+  },
+  "sega": {
+    "slug": "sega",
+    "name": "Sega",
+    "skillPath": "skills/sega/SKILL.md",
+    "designPath": "skills/sega/DESIGN.md",
+    "mood": [
+      "亲和/友好",
+      "复古/玩味"
+    ],
+    "scheme": "light",
+    "era": "复古",
+    "formality": "low",
+    "best_for": "Arcade-inspired game interface with pixel typography, hard e"
+  },
+  "sketch": {
+    "slug": "sketch",
+    "name": "Sketch",
+    "skillPath": "skills/sketch/SKILL.md",
+    "designPath": "skills/sketch/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "温暖",
+      "插画丰富"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Hand-drawn sketch aesthetic on warm paper with soft teal acc"
+  },
+  "terracotta": {
+    "slug": "terracotta",
+    "name": "Terracotta",
+    "skillPath": "skills/terracotta.md/SKILL.md",
+    "designPath": "skills/terracotta.md/DESIGN.md",
+    "mood": [
+      "极简",
+      "戏剧化",
+      "编辑/杂志感",
+      "温暖",
+      "亲和/友好"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": "Sun-baked, clay-toned editorial system with warm cream surfa"
+  },
+  "atelier-zero": {
+    "slug": "atelier-zero",
+    "name": "Atelier Zero",
+    "skillPath": "skills/atelier-zero/SKILL.md",
+    "designPath": "skills/atelier-zero/DESIGN.md",
+    "mood": [
+      "克制",
+      "编辑/杂志感"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": ""
+  },
+  "default": {
+    "slug": "default",
+    "name": "Default",
+    "skillPath": "skills/default/SKILL.md",
+    "designPath": "skills/default/DESIGN.md",
+    "mood": [
+      "极简",
+      "克制"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": ""
+  },
+  "hud": {
+    "slug": "hud",
+    "name": "Hud",
+    "skillPath": "skills/hud/SKILL.md",
+    "designPath": "skills/hud/DESIGN.md",
+    "mood": [
+      "技术感",
+      "未来/科幻",
+      "精密/工程感",
+      "暗黑原生"
+    ],
+    "scheme": "dark",
+    "era": "未来",
+    "formality": "medium",
+    "best_for": ""
+  },
+  "mission-control": {
+    "slug": "mission-control",
+    "name": "Mission Control",
+    "skillPath": "skills/mission-control/SKILL.md",
+    "designPath": "skills/mission-control/DESIGN.md",
+    "mood": [
+      "技术感",
+      "精密/工程感",
+      "暗黑原生"
+    ],
+    "scheme": "dark",
+    "era": "现代",
+    "formality": "high",
+    "best_for": ""
+  },
+  "totality-festival": {
+    "slug": "totality-festival",
+    "name": "Totality Festival",
+    "skillPath": "skills/totality-festival/SKILL.md",
+    "designPath": "skills/totality-festival/DESIGN.md",
+    "mood": [
+      "戏剧化",
+      "暗黑原生",
+      "渐变氛围",
+      "影像优先"
+    ],
+    "scheme": "dark",
+    "era": "未来",
+    "formality": "low",
+    "best_for": ""
+  },
+  "trading-terminal": {
+    "slug": "trading-terminal",
+    "name": "Trading Terminal",
+    "skillPath": "skills/trading-terminal/SKILL.md",
+    "designPath": "skills/trading-terminal/DESIGN.md",
+    "mood": [
+      "企业/可信",
+      "技术感"
+    ],
+    "scheme": "dark",
+    "era": "现代",
+    "formality": "high",
+    "best_for": ""
+  },
+  "urdu": {
+    "slug": "urdu",
+    "name": "Urdu",
+    "skillPath": "skills/urdu/SKILL.md",
+    "designPath": "skills/urdu/DESIGN.md",
+    "mood": [
+      "编辑/杂志感",
+      "内容优先"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": ""
+  },
+  "warm-editorial": {
+    "slug": "warm-editorial",
+    "name": "Warm Editorial",
+    "skillPath": "skills/warm-editorial/SKILL.md",
+    "designPath": "skills/warm-editorial/DESIGN.md",
+    "mood": [
+      "编辑/杂志感",
+      "温暖"
+    ],
+    "scheme": "light",
+    "era": "现代",
+    "formality": "medium",
+    "best_for": ""
+  },
+  "parchment": {
+    "slug": "parchment",
+    "name": "Parchment",
+    "skillPath": "skills/parchment/SKILL.md",
+    "designPath": "skills/parchment/DESIGN.md",
+    "mood": [
+      "编辑杂志感",
+      "正式",
+      "温暖",
+      "内容优先"
+    ],
+    "scheme": "light",
+    "era": "经典",
+    "formality": "high",
+    "best_for": "简历/报告/白皮书/正式信函/编辑长文的可打印文档"
+  }
+}

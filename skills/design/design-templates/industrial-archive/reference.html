@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>克制之物 — 北欧工业典藏 1948—1988</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+SC:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* ===================== design tokens — 冷调钢蓝工业 ===================== */
+  :root{
+    --bg:        #e6e9ee;   /* 冷灰白 */
+    --bg-soft:   #f1f3f6;
+    --paper:     #c9cfd6;
+    --ink:       #0c0f14;   /* 接近黑，微带冷调 */
+    --ink-soft:  #535963;
+    --line:      #aab0b8;
+    --line-soft: #c4c9d0;
+    --steel:     #3a4a5a;   /* 强调色 · 氧化钢蓝 */
+    --steel-dim: #6a7684;
+
+    --serif: 'Cormorant Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+    --sans:  'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:  'JetBrains Mono', ui-monospace, monospace;
+
+    --text-xs:  10.5px;
+    --text-s:   12px;
+    --text-m:   14px;
+    --text-l:   28px;
+    --text-xl:  56px;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html, body{
+    width:100%; height:100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: var(--text-m);
+    letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body{
+    overflow:hidden;
+    background-image:
+      radial-gradient(at 20% 22%, rgba(170,176,184,0.22) 0px, transparent 50%),
+      radial-gradient(at 78% 80%, rgba(58,74,90,0.07) 0px, transparent 55%);
+  }
+  body.detail-open{ overflow-y:auto; }
+  ::selection{ background: var(--steel); color: var(--bg-soft); }
+  a{ color: inherit; text-decoration: none; }
+  button{ all: unset; cursor: pointer; }
+
+  /* ===================== typography per spec ===================== */
+  .page-title,
+  h1{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: var(--text-l);
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+  }
+  h2{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: var(--text-xl);
+    letter-spacing: 0.01em;
+    line-height: 1.02;
+  }
+  .label{
+    font-family: var(--mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .label--ink{ color: var(--ink); }
+  .serif-tag{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 17px;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+  }
+
+  /* ===================== ticker ===================== */
+  .ticker{
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 22px; z-index: 4;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-soft);
+    display: flex; align-items: center; overflow: hidden;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    color: var(--ink-soft); text-transform: uppercase;
+  }
+  .ticker-track{
+    display:flex; gap: 36px;
+    animation: ticker 70s linear infinite;
+    padding-left: 100%;
+    white-space: nowrap;
+  }
+  @keyframes ticker{
+    0%{ transform: translateX(0); }
+    100%{ transform: translateX(-100%); }
+  }
+  .ticker .dot{ color: var(--steel); }
+
+  /* ===================== grid ===================== */
+  .stage{
+    position: fixed; inset: 0;
+    padding-top: 44px;
+    display: grid;
+    grid-template-columns: 280px 1fr 280px;
+    grid-template-rows: 64px 1fr 64px;
+    gap: 22px;
+    padding: 44px 26px 22px;
+    z-index: 5;
+  }
+  .g1c1{ grid-column:1; grid-row:1; }
+  .g1c2{ grid-column:2; grid-row:1; }
+  .g1c3{ grid-column:3; grid-row:1; }
+  .g2c1{ grid-column:1; grid-row:2; }
+  .g2c2{ grid-column:2; grid-row:2; }
+  .g2c3{ grid-column:3; grid-row:2; }
+  .g3c1{ grid-column:1; grid-row:3; }
+  .g3c2{ grid-column:2; grid-row:3; }
+  .g3c3{ grid-column:3; grid-row:3; }
+
+  /* ===================== header ===================== */
+  .head-mark{ display:flex; flex-direction:column; gap:4px; }
+  .head-mark .glyph{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 32px; line-height: 1; letter-spacing: 0.01em; color: var(--ink);
+  }
+  .head-center{ display:flex; flex-direction:column; align-items:center; gap:4px; padding-top:4px; }
+  .head-right{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+
+  .nav-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.3);
+    transition: border-color .35s, color .35s, background .35s;
+    color: var(--ink);
+  }
+  .nav-btn:hover{ border-color: var(--ink); background: var(--ink); color: var(--bg-soft); }
+  .nav-btn .arr{ font-family: var(--mono); font-size: 13px; }
+  .nav-btn .txt{
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+
+  /* ===================== sidebar (project list) ===================== */
+  .sidebar{ display:flex; flex-direction:column; justify-content:center; position:relative; }
+  .sidebar-head{ margin-bottom: 18px; }
+  .sidebar-head .rule{ width: 28px; height: 1px; background: var(--ink); margin-top: 8px; }
+
+  .proj-list{ list-style: none; position: relative; padding-left: 14px; }
+  .indicator{
+    position: absolute;
+    left: 0; top: 0;
+    width: 2px; height: 0;
+    background: var(--steel);
+    transition: top .55s cubic-bezier(.2,.8,.2,1), height .55s cubic-bezier(.2,.8,.2,1);
+  }
+  .proj-list li{
+    position: relative;
+    padding: 7px 0;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: color .5s cubic-bezier(.2,.8,.2,1),
+                transform .55s cubic-bezier(.2,.8,.2,1),
+                padding-left .45s cubic-bezier(.2,.8,.2,1);
+    display:flex; align-items: baseline; gap: 12px;
+  }
+  .proj-list li .num{
+    font-family: var(--mono);
+    font-size: 10px; letter-spacing: 0.14em;
+    color: var(--ink-soft); min-width: 26px;
+    transition: color .4s;
+  }
+  .proj-list li .ttl{
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    font-size: var(--text-l);
+    letter-spacing: 0.01em;
+    line-height: 1.12;
+    display:inline-block; position:relative;
+  }
+  .proj-list li .ttl::after{
+    content:""; position:absolute; left:0; bottom: 2px;
+    width: 0; height: 1px; background: var(--ink);
+    transition: width .55s cubic-bezier(.2,.8,.2,1);
+  }
+  .proj-list li:hover{ color: var(--ink); padding-left: 6px; }
+  .proj-list li:hover .num{ color: var(--ink); }
+  .proj-list li:hover .ttl::after{ width: 100%; }
+  .proj-list li.active{ color: var(--ink); padding-left: 14px; }
+  .proj-list li.active .num{ color: var(--steel); }
+  .proj-list li.active .ttl::after{ width: 100%; background: var(--steel); }
+  .proj-list li .ttl .ch{ display: inline-block; }
+  .proj-list li.active .ttl .ch{
+    animation: shimmer 2.8s ease-in-out infinite;
+    animation-delay: calc(var(--i,0) * 80ms);
+  }
+  @keyframes shimmer{
+    0%, 92%, 100%{ transform: translateY(0); opacity: 1; }
+    96%{ transform: translateY(-2px); opacity: .55; }
+  }
+
+  /* ===================== viewport (cover) ===================== */
+  .viewport{
+    position: relative;
+    overflow: visible;          /* 允许卡片在翻转时探出画框 → AR 感 */
+    background: #0a0c11;        /* 黑色画框，参考图同款 */
+    cursor: pointer;
+    z-index: 10;                /* 高于相邻栅格，溢出时不被 sidebar/meta 挡 */
+    box-shadow:
+      inset 0 0 0 1px rgba(170,176,184,0.22),
+      0 30px 60px -28px rgba(12,15,20,0.45);
+  }
+  /* 画框装饰图层放最底（z 1-2），保证 viewport 内的层级是：
+     bg(0) → vignette(1) → noise(2) → mask/cover(20) → caption(30) → bracket(40) → enter-cue(40) */
+  .viewport::before{
+    content: ""; position: absolute; inset: 0; z-index: 1;
+    box-shadow: inset 0 0 140px rgba(0,0,0,0.85);
+    pointer-events: none;
+  }
+  .viewport::after{
+    content: ""; position: absolute; inset: 0; z-index: 2;
+    pointer-events: none; opacity: 0.08;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: screen;
+  }
+  .viewport-mask{
+    position: absolute; inset: 0; z-index: 20;   /* 卡片图层高于 vignette/noise */
+    overflow: hidden;
+  }
+  .viewport.switching .viewport-mask{ overflow: visible; }
+
+  /* — 单卡片双面翻转：正面=当前展品，背面=下一展品 — */
+  .cover-stage{
+    position: absolute; inset: 0;
+    perspective: 600px;          /* 强透视 → 翻转过程中近端边缘自然探出画框 */
+    perspective-origin: 50% 50%;
+    transform-style: preserve-3d;
+    /* z-index 由父级 .viewport-mask (z:20) 决定 — 卡片在 vignette/noise 之上 */
+  }
+  .cover-flipper{
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    transform: translateZ(0) rotateY(0deg);
+    transition: transform 1.05s cubic-bezier(.55,.05,.25,1);
+    will-change: transform;
+    opacity: 1;
+  }
+  .cover-face{
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background-color: #b0b6be;     /* 深一档的工业灰 — 与页面浅灰背景明确区分 */
+    background-image: linear-gradient(180deg, #bcc2ca 0%, #a4abb4 100%);
+    overflow: hidden;
+    opacity: 1;
+    isolation: isolate;            /* 隔绝外层 mix-blend-mode 渗透 */
+    box-shadow:
+      inset 0 0 0 1px rgba(12,15,20,0.32),
+      inset 0 -60px 80px -40px rgba(12,15,20,0.22),
+      0 28px 60px -22px rgba(12,15,20,0.55);   /* 外阴影 → 卡片像悬空的实体面板 */
+  }
+  .cover-face.front{ transform: rotateY(0deg); }
+  .cover-face.back { transform: rotateY(180deg); }
+  .cover-face svg{
+    display: block;
+    width: 100%; height: 100%;
+    opacity: 1;
+  }
+
+  .cover-caption{
+    position: absolute; left: 24px; bottom: 24px; right: 24px;
+    z-index: 30;                  /* 文字在卡片之上 */
+    color: var(--bg-soft);
+    display:flex; justify-content: space-between; align-items: flex-end;
+    gap: 24px;
+    pointer-events: none;
+  }
+  .cover-caption .lhs{ max-width: 70%; }
+  .cover-caption .ch{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: clamp(36px, 5vw, 64px); line-height: 1; letter-spacing: 0.01em;
+    text-shadow: 0 4px 28px rgba(0,0,0,0.5);
+    transition: opacity .45s, transform .55s cubic-bezier(.2,.8,.2,1);
+  }
+  .cover-caption .en{
+    margin-top: 8px;
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(241,243,246,0.9);
+    transition: opacity .45s, transform .55s cubic-bezier(.2,.8,.2,1);
+    transition-delay: .08s;
+  }
+  .cover-caption .rhs{
+    text-align: right;
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(241,243,246,0.85); line-height: 1.7;
+    transition: opacity .45s, transform .55s cubic-bezier(.2,.8,.2,1);
+    transition-delay: .16s;
+  }
+  .cover-caption.swap .ch,
+  .cover-caption.swap .en,
+  .cover-caption.swap .rhs{ opacity: 0; transform: translateY(8px); }
+
+  /* corner brackets */
+  .bracket{ position: absolute; width: 14px; height: 14px; z-index: 40; pointer-events:none; }
+  .bracket--tl{ top: 12px; left: 12px; border-top:1px solid var(--bg-soft); border-left:1px solid var(--bg-soft); }
+  .bracket--tr{ top: 12px; right:12px; border-top:1px solid var(--bg-soft); border-right:1px solid var(--bg-soft); }
+  .bracket--bl{ bottom:12px; left: 12px; border-bottom:1px solid var(--bg-soft); border-left:1px solid var(--bg-soft); }
+  .bracket--br{ bottom:12px; right:12px; border-bottom:1px solid var(--bg-soft); border-right:1px solid var(--bg-soft); }
+
+  .enter-cue{
+    position: absolute; top: 18px; right: 18px; z-index: 40;
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--bg-soft);
+    display:flex; align-items:center; gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid rgba(241,243,246,0.4);
+    backdrop-filter: blur(4px);
+    background: rgba(12,15,20,0.28);
+    cursor: pointer;
+    transition: background .3s, border-color .3s, gap .3s;
+  }
+  .enter-cue:hover{ background: rgba(12,15,20,0.55); border-color: var(--bg-soft); gap: 14px; }
+
+  /* ===================== right meta column ===================== */
+  .meta-col{
+    display:flex; flex-direction: column; justify-content: space-between;
+    gap: 16px; padding: 4px 0;
+  }
+  .meta-block{ border-top: 1px solid var(--line); padding-top: 10px; }
+  .meta-block .value{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 19px; letter-spacing: 0.01em; line-height: 1.35;
+    color: var(--ink); margin-top: 6px;
+    transition: opacity .35s, transform .45s cubic-bezier(.2,.8,.2,1);
+  }
+  .meta-col.swap .meta-block .value{ opacity: 0; transform: translateY(6px); }
+  .meta-block .label{ display:block; }
+
+  /* ===================== counter / progress ===================== */
+  .foot-count{ display:flex; align-items: baseline; gap: 10px; }
+  .foot-count .now{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 44px; letter-spacing: 0.01em; line-height: 1; color: var(--ink);
+    display:inline-block;
+    transition: opacity .35s, transform .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .foot-count.swap .now{ opacity: 0; transform: translateY(8px); }
+  .foot-count .of{
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.14em; color: var(--ink-soft);
+  }
+  .progress-track{
+    margin-top: 8px; width: 100%; height: 1px;
+    background: var(--line-soft); position: relative;
+  }
+  .progress-track::after{
+    content:""; position:absolute; left:0; top:0; height:100%;
+    width: var(--p, 25%);
+    background: var(--steel);
+    transition: width .6s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .foot-cta{
+    display:inline-flex; align-items: center; gap: 12px;
+    padding: 10px 18px;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--bg-soft);
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.18em; text-transform: uppercase;
+    transition: background .4s, border-color .4s, gap .4s;
+  }
+  .foot-cta:hover{ background: var(--steel); border-color: var(--steel); gap: 22px; }
+
+  .foot-right-stack{ display:flex; flex-direction: column; align-items:flex-end; gap: 4px; }
+  .foot-right-stack a{ border-bottom: 1px solid transparent; transition: border-color .3s; }
+  .foot-right-stack a:hover{ border-color: var(--ink-soft); }
+
+  /* ===================== intro splash ===================== */
+  .intro{
+    position: fixed; inset: 0; z-index: 80;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .9s ease, visibility .9s;
+  }
+  .intro.hide{ opacity: 0; visibility: hidden; }
+  .intro-content{ max-width: 760px; padding: 0 32px; text-align: center; }
+  .intro-tag{
+    font-family: var(--mono); font-size: var(--text-xs);
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--ink-soft);
+    display:inline-flex; align-items: center; gap: 14px;
+  }
+  .intro-tag .ln{ width: 28px; height: 1px; background: var(--line); }
+  .intro-title{
+    margin-top: 32px;
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: clamp(64px, 9vw, 128px); line-height: 1;
+    letter-spacing: 0.005em;
+  }
+  .intro-title .accent{ color: var(--steel); }
+  .intro-sub{
+    margin-top: 24px;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .intro-quote{
+    margin: 40px auto 0; max-width: 540px;
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 19px; line-height: 1.5; color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+  .intro-quote::before{ content:"〝 "; color: var(--steel); }
+  .intro-quote::after{ content:" 〞"; color: var(--steel); }
+  .intro-attr{
+    margin-top: 14px; font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .intro-cta{
+    margin-top: 56px;
+    display:inline-flex; align-items: center; gap: 14px;
+    padding: 14px 26px;
+    border: 1px solid var(--ink); background: transparent; color: var(--ink);
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background .4s, color .4s, gap .4s;
+  }
+  .intro-cta:hover{ background: var(--ink); color: var(--bg-soft); gap: 22px; }
+
+  /* ===================== detail page ===================== */
+  .detail{
+    position: fixed; inset: 0; z-index: 60;
+    background: var(--bg);
+    overflow-y: auto;
+    visibility: hidden; opacity: 0;
+    transition: opacity .55s ease, visibility .55s;
+  }
+  .detail.open{ visibility: visible; opacity: 1; }
+  .detail-bar{
+    position: sticky; top: 0; z-index: 5;
+    display:flex; justify-content: space-between; align-items: center;
+    padding: 14px 26px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(230,233,238,0.92);
+    backdrop-filter: blur(8px);
+  }
+  .detail-bar .crumbs{
+    font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .detail-bar .crumbs .sep{ margin: 0 10px; color: var(--line); }
+  .detail-bar .crumbs .cur{ color: var(--ink); }
+  .detail-close{
+    display:inline-flex; align-items: center; gap: 10px;
+    padding: 8px 14px; border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink);
+    transition: background .35s, color .35s, border-color .35s;
+  }
+  .detail-close:hover{ background: var(--ink); color: var(--bg-soft); border-color: var(--ink); }
+
+  .detail-inner{ max-width: 1320px; margin: 0 auto; padding: 80px 26px 120px; }
+  .detail-hero{
+    display: grid; grid-template-columns: 1fr 360px;
+    gap: 56px; align-items: end;
+  }
+  .detail-tag-row{ display:flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+  .detail-tag-row .steel-pill{
+    display:inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px;
+    background: var(--steel); color: var(--bg-soft);
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .detail-tag-row .ln{ flex: 1; height: 1px; background: var(--line); }
+
+  .detail-title{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: clamp(72px, 9vw, 140px); line-height: 0.95; letter-spacing: 0.005em; color: var(--ink);
+  }
+  .detail-title .accent-line{
+    display: inline-block;
+    border-bottom: 1px solid var(--steel);
+    padding-bottom: 6px;
+  }
+  .detail-subtitle{
+    margin-top: 18px;
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  .detail-spec-table{ border-top: 1px solid var(--ink); padding-top: 16px; }
+  .detail-spec-table dl{
+    display: grid; grid-template-columns: 1fr 1.4fr;
+    gap: 14px 12px; font-size: 13px; line-height: 1.55;
+  }
+  .detail-spec-table dt{
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .detail-spec-table dd{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 15px; letter-spacing: 0.01em; color: var(--ink); line-height: 1.4;
+  }
+
+  .detail-hero-img{
+    margin-top: 56px;
+    width: 100%; aspect-ratio: 21/9;
+    overflow: hidden; background: var(--paper); position: relative;
+    border: 1px solid var(--line);
+  }
+  .detail-hero-img svg{ width: 100%; height: 100%; display: block; }
+  .detail-hero-img .caption{
+    position: absolute; left: 16px; bottom: 12px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink);
+    background: var(--bg-soft); padding: 4px 8px;
+  }
+
+  .detail-body{ margin-top: 64px; display: grid; grid-template-columns: 1fr 2fr; gap: 64px; }
+  .detail-body .left h4{
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 500;
+  }
+  .detail-body .left p{
+    margin-top: 10px;
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 19px; line-height: 1.4; letter-spacing: 0.01em; color: var(--ink);
+  }
+  .detail-body .right .lead{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 24px; line-height: 1.45; letter-spacing: 0.005em; color: var(--ink);
+    border-left: 1px solid var(--steel); padding-left: 24px;
+  }
+  .detail-body .right .lead em{
+    font-style: italic; border-bottom: 1px solid var(--steel); padding-bottom: 1px;
+  }
+  .detail-body .right .prose{ margin-top: 36px; max-width: 620px; }
+  .detail-body .right .prose p{ margin-top: 18px; font-size: 14.5px; line-height: 1.85; color: #1a1d22; }
+  .detail-body .right .prose p:first-child{ margin-top: 0; }
+
+  .detail-gallery{ margin-top: 96px; border-top: 1px solid var(--line); padding-top: 32px; }
+  .detail-gallery-head{
+    display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px;
+  }
+  .detail-gallery-head h3{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 32px; letter-spacing: 0.01em;
+  }
+  .detail-gallery-head .count{
+    font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .grid-figs{ display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .grid-figs figure{
+    margin: 0; background: var(--paper); overflow: hidden; position: relative;
+    border: 1px solid var(--line);
+  }
+  .grid-figs figure svg{ width: 100%; height: 100%; display: block; transition: transform 1.4s cubic-bezier(.2,.8,.2,1); }
+  .grid-figs figure:hover svg{ transform: scale(1.04); }
+  .grid-figs figure figcaption{
+    position: absolute; left: 8px; bottom: 8px;
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--ink); background: var(--bg-soft); padding: 3px 7px;
+  }
+  .grid-figs .f-3{ grid-column: span 3; aspect-ratio: 16/10; }
+  .grid-figs .f-2{ grid-column: span 2; aspect-ratio: 4/5; }
+  .grid-figs .f-4{ grid-column: span 4; aspect-ratio: 16/9; }
+  .grid-figs .f-6{ grid-column: span 6; aspect-ratio: 21/8; }
+
+  .detail-nav{
+    margin-top: 96px; border-top: 1px solid var(--line); padding-top: 32px;
+    display:flex; justify-content: space-between; gap: 24px;
+  }
+  .detail-nav a{ display:flex; flex-direction: column; gap: 6px; transition: opacity .35s; }
+  .detail-nav a:hover{ opacity: 0.55; }
+  .detail-nav a .nav-lbl{
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .detail-nav a .nav-title{
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 26px; letter-spacing: 0.01em; color: var(--ink);
+  }
+  .detail-nav .next{ text-align: right; align-items: flex-end; }
+
+  /* cursor */
+  .cursor-dot{
+    position: fixed; top:0; left: 0;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--steel);
+    pointer-events: none; z-index: 200;
+    transform: translate(-50%,-50%);
+    transition: width .25s, height .25s, opacity .25s;
+    mix-blend-mode: difference;
+    opacity: 0.9;
+  }
+  body.cursor-large .cursor-dot{ width: 38px; height: 38px; opacity: .9; }
+
+  @media (max-width: 1100px){
+    .stage{ grid-template-columns: 220px 1fr 220px; }
+  }
+  @media (max-width: 820px){
+    .stage{
+      grid-template-columns: 1fr;
+      grid-template-rows: 60px 280px 320px auto 60px;
+    }
+    .g1c1, .g1c3{ display: none; }
+    .g1c2{ grid-column: 1; grid-row: 1; }
+    .g2c1{ grid-column: 1; grid-row: 4; }
+    .g2c2{ grid-column: 1; grid-row: 2; }
+    .g2c3{ grid-column: 1; grid-row: 3; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+    .g3c1, .g3c3{ display: none; }
+    .g3c2{ grid-column: 1; grid-row: 5; }
+    .detail-hero{ grid-template-columns: 1fr; gap: 24px; }
+    .detail-body{ grid-template-columns: 1fr; gap: 24px; }
+    .grid-figs{ grid-template-columns: repeat(2, 1fr); }
+    .grid-figs .f-3, .grid-figs .f-2, .grid-figs .f-4, .grid-figs .f-6{ grid-column: span 2; aspect-ratio: 4/3; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ===================== ticker ===================== -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+
+<!-- ===================== intro splash ===================== -->
+<div class="intro" id="intro">
+  <div class="intro-content">
+    <div class="intro-tag">
+      <span class="ln"></span>
+      <span>北欧工业典藏 · Vol.01</span>
+      <span class="ln"></span>
+    </div>
+    <h1 class="intro-title">克制<span class="accent">·</span>之物</h1>
+    <p class="intro-sub">Restrained Objects — A Nordic Industrial Archive 1948 — 1988</p>
+    <p class="intro-quote">器物不为讨好而生，它们只为承担一件具体的事而存在。当那件事被它做得足够好时，它就成为了器物本身。</p>
+    <p class="intro-attr">— 策展前言 / Curatorial Note</p>
+    <button class="intro-cta" id="intro-enter">
+      <span>进入展厅</span>
+      <span>—→</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== main stage ===================== -->
+<main class="stage">
+  <div class="g1c1 head-mark">
+    <span class="glyph">Æ</span>
+    <span class="label">克制之物 / 编号 N°01—04</span>
+  </div>
+
+  <div class="g1c2 head-center">
+    <span class="label label--ink">北欧工业典藏 · 1948 — 1988</span>
+    <span class="label">Restrained Objects · Curated Volume One</span>
+  </div>
+
+  <div class="g1c3 head-right">
+    <span class="label">2026 / 05 · 上海</span>
+    <span class="label">31.23°N 121.47°E</span>
+  </div>
+
+  <aside class="g2c1 sidebar">
+    <div class="sidebar-head">
+      <span class="label">展品目录</span>
+      <div class="rule"></div>
+      <span class="label" style="margin-top:8px;display:block">SELECTED OBJECTS</span>
+    </div>
+    <ol class="proj-list" id="proj-list">
+      <div class="indicator" id="indicator"></div>
+      <li data-idx="0" class="active">
+        <span class="num">N°01</span>
+        <span class="ttl"><span class="ch" style="--i:0">铸</span><span class="ch" style="--i:1">铁</span><span class="ch" style="--i:2">壶</span></span>
+      </li>
+      <li data-idx="1">
+        <span class="num">N°02</span>
+        <span class="ttl"><span class="ch" style="--i:0">轴</span><span class="ch" style="--i:1">承</span><span class="ch" style="--i:2">灯</span></span>
+      </li>
+      <li data-idx="2">
+        <span class="num">N°03</span>
+        <span class="ttl"><span class="ch" style="--i:0">桦</span><span class="ch" style="--i:1">木</span><span class="ch" style="--i:2">椅</span></span>
+      </li>
+      <li data-idx="3">
+        <span class="num">N°04</span>
+        <span class="ttl"><span class="ch" style="--i:0">测</span><span class="ch" style="--i:1">距</span><span class="ch" style="--i:2">仪</span></span>
+      </li>
+    </ol>
+  </aside>
+
+  <section class="g2c2 viewport" id="viewport">
+    <span class="bracket bracket--tl"></span>
+    <span class="bracket bracket--tr"></span>
+    <span class="bracket bracket--bl"></span>
+    <span class="bracket bracket--br"></span>
+
+    <button class="enter-cue" id="enter-cue">
+      <span>查看展品</span>
+      <span>→</span>
+    </button>
+
+    <div class="viewport-mask">
+      <div class="cover-stage" id="cover-stage">
+        <div class="cover-flipper" id="cover-flipper">
+          <div class="cover-face front" id="face-front"></div>
+          <div class="cover-face back"  id="face-back"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-caption" id="cover-caption">
+      <div class="lhs">
+        <div class="ch" id="cover-ch">铸铁壶</div>
+        <div class="en" id="cover-en">N°01 · IRON KETTLE · 1958</div>
+      </div>
+      <div class="rhs" id="cover-rhs"></div>
+    </div>
+  </section>
+
+  <aside class="g2c3 meta-col" id="meta-col">
+    <div class="meta-block">
+      <span class="label">材料 / MATERIAL</span>
+      <div class="value" id="meta-material"></div>
+    </div>
+    <div class="meta-block">
+      <span class="label">产地 / ORIGIN</span>
+      <div class="value" id="meta-origin"></div>
+    </div>
+    <div class="meta-block">
+      <span class="label">年代 / YEAR</span>
+      <div class="value" id="meta-year"></div>
+    </div>
+    <div class="meta-block">
+      <span class="label">尺寸 / DIMENSION</span>
+      <div class="value" id="meta-dim"></div>
+    </div>
+  </aside>
+
+  <div class="g3c1">
+    <div class="foot-count" id="foot-count">
+      <span class="now" id="cur-num">01</span>
+      <span class="of">/ 04 件展品</span>
+    </div>
+    <div class="progress-track" id="progress-track" style="--p:25%"></div>
+  </div>
+
+  <div class="g3c2" style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px;">
+    <button class="nav-btn" id="btn-prev">
+      <span class="arr">←</span><span class="txt">上一件</span>
+    </button>
+    <button class="foot-cta" id="btn-enter">
+      <span>进入展品 / VIEW EXHIBIT</span><span>—→</span>
+    </button>
+    <button class="nav-btn" id="btn-next">
+      <span class="txt">下一件</span><span class="arr">→</span>
+    </button>
+  </div>
+
+  <div class="g3c3 foot-right-stack">
+    <span class="label">策展 / CURATED BY</span>
+    <span class="serif-tag">青林 · 沉积研究室</span>
+    <span class="label" style="margin-top:6px"><a href="mailto:archive@chenji.studio">archive@chenji.studio</a></span>
+  </div>
+</main>
+
+<div class="cursor-dot" id="cursor"></div>
+
+<!-- ===================== detail page ===================== -->
+<div class="detail" id="detail" aria-hidden="true">
+  <div class="detail-bar">
+    <div class="crumbs">
+      <span>北欧工业典藏</span><span class="sep">/</span>
+      <span>第一卷 · 克制之物</span><span class="sep">/</span>
+      <span class="cur" id="crumb-cur"></span>
+    </div>
+    <button class="detail-close" id="detail-close">
+      <span>←</span><span>返回展厅</span>
+    </button>
+  </div>
+  <div class="detail-inner" id="detail-inner"></div>
+</div>
+
+<!-- ===================== SVG defs (复用) ===================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 通用背景图案 -->
+    <pattern id="grid-fine" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M 36 0 L 0 0 0 36" fill="none" stroke="rgba(83,89,99,0.16)" stroke-width="0.6"/>
+    </pattern>
+    <pattern id="grid-major" width="180" height="180" patternUnits="userSpaceOnUse">
+      <path d="M 180 0 L 0 0 0 180" fill="none" stroke="rgba(83,89,99,0.28)" stroke-width="0.6"/>
+    </pattern>
+    <!-- 渐变 -->
+    <linearGradient id="iron-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1d222a"/>
+      <stop offset="50%" stop-color="#0c0f14"/>
+      <stop offset="100%" stop-color="#1a1f27"/>
+    </linearGradient>
+    <linearGradient id="wood-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4a525f"/>
+      <stop offset="50%" stop-color="#5e6772"/>
+      <stop offset="100%" stop-color="#3d4450"/>
+    </linearGradient>
+    <linearGradient id="brass-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4f5e6e"/>
+      <stop offset="50%" stop-color="#3a4a5a"/>
+      <stop offset="100%" stop-color="#2a3744"/>
+    </linearGradient>
+    <linearGradient id="glass-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#aab0b8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#535963" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ===================== exhibit data ===================== -->
+<script id="exhibits-data" type="application/json">
+[
+  {
+    "slug": "iron-kettle",
+    "num": "N°01",
+    "title": "铸铁壶",
+    "en": "IRON KETTLE",
+    "year": "1958",
+    "place": "丹麦 · 哥本哈根",
+    "maker": "Carl Hansen Værksted / 卡尔·汉森工坊",
+    "material": "灰口铸铁 · 山毛榉木柄<br/>黑釉烧结涂层",
+    "origin": "丹麦 · 哥本哈根<br/>Carl Hansen Værksted",
+    "dim": "高 18 cm · 容 1.2 L<br/>底径 14 cm",
+    "tagline": "FORGED ESSENTIAL / 锻造的必需品",
+    "lead": "一只为<em>沉默与水的低温</em>而设计的容器——壶身的厚度，是为了让热停留得久一点，而不是更快地变热。",
+    "spec": [
+      ["编号", "1958 · K-04"],
+      ["材料", "灰口铸铁 + 山毛榉"],
+      ["工艺", "砂模铸造 / 黑釉烧结"],
+      ["重量", "1.86 kg"],
+      ["产量", "限量 240 件 · 现存 31"]
+    ],
+    "prose": [
+      "在汉森工坊 1958 年的目录里，这只壶被简单地记作「K-04」。没有名字，没有花体签名，只有一个砂模编号和一个粗体的「DK」。",
+      "壶身用灰口铸铁砂模一次成型，壶嘴的弧线在出模之后由两位工匠用锉刀手工修整——他们的差异至今仍能从同一批次的几只壶里被识别出来。",
+      "把手是山毛榉，浸过两遍亚麻籽油。表面那层不均匀的黑色，并非涂装，而是壶在第一次烧水之后留下的氧化薄膜——一种被工坊郑重写进说明书的「自然完成」。"
+    ],
+    "gallery": [
+      ["f-3", "壶身正立面"],
+      ["f-2", "山毛榉木柄"],
+      ["f-2", "壶嘴细部"],
+      ["f-2", "底部砂模印"],
+      ["f-4", "工坊蓝图"],
+      ["f-6", "陈列剖面"]
+    ]
+  },
+  {
+    "slug": "bearing-lamp",
+    "num": "N°02",
+    "title": "轴承灯",
+    "en": "BEARING LAMP",
+    "year": "1974",
+    "place": "芬兰 · 坦佩雷",
+    "maker": "Aalto Industrial Lab / 阿尔托工业研究所",
+    "material": "黄铜外圈 · 钢制滚珠轴承<br/>磨砂硼硅玻璃灯罩",
+    "origin": "芬兰 · 坦佩雷<br/>Aalto Industrial Lab",
+    "dim": "悬挑 42 cm · 灯罩 Ø 22 cm<br/>整体重 1.4 kg",
+    "tagline": "PIVOT & LIGHT / 旋转与光",
+    "lead": "把<em>工业用的滚珠轴承</em>，从机器的内部，请到一盏吊灯的关节里。它转动得几乎没有声音。",
+    "spec": [
+      ["编号", "1974 · A-Lab 17"],
+      ["关节", "SKF 6204 滚珠轴承"],
+      ["灯罩", "磨砂硼硅玻璃"],
+      ["光源", "原配 25W 钨丝灯泡"],
+      ["产量", "实验批次 80 件"]
+    ],
+    "prose": [
+      "1974 年，阿尔托工业研究所做了一个为期半年的「废料计划」：从坦佩雷周边的造纸机械厂回收一批 SKF 6204 型号的滚珠轴承——它们因为内圈轻微氧化而被判废，但旋转精度仍在 5 微米以内。",
+      "研究所的 Niiranen 教授把其中 80 只装进了一组吊灯的连接件。轴承的精密旋转让灯罩可以绕水平轴自由偏转 270°，并且在任何角度都能停住。",
+      "工厂原本以为这是设计师的浪漫，但目录上写得很冷静：「废品的精度，仍是合格的精度」。"
+    ],
+    "gallery": [
+      ["f-3", "悬挑全貌"],
+      ["f-2", "黄铜外圈"],
+      ["f-2", "轴承剖面"],
+      ["f-2", "灯罩正视"],
+      ["f-4", "节点装配图"],
+      ["f-6", "研究所现场"]
+    ]
+  },
+  {
+    "slug": "birch-chair",
+    "num": "N°03",
+    "title": "桦木椅",
+    "en": "BIRCH CHAIR",
+    "year": "1962",
+    "place": "瑞典 · 胡尔特斯弗雷德",
+    "maker": "Hultsfreds Stolfabrik / 胡尔特斯弗雷德椅厂",
+    "material": "瑞典桦木 · 冷弯钢条<br/>亚麻籽油处理",
+    "origin": "瑞典 · 胡尔特斯弗雷德<br/>Hultsfreds Stolfabrik",
+    "dim": "座高 44 cm · 总高 78 cm<br/>整椅重 4.2 kg",
+    "tagline": "FOUR LEGS, NO MORE / 四只脚，仅此而已",
+    "lead": "椅子的全部任务，是稳定地承载一个人的体重——这把椅子拒绝完成<em>多于这件事的任何事</em>。",
+    "spec": [
+      ["编号", "1962 · HF-S2"],
+      ["木材", "瑞典中部桦木"],
+      ["结构", "桦木框架 + 冷弯钢加固"],
+      ["处理", "亚麻籽油 · 两遍手刷"],
+      ["产量", "1962—1971 量产约 8 600 把"]
+    ],
+    "prose": [
+      "1962 年的胡尔特斯弗雷德椅厂正面临一次成本审查。设计师 Lindgren 提交的方案，是把上一代椅子上一切非承重的木料全部拿掉——靠背的横档减到一根，扶手取消，椅腿的截面从 32 mm 收窄到 24 mm。",
+      "审计师起初以为这是为了省料，直到工厂的工程师把他请到测试间：减重 36% 之后，承载强度仅下降了 8%——因为剩下的木料正好沿应力方向布置。",
+      "这把椅子的目录页上印着一句话：「这不是设计极简，这是结构正好。」"
+    ],
+    "gallery": [
+      ["f-2", "正立面"],
+      ["f-3", "椅背节点"],
+      ["f-2", "椅腿截面"],
+      ["f-2", "亚麻籽油表面"],
+      ["f-4", "桦木拼接"],
+      ["f-6", "工厂量产线"]
+    ]
+  },
+  {
+    "slug": "rangefinder",
+    "num": "N°04",
+    "title": "测距仪",
+    "en": "RANGEFINDER",
+    "year": "1948",
+    "place": "挪威 · 卑尔根",
+    "maker": "Bergen Marine Instruments / 卑尔根海事仪器",
+    "material": "海军级黄铜 · 光学玻璃<br/>硬橡胶护套",
+    "origin": "挪威 · 卑尔根<br/>Bergen Marine Instruments",
+    "dim": "长 28 cm · 重 1.1 kg<br/>测程 50—2 000 m",
+    "tagline": "MEASURED HORIZON / 被丈量的地平线",
+    "lead": "战后第三年的卑尔根，一只为<em>渔船而不是军舰</em>设计的双筒测距仪——它把军用光学的精度，归还给民用海岸。",
+    "spec": [
+      ["编号", "1948 · BM-R 04"],
+      ["镜组", "对称式双筒 · 60 mm 基线"],
+      ["精度", "±2% @ 500 m"],
+      ["材料", "海军级黄铜 · 硬橡胶护套"],
+      ["产量", "1948—1953 制造 1 240 件"]
+    ],
+    "prose": [
+      "1948 年，卑尔根海事仪器厂用一批从被遣散的德军海防站回收的潜望镜光学组，做了一款民用测距仪——双筒、对称式、基线 60 mm。",
+      "它的精度在 500 米距离上误差不超过 ±2%，足以让一艘小渔船在能见度不佳的清晨判断离岩礁的距离。仪器的橡胶护套，是为了让它能从甲板掉到水里再被捞起来。",
+      "这种仪器在 1953 年被雷达淘汰，今天的卑尔根海岸博物馆里还存着 6 件——它们仍然能用。"
+    ],
+    "gallery": [
+      ["f-6", "双筒整体"],
+      ["f-2", "左目镜"],
+      ["f-2", "调焦旋钮"],
+      ["f-2", "右目镜"],
+      ["f-3", "刻度盘"],
+      ["f-3", "硬橡胶护套"]
+    ]
+  }
+]
+</script>
+
+<script>
+/* ============================================================
+   SVG illustrations — Nordic-industrial line/blueprint art
+   Each function returns the full SVG string for one exhibit.
+   `view` may shift composition for gallery thumbnails.
+   ============================================================ */
+
+const VB = 'viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"';
+
+function bg(){
+  return `
+    <defs>
+      <linearGradient id="panel-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"  stop-color="#bcc2ca"/>
+        <stop offset="100%" stop-color="#a4abb4"/>
+      </linearGradient>
+    </defs>
+    <rect width="800" height="600" fill="url(#panel-bg)"/>
+    <rect width="800" height="600" fill="url(#grid-fine)"/>
+    <rect width="800" height="600" fill="url(#grid-major)"/>
+    <line x1="400" y1="0" x2="400" y2="600" stroke="rgba(58,74,90,0.28)" stroke-width="0.5" stroke-dasharray="3 5"/>
+    <line x1="0" y1="320" x2="800" y2="320" stroke="rgba(58,74,90,0.28)" stroke-width="0.5" stroke-dasharray="3 5"/>
+  `;
+}
+function corners(label, scale, foot1, foot2){
+  return `
+    <g stroke="#0c0f14" stroke-width="1" fill="none">
+      <path d="M 22 22 L 22 32 M 22 22 L 32 22"/>
+      <path d="M 778 22 L 778 32 M 778 22 L 768 22"/>
+      <path d="M 22 578 L 22 568 M 22 578 L 32 578"/>
+      <path d="M 778 578 L 778 568 M 778 578 L 768 578"/>
+    </g>
+    <text x="40" y="44" font-family="JetBrains Mono, monospace" font-size="11" fill="#0c0f14" letter-spacing="2">${label}</text>
+    <text x="760" y="44" font-family="JetBrains Mono, monospace" font-size="10" fill="#535963" letter-spacing="1.4" text-anchor="end">${scale}</text>
+    <text x="40" y="572" font-family="JetBrains Mono, monospace" font-size="10" fill="#535963" letter-spacing="1.4">${foot1}</text>
+    <text x="760" y="572" font-family="JetBrains Mono, monospace" font-size="10" fill="#535963" letter-spacing="1.4" text-anchor="end">${foot2}</text>
+  `;
+}
+function dim(x1, y1, x2, y2, label, side='right'){
+  const tx = side === 'right' ? x2 + 12 : (x1 + x2)/2;
+  const ty = side === 'right' ? (y1 + y2)/2 + 4 : y2 + 16;
+  const anchor = side === 'right' ? 'start' : 'middle';
+  return `
+    <g stroke="#535963" stroke-width="0.7" fill="none" opacity="0.85">
+      <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>
+      <line x1="${x1-4}" y1="${y1}" x2="${x1+4}" y2="${y1}"/>
+      <line x1="${x2-4}" y1="${y2}" x2="${x2+4}" y2="${y2}"/>
+    </g>
+    <text x="${tx}" y="${ty}" font-family="JetBrains Mono, monospace" font-size="10" fill="#535963" letter-spacing="0.1em" text-anchor="${anchor}">${label}</text>
+  `;
+}
+
+/* ===== N°01 IRON KETTLE ===== */
+function svgKettle(view='hero'){
+  const labelTop  = 'N°01 / IRON KETTLE / 1958';
+  const labelL    = 'CARL HANSEN VÆRKSTED · DK';
+  const labelR    = 'CAT. K-04 / 1.86 kg';
+  const scale     = view === 'hero' ? 'SCALE 1:3' : view.toUpperCase();
+  const tx = { hero: 0, side: -40, detail: 80, top: 0, blueprint: 0 }[view] ?? 0;
+  const ty = { hero: 0, side: 0, detail: -30, top: 60, blueprint: 0 }[view] ?? 0;
+  const sc = { hero: 1, side: 1.05, detail: 1.6, top: 0.85, blueprint: 0.95 }[view] ?? 1;
+
+  return `<svg ${VB}>
+    ${bg()}
+    <g transform="translate(${400+tx}, ${360+ty}) scale(${sc})">
+      <!-- spout -->
+      <path d="M 122 -52 L 198 -82 L 214 -68 L 132 -28 Z" fill="url(#iron-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+      <path d="M 198 -82 L 204 -86 L 214 -68 L 208 -68 Z" fill="#0c0f14"/>
+      <!-- top rim -->
+      <ellipse cx="0" cy="-90" rx="125" ry="14" fill="#0c0f14"/>
+      <!-- body -->
+      <path d="M -125 -90 L -135 60 Q -135 110 -85 130 L 85 130 Q 135 110 135 60 L 125 -90 Z"
+            fill="url(#iron-grad)" stroke="#0c0f14" stroke-width="2"/>
+      <ellipse cx="0" cy="-90" rx="125" ry="14" fill="none" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- opening shadow -->
+      <ellipse cx="0" cy="-92" rx="100" ry="9" fill="#070a0e" opacity="0.85"/>
+      <!-- side reflection -->
+      <path d="M -88 -60 Q -104 0 -88 60" fill="none" stroke="#3a4a5a" stroke-width="14" opacity="0.28" stroke-linecap="round"/>
+      <path d="M 80 -50 Q 88 0 76 50" fill="none" stroke="#3a4a5a" stroke-width="6" opacity="0.2" stroke-linecap="round"/>
+      <!-- handle base -->
+      <rect x="-14" y="-105" width="28" height="18" fill="#3a4a5a" stroke="#0c0f14" stroke-width="1.5"/>
+      <rect x="-62" y="-150" width="6" height="46" fill="#3a4a5a"/>
+      <rect x="56"  y="-150" width="6" height="46" fill="#3a4a5a"/>
+      <!-- wooden handle -->
+      <g transform="translate(0, -150)">
+        <rect x="-70" y="-15" width="140" height="22" rx="11" fill="url(#wood-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+        <line x1="-58" y1="-10" x2="58" y2="-10" stroke="#0c0f14" stroke-width="0.3" opacity="0.6"/>
+        <line x1="-58" y1="-4"  x2="58" y2="-4"  stroke="#0c0f14" stroke-width="0.3" opacity="0.4"/>
+        <line x1="-58" y1="2"   x2="58" y2="2"   stroke="#0c0f14" stroke-width="0.3" opacity="0.55"/>
+      </g>
+      <!-- bottom base ring -->
+      <ellipse cx="0" cy="130" rx="80" ry="8" fill="#070a0e"/>
+    </g>
+    ${dim(620, 200, 620, 490, '18 cm')}
+    ${dim(265, 540, 535, 540, 'Ø 14 cm', 'bottom')}
+    ${corners(labelTop, scale, labelL, labelR)}
+  </svg>`;
+}
+
+/* ===== N°02 BEARING LAMP ===== */
+function svgLamp(view='hero'){
+  const labelTop = 'N°02 / BEARING LAMP / 1974';
+  const labelL   = 'AALTO INDUSTRIAL LAB · FI';
+  const labelR   = 'CAT. A-Lab 17 / 1.4 kg';
+  const scale    = view === 'hero' ? 'SCALE 1:5' : view.toUpperCase();
+  const ty = { hero: 0, detail: -120, lower: 80 }[view] ?? 0;
+  const sc = { hero: 1, detail: 1.4, lower: 1.05 }[view] ?? 1;
+  // 8 bolts around ring
+  let bolts = '';
+  for(let i=0;i<8;i++){
+    const a = (i/8) * Math.PI * 2;
+    const r = 78;
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * r;
+    bolts += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="4" fill="#0c0f14"/>`;
+  }
+  return `<svg ${VB}>
+    ${bg()}
+    <!-- ceiling -->
+    <rect x="0" y="40" width="800" height="6" fill="#0c0f14"/>
+    <line x1="0" y1="46" x2="800" y2="46" stroke="#0c0f14" stroke-width="1"/>
+    <g transform="translate(400, ${300+ty}) scale(${sc})">
+      <!-- canopy -->
+      <ellipse cx="0" cy="-260" rx="40" ry="7" fill="#0c0f14"/>
+      <rect x="-32" y="-270" width="64" height="12" fill="#3a4a5a" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- cord -->
+      <line x1="0" y1="-258" x2="0" y2="-95" stroke="#0c0f14" stroke-width="2"/>
+      <!-- bearing ring outer -->
+      <circle cx="0" cy="0" r="100" fill="url(#brass-grad)" stroke="#0c0f14" stroke-width="2"/>
+      <circle cx="0" cy="0" r="100" fill="none" stroke="#0c0f14" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.5"/>
+      <!-- inner race -->
+      <circle cx="0" cy="0" r="62" fill="#0c0f14"/>
+      <circle cx="0" cy="0" r="62" fill="none" stroke="#3a4a5a" stroke-width="1"/>
+      <!-- balls -->
+      ${(()=>{ let s=''; for(let i=0;i<14;i++){ const a=(i/14)*Math.PI*2; const r=81; s+=`<circle cx="${(Math.cos(a)*r).toFixed(2)}" cy="${(Math.sin(a)*r).toFixed(2)}" r="6" fill="#5e6772" stroke="#0c0f14" stroke-width="0.6"/>`; } return s; })()}
+      <!-- bolts -->
+      ${bolts}
+      <!-- center hub -->
+      <circle cx="0" cy="0" r="22" fill="#1a1f27" stroke="#0c0f14" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="6" fill="#3a4a5a"/>
+      <!-- glass dome -->
+      <path d="M -90 18 Q -85 220 0 220 Q 85 220 90 18 Z" fill="url(#glass-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- glass highlight -->
+      <path d="M -64 30 Q -68 180 -42 200" fill="none" stroke="#e6e9ee" stroke-width="3" opacity="0.4" stroke-linecap="round"/>
+      <!-- bulb glow -->
+      <ellipse cx="0" cy="120" rx="22" ry="40" fill="#f1f3f6" opacity="0.55"/>
+      <ellipse cx="0" cy="118" rx="10" ry="22" fill="#ffffff" opacity="0.75"/>
+    </g>
+    ${dim(620, 100, 620, 480, '42 cm')}
+    ${dim(310, 540, 490, 540, 'Ø 22 cm', 'bottom')}
+    ${corners(labelTop, scale, labelL, labelR)}
+  </svg>`;
+}
+
+/* ===== N°03 BIRCH CHAIR ===== */
+function svgChair(view='hero'){
+  const labelTop = 'N°03 / BIRCH CHAIR / 1962';
+  const labelL   = 'HULTSFREDS STOLFABRIK · SE';
+  const labelR   = 'CAT. HF-S2 / 4.2 kg';
+  const scale    = view === 'hero' ? 'SCALE 1:8' : view.toUpperCase();
+  const tx = { hero: 0, detail: 60, lower: 0 }[view] ?? 0;
+  const sc = { hero: 1, detail: 1.4, lower: 0.95 }[view] ?? 1;
+  return `<svg ${VB}>
+    ${bg()}
+    <!-- floor -->
+    <line x1="150" y1="520" x2="650" y2="520" stroke="#0c0f14" stroke-width="1.5"/>
+    <line x1="150" y1="530" x2="650" y2="530" stroke="#535963" stroke-width="0.5" stroke-dasharray="2 4"/>
+    <g transform="translate(${400+tx}, 520) scale(${sc})">
+      <!-- back leg (taller, structural) -->
+      <path d="M -130 -460 L -116 -460 L -116 0 L -130 0 Z" fill="url(#wood-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- top cap of back leg -->
+      <rect x="-132" y="-466" width="18" height="6" fill="#0c0f14"/>
+      <!-- back rest -->
+      <rect x="-118" y="-370" width="120" height="12" fill="url(#wood-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- 2nd back rest (lower, single bar — minimal) -->
+      <rect x="-118" y="-340" width="120" height="6" fill="url(#wood-grad)" stroke="#0c0f14" stroke-width="1"/>
+      <!-- seat -->
+      <rect x="-150" y="-220" width="240" height="16" fill="#0c0f14"/>
+      <rect x="-150" y="-220" width="240" height="6" fill="url(#wood-grad)" stroke="#0c0f14" stroke-width="0.8"/>
+      <!-- seat side -->
+      <path d="M -150 -220 L -148 -204 L 88 -204 L 90 -220 Z" fill="#1a1f27"/>
+      <!-- front leg -->
+      <path d="M 76 -204 L 90 -204 L 90 0 L 76 0 Z" fill="url(#wood-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- steel cross brace (signature element) -->
+      <line x1="-116" y1="-100" x2="76" y2="-100" stroke="#3a4a5a" stroke-width="4" stroke-linecap="square"/>
+      <line x1="-116" y1="-100" x2="76" y2="-100" stroke="#0c0f14" stroke-width="1" opacity="0.4"/>
+      <!-- bolts at brace -->
+      <circle cx="-116" cy="-100" r="3.5" fill="#0c0f14"/>
+      <circle cx="76" cy="-100" r="3.5" fill="#0c0f14"/>
+      <!-- subtle wood grain on legs -->
+      <line x1="-128" y1="-450" x2="-128" y2="-10" stroke="#0c0f14" stroke-width="0.3" opacity="0.4"/>
+      <line x1="-120" y1="-450" x2="-120" y2="-10" stroke="#0c0f14" stroke-width="0.3" opacity="0.3"/>
+      <line x1="80"   y1="-194" x2="80"   y2="-10" stroke="#0c0f14" stroke-width="0.3" opacity="0.4"/>
+      <line x1="86"   y1="-194" x2="86"   y2="-10" stroke="#0c0f14" stroke-width="0.3" opacity="0.3"/>
+    </g>
+    ${dim(630, 60,  630, 520, '78 cm')}
+    ${dim(630, 300, 630, 520, '44 cm')}
+    ${corners(labelTop, scale, labelL, labelR)}
+  </svg>`;
+}
+
+/* ===== N°04 RANGEFINDER ===== */
+function svgRangefinder(view='hero'){
+  const labelTop = 'N°04 / RANGEFINDER / 1948';
+  const labelL   = 'BERGEN MARINE INSTRUMENTS · NO';
+  const labelR   = 'CAT. BM-R 04 / 1.1 kg';
+  const scale    = view === 'hero' ? 'SCALE 1:4' : view.toUpperCase();
+  const sc = { hero: 1, detail: 1.5, eye: 2.0 }[view] ?? 1;
+  const tx = { hero: 0, detail: 0, eye: -160 }[view] ?? 0;
+
+  // scale ticks along top tube
+  let ticks = '';
+  for(let i=-180; i<=180; i+=20){
+    const big = i % 60 === 0;
+    ticks += `<line x1="${i}" y1="-30" x2="${i}" y2="${big ? -42 : -38}" stroke="#0c0f14" stroke-width="1"/>`;
+  }
+  let labels = '';
+  ['50','200','500','1k','2k'].forEach((t,i)=>{
+    const x = -180 + i*90;
+    labels += `<text x="${x}" y="-50" font-family="JetBrains Mono, monospace" font-size="9" fill="#0c0f14" letter-spacing="0.06em" text-anchor="middle">${t}m</text>`;
+  });
+
+  return `<svg ${VB}>
+    ${bg()}
+    <g transform="translate(${400+tx}, 320) scale(${sc})">
+      <!-- main tube body -->
+      <rect x="-200" y="-30" width="400" height="62" rx="5" fill="url(#brass-grad)" stroke="#0c0f14" stroke-width="1.5"/>
+      <!-- top tick band -->
+      <rect x="-200" y="-30" width="400" height="14" fill="#1a1f27"/>
+      ${ticks}
+      ${labels}
+      <!-- rubber sleeve (left & right) -->
+      <rect x="-220" y="-40" width="50" height="80" rx="5" fill="#0c0f14"/>
+      <rect x="170"  y="-40" width="50" height="80" rx="5" fill="#0c0f14"/>
+      <!-- rubber texture lines -->
+      <g stroke="#3a4a5a" stroke-width="0.6" opacity="0.6">
+        ${[0,1,2,3,4,5,6].map(i=>`<line x1="${-216 + i*7}" y1="-35" x2="${-216 + i*7}" y2="35"/>`).join('')}
+        ${[0,1,2,3,4,5,6].map(i=>`<line x1="${174 + i*7}" y1="-35" x2="${174 + i*7}" y2="35"/>`).join('')}
+      </g>
+      <!-- left lens -->
+      <circle cx="-200" cy="0" r="16" fill="#0c0f14" stroke="#5e6772" stroke-width="1.5"/>
+      <circle cx="-200" cy="0" r="10" fill="#1a1f27" stroke="#3a4a5a" stroke-width="1"/>
+      <circle cx="-204" cy="-4" r="3" fill="#aab0b8" opacity="0.7"/>
+      <!-- right lens -->
+      <circle cx="200" cy="0" r="16" fill="#0c0f14" stroke="#5e6772" stroke-width="1.5"/>
+      <circle cx="200" cy="0" r="10" fill="#1a1f27" stroke="#3a4a5a" stroke-width="1"/>
+      <circle cx="196" cy="-4" r="3" fill="#aab0b8" opacity="0.7"/>
+      <!-- center adjustment knob -->
+      <rect x="-22" y="-60" width="44" height="30" fill="#1a1f27" stroke="#0c0f14" stroke-width="1.5"/>
+      <ellipse cx="0" cy="-60" rx="22" ry="6" fill="#3a4a5a" stroke="#0c0f14" stroke-width="1"/>
+      <ellipse cx="0" cy="-60" rx="22" ry="6" fill="none" stroke="#0c0f14" stroke-width="0.5" stroke-dasharray="2 2"/>
+      <!-- knob notches -->
+      ${[-18,-12,-6,0,6,12,18].map(x=>`<line x1="${x}" y1="-62" x2="${x}" y2="-58" stroke="#0c0f14" stroke-width="0.7"/>`).join('')}
+      <!-- bottom mount lugs -->
+      <path d="M -150 32 L -150 50 L -120 50 L -120 32 Z" fill="#1a1f27" stroke="#0c0f14" stroke-width="1"/>
+      <path d="M 120 32 L 120 50 L 150 50 L 150 32 Z" fill="#1a1f27" stroke="#0c0f14" stroke-width="1"/>
+      <circle cx="-135" cy="42" r="2.5" fill="#0c0f14"/>
+      <circle cx="135" cy="42" r="2.5" fill="#0c0f14"/>
+      <!-- maker mark plate -->
+      <rect x="-40" y="14" width="80" height="14" fill="#0c0f14"/>
+      <text x="0" y="24" font-family="JetBrains Mono, monospace" font-size="8" fill="#aab0b8" letter-spacing="0.18em" text-anchor="middle">BERGEN · 1948</text>
+    </g>
+    ${dim(180, 540, 620, 540, '28 cm', 'bottom')}
+    ${corners(labelTop, scale, labelL, labelR)}
+  </svg>`;
+}
+
+const SVG_FUNCS = {
+  'iron-kettle':   svgKettle,
+  'bearing-lamp':  svgLamp,
+  'birch-chair':   svgChair,
+  'rangefinder':   svgRangefinder
+};
+
+/* ============================================================
+   App logic
+   ============================================================ */
+
+const DATA = JSON.parse(document.getElementById('exhibits-data').textContent);
+let cur = 0;
+let switching = false;
+
+const coverStage  = document.getElementById('cover-stage');
+const coverCap    = document.getElementById('cover-caption');
+const coverCh     = document.getElementById('cover-ch');
+const coverEn     = document.getElementById('cover-en');
+const coverRhs    = document.getElementById('cover-rhs');
+const projList    = document.getElementById('proj-list');
+const indicator   = document.getElementById('indicator');
+const metaCol     = document.getElementById('meta-col');
+const metaMat     = document.getElementById('meta-material');
+const metaOrigin  = document.getElementById('meta-origin');
+const metaYear    = document.getElementById('meta-year');
+const metaDim     = document.getElementById('meta-dim');
+const footCount   = document.getElementById('foot-count');
+const curNum      = document.getElementById('cur-num');
+const progress    = document.getElementById('progress-track');
+const btnPrev     = document.getElementById('btn-prev');
+const btnNext     = document.getElementById('btn-next');
+const btnEnter    = document.getElementById('btn-enter');
+const enterCue    = document.getElementById('enter-cue');
+const detail      = document.getElementById('detail');
+const detailInner = document.getElementById('detail-inner');
+const detailClose = document.getElementById('detail-close');
+const crumbCur    = document.getElementById('crumb-cur');
+const introEl     = document.getElementById('intro');
+const introEnter  = document.getElementById('intro-enter');
+const cursor      = document.getElementById('cursor');
+const tickerTrack = document.getElementById('ticker-track');
+
+// build flipper — single rotating element with two faces
+const flipper   = document.getElementById('cover-flipper');
+const faceFront = document.getElementById('face-front');
+const faceBack  = document.getElementById('face-back');
+let   flipperRotation = 0;     // accumulated rotation (deg)
+let   currentFace     = 'front'; // which face is towards camera right now
+faceFront.innerHTML = SVG_FUNCS[DATA[0].slug]('hero');
+
+// ticker
+const tickerText = DATA.map(d =>
+  `<span><span class="dot">●</span> ${d.num} · ${d.title} / ${d.en} · ${d.year} · ${d.place}</span>`
+).join('') + '<span>— 北欧工业典藏 · 第一卷 · 克制之物 · 2026 — RESTRAINED OBJECTS / NORDIC INDUSTRIAL ARCHIVE</span>';
+tickerTrack.innerHTML = tickerText + tickerText;
+
+function applyMeta(d, idx){
+  // animated swap class triggers fade-out, then content updates, then fade-in
+  coverCap.classList.add('swap');
+  metaCol.classList.add('swap');
+  footCount.classList.add('swap');
+
+  setTimeout(() => {
+    coverCh.textContent = d.title;
+    coverEn.textContent = `${d.num} · ${d.en} · ${d.year}`;
+    coverRhs.innerHTML = `编号 / ${d.num}<br/>${d.place}<br/>${d.maker.split('/')[0].trim()}`;
+    metaMat.innerHTML = d.material;
+    metaOrigin.innerHTML = d.origin;
+    metaYear.innerHTML = d.year;
+    metaDim.innerHTML = d.dim;
+    curNum.textContent = String(idx + 1).padStart(2, '0');
+    progress.style.setProperty('--p', `${((idx + 1) / DATA.length) * 100}%`);
+
+    coverCap.classList.remove('swap');
+    metaCol.classList.remove('swap');
+    footCount.classList.remove('swap');
+  }, 280);
+
+  [...projList.querySelectorAll('li')].forEach((li, i) => li.classList.toggle('active', i === idx));
+
+  // indicator follows active li
+  const activeLi = projList.querySelector('li.active');
+  if(activeLi){
+    const r1 = projList.getBoundingClientRect();
+    const r2 = activeLi.getBoundingClientRect();
+    indicator.style.top    = (r2.top - r1.top + 8) + 'px';
+    indicator.style.height = (r2.height - 16) + 'px';
+  }
+}
+
+/* — 单卡片双面翻转：把下一展品 SVG 写到背面，flipper 整体旋转 ±180° — */
+function setCover(idx, direction='next'){
+  // 当前面朝相机的对立面就是"背面" → 把新内容写在那里
+  const incomingFace = currentFace === 'front' ? faceBack : faceFront;
+  incomingFace.innerHTML = SVG_FUNCS[DATA[idx].slug]('hero');
+
+  // 累加 ±180° 让 flipper 平滑转过去（CSS transition 自动从当前角度插值到目标）
+  flipperRotation += (direction === 'next' ? -180 : 180);
+  flipper.style.transform = `translateZ(0) rotateY(${flipperRotation}deg)`;
+
+  // 翻转完成后，记录新的"正面"（其实是物理上的另一面，但现在朝向相机）
+  currentFace = currentFace === 'front' ? 'back' : 'front';
+}
+
+function go(idx){
+  if(switching) return;
+  const target = (idx + DATA.length) % DATA.length;
+  if(target === cur) return;
+  const direction =
+    (target - cur + DATA.length) % DATA.length === 1 ? 'next' :
+    (cur - target + DATA.length) % DATA.length === 1 ? 'prev' :
+    (target > cur ? 'next' : 'prev');
+  switching = true;
+  cur = target;
+  // 打开画框遮罩，让卡片在翻转中可以探出 → AR 感
+  const vp = document.getElementById('viewport');
+  vp.classList.add('switching');
+  setCover(target, direction);
+  applyMeta(DATA[target], target);
+  setTimeout(() => {
+    switching = false;
+    vp.classList.remove('switching');   // 关闭遮罩，回到画框内
+  }, 1050);
+}
+
+applyMeta(DATA[0], 0);
+window.addEventListener('load',   () => applyMeta(DATA[cur], cur));
+window.addEventListener('resize', () => applyMeta(DATA[cur], cur));
+
+btnPrev.addEventListener('click', () => go(cur - 1));
+btnNext.addEventListener('click', () => go(cur + 1));
+projList.querySelectorAll('li').forEach((li, i) => {
+  li.addEventListener('click', () => go(i));
+});
+
+// intro splash
+function hideIntro(){
+  introEl.classList.add('hide');
+  setTimeout(() => { introEl.style.display = 'none'; }, 950);
+}
+introEnter.addEventListener('click', hideIntro);
+setTimeout(() => { if(!introEl.classList.contains('hide')) hideIntro(); }, 7000);
+
+// detail page
+function renderDetail(idx){
+  const d = DATA[idx];
+  const prev = DATA[(idx - 1 + DATA.length) % DATA.length];
+  const next = DATA[(idx + 1) % DATA.length];
+  crumbCur.textContent = `${d.num} · ${d.title}`;
+
+  const svgFn = SVG_FUNCS[d.slug];
+  const galleryViews = ['hero','detail','eye','lower','blueprint','side'];
+
+  const specRows = d.spec.map(([k,v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  const figs = d.gallery.map(([layout, cap], i) => `
+    <figure class="${layout}">
+      ${svgFn(galleryViews[i % galleryViews.length])}
+      ${cap ? `<figcaption>${cap}</figcaption>` : ''}
+    </figure>`).join('');
+
+  detailInner.innerHTML = `
+    <section class="detail-hero">
+      <div class="detail-title-block">
+        <div class="detail-tag-row">
+          <span class="steel-pill">${d.num} · ${d.tagline}</span>
+          <span class="ln"></span>
+        </div>
+        <h2 class="detail-title">${d.title.split('').map(c=>`<span class="accent-line">${c}</span>`).join('')}</h2>
+        <p class="detail-subtitle">${d.en} · ${d.year} · ${d.place}</p>
+      </div>
+      <div class="detail-spec-table"><dl>${specRows}</dl></div>
+    </section>
+
+    <div class="detail-hero-img">
+      ${svgFn('hero')}
+      <span class="caption">${d.num} · 主图 / Cover plate</span>
+    </div>
+
+    <section class="detail-body">
+      <div class="left">
+        <h4>制作者 / MAKER</h4>
+        <p>${d.maker}</p>
+        <h4 style="margin-top:32px">藏品序号 / CAT.</h4>
+        <p>${d.year} · ${d.num.replace('N°','')}</p>
+        <h4 style="margin-top:32px">现存 / EXTANT</h4>
+        <p>${d.spec[d.spec.length - 1][1]}</p>
+      </div>
+      <div class="right">
+        <div class="lead">${d.lead}</div>
+        <div class="prose">${d.prose.map(p => `<p>${p}</p>`).join('')}</div>
+      </div>
+    </section>
+
+    <section class="detail-gallery">
+      <div class="detail-gallery-head">
+        <h3>陈列细节 / Gallery</h3>
+        <span class="count">${d.gallery.length} 帧 · ${d.num}</span>
+      </div>
+      <div class="grid-figs">${figs}</div>
+    </section>
+
+    <nav class="detail-nav">
+      <a data-go="${DATA.indexOf(prev)}" href="#">
+        <span class="nav-lbl">← 上一件 / PREV</span>
+        <span class="nav-title">${prev.num} · ${prev.title}</span>
+      </a>
+      <a class="next" data-go="${DATA.indexOf(next)}" href="#">
+        <span class="nav-lbl">下一件 / NEXT →</span>
+        <span class="nav-title">${next.num} · ${next.title}</span>
+      </a>
+    </nav>
+  `;
+  detailInner.querySelectorAll('.detail-nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const ni = Number(a.dataset.go);
+      const dir = ni > cur ? 'next' : 'prev';
+      cur = ni;
+      applyMeta(DATA[ni], ni);
+      setCover(ni, dir);
+      renderDetail(ni);
+      detail.scrollTop = 0;
+    });
+  });
+}
+
+function openDetail(){
+  renderDetail(cur);
+  detail.classList.add('open');
+  document.body.classList.add('detail-open');
+}
+function closeDetail(){
+  detail.classList.remove('open');
+  document.body.classList.remove('detail-open');
+}
+btnEnter.addEventListener('click', openDetail);
+enterCue.addEventListener('click', e => { e.stopPropagation(); openDetail(); });
+detailClose.addEventListener('click', closeDetail);
+document.getElementById('viewport').addEventListener('click', e => {
+  if(e.target.closest('.enter-cue')) return;
+  if(e.target.closest('.bracket')) return;
+  openDetail();
+});
+
+// keyboard
+window.addEventListener('keydown', e => {
+  if(detail.classList.contains('open')){
+    if(e.key === 'Escape') closeDetail();
+    return;
+  }
+  if(!introEl.classList.contains('hide')){
+    if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hideIntro(); }
+    return;
+  }
+  if(e.key === 'ArrowLeft')  go(cur - 1);
+  if(e.key === 'ArrowRight') go(cur + 1);
+  if(e.key === 'Enter')      openDetail();
+});
+
+// custom cursor
+let mx=0, my=0, cx=0, cy=0;
+window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function loop(){
+  cx += (mx - cx) * 0.22;
+  cy += (my - cy) * 0.22;
+  cursor.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
+  requestAnimationFrame(loop);
+})();
+['.proj-list li','.nav-btn','.foot-cta','.intro-cta','.detail-close','.enter-cue','.viewport','.detail-nav a']
+  .forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-large'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-large'));
+    });
+  });
+
+// === 微视差：仅偏移整个 3D 场景的视点（不直接动卡片） ===
+const viewportEl = document.getElementById('viewport');
+let tiltTargetX = 0, tiltTargetY = 0, tiltX = 0, tiltY = 0;
+let tiltActive = false;
+
+viewportEl.addEventListener('mousemove', e => {
+  const r = viewportEl.getBoundingClientRect();
+  tiltTargetY = ((e.clientX - r.left) / r.width  - 0.5);   // -0.5 → 0.5
+  tiltTargetX = -((e.clientY - r.top)  / r.height - 0.5);
+  tiltActive = true;
+});
+viewportEl.addEventListener('mouseleave', () => {
+  tiltTargetX = 0; tiltTargetY = 0;
+  setTimeout(() => { tiltActive = false; }, 800);
+});
+(function tiltLoop(){
+  tiltX += (tiltTargetX - tiltX) * 0.06;
+  tiltY += (tiltTargetY - tiltY) * 0.06;
+  if(tiltActive || Math.abs(tiltX) > 0.005 || Math.abs(tiltY) > 0.005){
+    // 只移动 perspective-origin → 整个 3D 场景的相机微动，卡片自身不变形
+    coverStage.style.perspectiveOrigin = `${50 + tiltY * 8}% ${50 + tiltX * 5}%`;
+  }
+  requestAnimationFrame(tiltLoop);
+})();
+
+// auto-advance
+let autoTimer = setInterval(() => {
+  if(detail.classList.contains('open')) return;
+  if(!introEl.classList.contains('hide')) return;
+  go(cur + 1);
+}, 9000);
+['mousedown','keydown','touchstart'].forEach(ev =>
+  window.addEventListener(ev, () => { clearInterval(autoTimer); autoTimer = null; }, { once: true })
+);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "student": {
+    "interests": "考生兴趣爱好",
+    "family_situation": "家庭情况",
+    "career_direction": "就业方向",
+    "subject_scores": { "语文": 125, "数学": 138 },
+    "preferred_cities": ["北京", "上海"],
+    "notes": "补充说明"
+  },
+  "analysis": {
+    "intro": "来自 major_recommendation.intro",
+    "strategy": "来自 major_recommendation.strategy",
+    "major_directions": [
+      {
+        "icon": "🧑‍💻",
+        "title": "专业方向名称",
+        "match_level": "极高",
+        "description": "方向说明"
+      }
+    ],
+    "school_strategy": "来自 school_recommendation.school_strategy"
+  },
+  "recommended_majors": [],
+  "recommended_schools": []
+}

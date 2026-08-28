@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<!-- SWAP-1-TITLE: 替换为 "{ATELIER_NAME} {PINYIN} — {DIRECTOR} 作品集 / Studio" -->
+<title>SWAP-1-TITLE — 作品集 / Studio</title>
+<!-- SWAP-2-DESC: 一句话网站简介 -->
+<meta name="description" content="SWAP-2-DESC 作品集">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=EB+Garamond:ital,wght@0,400;1,400&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+<style>
+/* ========= 阿里妈妈刀隶体（艺术感强的隶书） ========= */
+@font-face {
+  font-family: 'Alimama DaoLiTi';
+  src: url('https://cdn.jsdelivr.net/npm/@fontpkg/alimama-dao-li-ti@1.0.5/AlimamaDaoLiTi.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root,
+:root[data-theme="light"]{
+  --c-bg:#ffffff;
+  --c-fg:#000000;
+  --c-mute:#787878;
+  --c-line:#000000;
+  --c-line-soft:#e0e0e0;
+  --c-card:#000000;
+  --c-card-fg:#ffffff;
+  --c-card-mute:#9a9a9a;
+  --c-card-line:rgba(255,255,255,.14);
+  --header-h:60px;
+  --pad:clamp(16px,2vw,28px);
+  --grid-gap:20px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+:root[data-theme="dark"]{
+  --c-bg:#000000;
+  --c-fg:#ffffff;
+  --c-mute:#7a7a7a;
+  --c-line:#ffffff;
+  --c-line-soft:#222222;
+  --c-card:#ffffff;
+  --c-card-fg:#000000;
+  --c-card-mute:#5a5a5a;
+  --c-card-line:rgba(0,0,0,.14);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--c-bg);color:var(--c-fg);min-height:100%}
+html{scroll-behavior:auto}
+body{
+  font-family:"DM Mono","Menlo","Monaco","Roboto Mono",monospace;
+  font-weight:400;font-size:13px;line-height:1.4;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  overflow-x:hidden;cursor:default;
+  transition:background .9s var(--ease),color .9s var(--ease);
+}
+img,video{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;background:none;border:0;color:inherit;cursor:pointer}
+ul,ol{list-style:none}
+
+.kai{font-family:"STKaiti","Kaiti SC","KaiTi","楷体","Songti SC",serif;font-weight:400;letter-spacing:.05em;text-shadow:0 0 .25px currentColor}
+.serif{font-family:"Cormorant Garamond","EB Garamond",serif;font-style:italic;font-weight:300}
+.mono{font-family:"DM Mono",monospace;font-weight:400}
+.li{font-family:"Alimama DaoLiTi","STLibian","SimLi","隶书",serif;font-weight:400;letter-spacing:.06em}
+
+.grid{padding:0 10px;width:100%;display:flex;flex-wrap:nowrap;justify-content:center;min-height:calc(100vh - 100px)}
+.col-1{width:calc(((100vw - 20px) / 10) * 1);padding:0 10px;flex-shrink:0}
+.col-2{width:calc(((100vw - 20px) / 10) * 2);padding:0 10px;flex-shrink:0}
+.col-3{width:calc(((100vw - 20px) / 10) * 3);padding:0 10px;flex-shrink:0}
+.col-4{width:calc(((100vw - 20px) / 10) * 4);padding:0 10px;flex-shrink:0}
+.col-5{width:calc(((100vw - 20px) / 10) * 5);padding:0 10px;flex-shrink:0}
+.col-6{width:calc(((100vw - 20px) / 10) * 6);padding:0 10px;flex-shrink:0}
+.col-7{width:calc(((100vw - 20px) / 10) * 7);padding:0 10px;flex-shrink:0}
+.col-8{width:calc(((100vw - 20px) / 10) * 8);padding:0 10px;flex-shrink:0}
+.col-9{width:calc(((100vw - 20px) / 10) * 9);padding:0 10px;flex-shrink:0}
+.col-10{width:calc(((100vw - 20px) / 10) * 10);padding:0 10px;flex-shrink:0}
+
+.curtain{position:fixed;inset:0;z-index:9999;background:var(--c-bg);display:flex;align-items:center;justify-content:center;pointer-events:auto;transition:transform 1.2s var(--ease),opacity .6s ease .9s}
+.curtain.is-out{transform:translateY(-101%);pointer-events:none}
+.curtain__mark{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:48px;letter-spacing:.2em;color:var(--c-fg);opacity:0;animation:fadeIn 1s ease forwards}
+@keyframes fadeIn{to{opacity:1}}
+
+.paper{position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:multiply;opacity:.06;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .1 0 0 0 0 .09 0 0 0 0 .07 0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+:root[data-theme="dark"] .paper{mix-blend-mode:screen;opacity:.04}
+
+#logo{position:fixed;top:20px;left:20px;z-index:100;color:var(--c-fg);transition:opacity .4s var(--ease)}
+#logo:hover{opacity:.6}
+#logo svg{display:block;width:48px;height:auto}
+#logo .stroke{stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:square}
+#logo .fill{fill:currentColor}
+#logo .label{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:9px;letter-spacing:.5em;fill:currentColor}
+
+#main-menu{position:fixed;z-index:100;right:20px;top:20px;text-align:right}
+#main-menu li{position:relative;margin-bottom:8px;display:block;transition:opacity .3s var(--ease)}
+#main-menu li:hover{opacity:.55}
+#main-menu li.current a::before{content:"";width:6px;height:6px;position:absolute;border-radius:50%;background:var(--c-fg);left:-12px;top:6px}
+#main-menu a{font-family:"DM Mono",monospace;font-size:13px;line-height:1;text-transform:lowercase;letter-spacing:.04em;display:inline-block;color:var(--c-fg)}
+
+.theme-toggle{position:fixed;left:20px;bottom:20px;z-index:100;display:flex;gap:0;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.theme-toggle button{padding:6px 10px;color:var(--c-mute);border:1px solid var(--c-line-soft);border-right:0;transition:color .4s var(--ease),background .4s var(--ease),border-color .4s var(--ease)}
+.theme-toggle button:last-child{border-right:1px solid var(--c-line-soft)}
+.theme-toggle button[data-active="1"]{color:var(--c-bg);background:var(--c-fg);border-color:var(--c-fg)}
+
+#project-view{position:fixed;left:50%;top:60px;transform:translateX(-50%);text-align:center;z-index:100}
+#project-view ul{display:flex;align-items:center;gap:14px}
+#project-view li{display:flex;align-items:center}
+#project-view a{font-family:"DM Mono",monospace;font-size:13px;line-height:1;text-transform:lowercase;letter-spacing:.04em;color:var(--c-fg);display:inline-flex;align-items:center;gap:8px}
+#project-view .icon{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--c-fg);width:22px;height:22px;flex-shrink:0}
+#project-view .icon svg{display:block}
+#project-view .icon svg rect{fill:var(--c-fg)}
+#project-view span{display:inline-block;padding-bottom:1px;border-bottom:1px solid transparent;transition:border-color .3s var(--ease)}
+#project-view a:hover span,#project-view .current span{border-bottom-color:var(--c-fg)}
+
+body[data-view="detail"] .view-home,
+body[data-view="detail"] #project-view{display:none}
+body[data-view="home"] .view-detail{display:none}
+
+.view-home{padding-top:0;padding-bottom:120px}
+
+.brand-block{padding:140px 20px 80px;text-align:center}
+.brand-block .zh{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:clamp(56px,9vw,140px);line-height:1;letter-spacing:.18em;text-indent:.18em;color:var(--c-fg);display:block}
+.brand-block .en{font-family:"Cormorant Garamond","EB Garamond",serif;font-style:italic;font-size:clamp(18px,1.6vw,24px);letter-spacing:.18em;color:var(--c-mute);margin-top:18px;display:block;text-transform:uppercase}
+.brand-block .tagline{font-family:"STKaiti","KaiTi","楷体",serif;font-size:14px;letter-spacing:.08em;color:var(--c-fg);margin-top:32px;line-height:1.9;max-width:520px;margin-left:auto;margin-right:auto;text-shadow:0 0 .25px currentColor}
+
+#projects-list{padding-top:60px;margin-bottom:120px;width:100%}
+#projects-list a.item{width:100%;text-align:left;display:block;cursor:pointer;margin-bottom:32px;position:relative;color:var(--c-fg)}
+#projects-list a.item:last-child{margin-bottom:0}
+#projects-list .num{font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.18em;display:inline-block;vertical-align:middle;color:var(--c-mute);margin-right:24px}
+#projects-list .project-name{font-family:"Alimama DaoLiTi","STLibian","SimLi","隶书",serif;font-size:clamp(36px,5vw,72px);line-height:1;letter-spacing:.04em;display:inline-block;vertical-align:middle;color:var(--c-fg)}
+#projects-list .location{font-family:"DM Mono",monospace;font-size:13px;line-height:1;letter-spacing:.04em;opacity:0;transition:opacity .4s var(--ease);display:inline-block;vertical-align:middle;margin-left:30px;color:var(--c-mute)}
+#projects-list .photo-thumb{position:absolute;right:0;top:50%;transform:translateY(-50%);opacity:0;transition:opacity .4s var(--ease);width:calc(((100vw - 20px) / 10) * 3);pointer-events:none}
+#projects-list .photo-grid{position:relative;display:block;width:100%;padding-bottom:calc((100% / 3) * 4);overflow:hidden;background:var(--c-line-soft)}
+#projects-list .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;top:0;left:0}
+#projects-list .item.active .location,
+#projects-list .item.active .photo-thumb{opacity:1}
+#projects-list .item .en-name{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:14px;letter-spacing:.04em;color:var(--c-mute);display:inline-block;vertical-align:baseline;margin-left:14px;opacity:0;transition:opacity .4s var(--ease)}
+#projects-list .item.active .en-name{opacity:.65}
+
+@media (max-width:780px){
+  #projects-list .photo-thumb{position:relative;right:auto;top:auto;transform:none;width:100%;margin-top:14px;opacity:1}
+  #projects-list .item.active .photo-thumb{opacity:1}
+  #projects-list .location{display:block;margin-left:0;margin-top:10px;opacity:1}
+  #projects-list .en-name{display:block;margin-left:0;margin-top:6px;opacity:.55}
+}
+
+#projects-gallery{padding-top:60px;margin-bottom:120px;text-align:center;display:none}
+body[data-mode="gallery"] #projects-gallery{display:block}
+body[data-mode="gallery"] #projects-list{display:none}
+#projects-gallery ul{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}
+#projects-gallery li{margin:0;display:block}
+#projects-gallery a{display:block;position:relative;overflow:hidden;background:var(--c-line-soft)}
+#projects-gallery .image{display:block;width:100%;padding-bottom:calc((100% / 3) * 4);position:relative;overflow:hidden;transition:opacity .3s var(--ease)}
+#projects-gallery img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;top:0;left:0;transition:transform 1.4s var(--ease)}
+#projects-gallery a:hover img{transform:scale(1.04)}
+#projects-gallery a:hover .image{opacity:.85}
+#projects-gallery .ga-title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:"Alimama DaoLiTi","STLibian",serif;font-size:32px;letter-spacing:.08em;color:#fff;text-shadow:0 0 24px #000;opacity:0;transition:opacity .4s var(--ease);z-index:2;text-align:center}
+#projects-gallery a:hover .ga-title{opacity:1}
+@media (max-width:780px){#projects-gallery ul{grid-template-columns:repeat(2,1fr)}}
+
+.about-strip{padding:120px 20px 80px;display:flex;justify-content:center;width:100%}
+.about-strip .inner{width:calc(((100vw - 20px) / 10) * 6);text-align:left}
+.about-strip h3{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:clamp(32px,4vw,56px);letter-spacing:.1em;color:var(--c-fg);margin-bottom:24px}
+.about-strip h3 .en{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:.5em;color:var(--c-mute);margin-left:18px;letter-spacing:.04em}
+.about-strip p{font-family:"STKaiti","KaiTi","楷体",serif;font-size:15px;line-height:2;letter-spacing:.06em;color:var(--c-fg);margin-bottom:18px;text-shadow:0 0 .25px currentColor}
+.about-strip .meta-list{margin-top:36px;border-top:1px solid var(--c-line-soft);padding-top:20px}
+.about-strip .meta-list li{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--c-line-soft);font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.06em}
+.about-strip .meta-list .k{color:var(--c-mute);text-transform:uppercase;letter-spacing:.16em}
+.about-strip .meta-list .v{color:var(--c-fg)}
+
+#svp-credit{font-family:"DM Mono",monospace;font-size:11px;line-height:1.3;color:var(--c-fg);text-align:center;position:fixed;right:14px;bottom:36px;z-index:50;transform:rotate(-45deg);text-decoration:none;opacity:0;transition:opacity .5s ease-in;pointer-events:none}
+#svp-credit span{display:block;font-style:italic}
+#svp-credit.visible{opacity:.55;pointer-events:auto}
+
+footer{padding:60px 20px 30px;text-align:center;border-top:1px solid var(--c-line-soft);margin:0 20px;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.16em;color:var(--c-mute);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+footer .links a{margin-left:14px}
+
+.view-detail{padding-top:90px;padding-bottom:60px;animation:fadeInUp .6s var(--ease);max-width:100%}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+.detail__back-row{padding:20px var(--pad) 0}
+.detail__back{display:inline-flex;align-items:center;gap:10px;font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:lowercase;padding:6px 0;border-bottom:1px solid var(--c-fg);color:var(--c-fg)}
+.detail__back .arrow{display:inline-block;transition:transform .4s var(--ease)}
+.detail__back:hover .arrow{transform:translateX(-6px)}
+
+.detail__head{padding:80px var(--pad) 60px;display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);align-items:end}
+.detail__tag{grid-column:1 / span 12;color:var(--c-mute);margin-bottom:20px;font-family:"Cormorant Garamond",serif;font-style:italic;font-size:14px;letter-spacing:.18em;text-transform:uppercase}
+.detail__title{grid-column:1 / span 9;display:flex;flex-direction:column;gap:8px}
+.detail__title .zh{font-family:"Alimama DaoLiTi","STLibian","SimLi","隶书",serif;font-size:clamp(56px,8vw,120px);line-height:1;letter-spacing:.08em;color:var(--c-fg)}
+.detail__title .en{font-family:"Cormorant Garamond","EB Garamond",serif;font-style:italic;font-weight:300;font-size:clamp(18px,2vw,28px);letter-spacing:.04em;color:var(--c-mute)}
+.detail__year{grid-column:10 / span 3;justify-self:end;align-self:end;font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.18em;color:var(--c-mute);text-align:right}
+@media (max-width:780px){.detail__title{grid-column:1 / -1}.detail__year{grid-column:1 / -1;justify-self:start;margin-top:12px;text-align:left}}
+
+.detail__hero{margin:0 var(--pad);height:78vh;min-height:480px;max-height:840px;overflow:hidden;position:relative;background:var(--c-line-soft)}
+.detail__hero img,.detail__hero video{width:100%;height:100%;object-fit:cover}
+
+.detail__meta{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);padding:40px var(--pad);border-bottom:1px solid var(--c-line-soft);margin:0 var(--pad)}
+.detail__meta dl{grid-column:span 3;display:flex;flex-direction:column;gap:8px}
+.detail__meta dt{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c-mute)}
+.detail__meta dd{font-family:"STKaiti","KaiTi",serif;font-size:14px;letter-spacing:.04em;color:var(--c-fg);text-shadow:0 0 .25px currentColor}
+@media (max-width:780px){.detail__meta dl{grid-column:span 6}}
+
+.detail__body{padding:100px var(--pad) 40px;display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap)}
+.detail__lead{grid-column:2 / span 9;font-family:"Cormorant Garamond","Noto Serif SC",serif;font-weight:300;font-size:clamp(22px,2.4vw,36px);line-height:1.45;letter-spacing:.012em;margin-bottom:60px;color:var(--c-fg)}
+.detail__lead em{font-style:italic;border-bottom:1px solid currentColor;padding-bottom:2px}
+.detail__prose{grid-column:3 / span 7;font-family:"STKaiti","KaiTi","楷体",serif;font-size:15px;line-height:2;letter-spacing:.06em;color:var(--c-fg);text-shadow:0 0 .25px currentColor}
+.detail__prose p{margin-bottom:22px}
+.detail__prose p:first-of-type::first-letter{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:3em;font-weight:400;float:left;line-height:.85;padding:8px 14px 0 0;color:var(--c-fg)}
+@media (max-width:780px){.detail__lead,.detail__prose{grid-column:1 / -1}}
+
+.detail__specs{padding:40px var(--pad) 60px;display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);border-top:1px solid var(--c-line-soft);margin:0 var(--pad)}
+.detail__specs h4{grid-column:1 / span 3;align-self:start;padding-top:14px;font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c-mute)}
+.detail__specs h4 .zh{display:block;font-family:"Alimama DaoLiTi","STLibian",serif;font-style:normal;font-size:22px;letter-spacing:.16em;color:var(--c-fg);margin-bottom:6px}
+.detail__specs dl{grid-column:5 / span 7;display:grid;grid-template-columns:160px 1fr;gap:0 24px}
+.detail__specs dt,.detail__specs dd{padding:14px 0;border-top:1px solid var(--c-line-soft)}
+.detail__specs dt{font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.06em;color:var(--c-mute)}
+.detail__specs dd{font-family:"STKaiti","KaiTi",serif;font-size:14px;letter-spacing:.05em;text-shadow:0 0 .25px currentColor}
+@media (max-width:780px){.detail__specs h4,.detail__specs dl{grid-column:1 / -1}.detail__specs dl{grid-template-columns:120px 1fr}}
+
+.detail__gallery{padding:40px 0 60px;display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin:0 var(--pad)}
+.detail__gallery figure{position:relative;overflow:hidden;background:var(--c-line-soft)}
+.detail__gallery .g-wide{grid-column:span 12}
+.detail__gallery .g-half{grid-column:span 6}
+.detail__gallery .g-third{grid-column:span 4}
+.detail__gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.4s var(--ease)}
+.detail__gallery figure:hover img{transform:scale(1.03)}
+.detail__gallery .g-half img,.detail__gallery .g-third img{aspect-ratio:4/5}
+.detail__gallery .g-wide img{aspect-ratio:16/8}
+.detail__gallery figcaption{position:absolute;left:14px;bottom:12px;color:#fff;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.16em;text-shadow:0 0 6px rgba(0,0,0,.6)}
+@media (max-width:780px){.detail__gallery .g-half,.detail__gallery .g-third{grid-column:span 12}}
+
+.detail__credits{padding:50px var(--pad) 60px;border-top:1px solid var(--c-line-soft);display:grid;grid-template-columns:repeat(12,1fr);gap:var(--grid-gap);margin:0 var(--pad)}
+.detail__credits h4{grid-column:1 / span 3;align-self:start;padding-top:14px;font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--c-mute)}
+.detail__credits h4 .zh{display:block;font-family:"Alimama DaoLiTi","STLibian",serif;font-style:normal;font-size:22px;letter-spacing:.16em;color:var(--c-fg);margin-bottom:6px}
+.detail__credits dl{grid-column:5 / span 7;display:grid;grid-template-columns:200px 1fr;gap:0 24px}
+.detail__credits dt,.detail__credits dd{padding:14px 0;border-top:1px solid var(--c-line-soft)}
+.detail__credits dt{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:12px;letter-spacing:.14em;color:var(--c-mute)}
+.detail__credits dd{font-family:"STKaiti","KaiTi",serif;font-size:14px;letter-spacing:.04em;text-shadow:0 0 .25px currentColor}
+@media (max-width:780px){.detail__credits h4,.detail__credits dl{grid-column:1 / -1}.detail__credits dl{grid-template-columns:1fr;gap:0}.detail__credits dt{padding-bottom:0}.detail__credits dd{border-top:0;padding-top:4px}}
+
+.detail__nav{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;padding:50px var(--pad) 60px;align-items:center;border-top:1px solid var(--c-line-soft);margin:0 var(--pad)}
+.detail__nav a{display:block}
+.detail__nav .prev{justify-self:start;text-align:left}
+.detail__nav .index{justify-self:center;font-family:"DM Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:lowercase;border-bottom:1px solid currentColor;padding-bottom:4px}
+.detail__nav .next{justify-self:end;text-align:right}
+.detail__nav .label{display:block;font-family:"Cormorant Garamond",serif;font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--c-mute);margin-bottom:8px}
+.detail__nav .name{font-family:"Alimama DaoLiTi","STLibian",serif;font-size:clamp(20px,2.2vw,32px);letter-spacing:.06em;line-height:1.2;color:var(--c-fg);transition:opacity .3s var(--ease)}
+.detail__nav a:hover .name{opacity:.55}
+@media (max-width:780px){.detail__nav{grid-template-columns:1fr;gap:24px}.detail__nav .prev,.detail__nav .next,.detail__nav .index{justify-self:start;text-align:left}}
+</style>
+</head>
+<body data-view="home" data-mode="list">
+
+<!-- 帘幕 -->
+<div class="curtain" id="curtain">
+  <!-- SWAP-3-CURTAIN-CHAR: 一个汉字（工作室名首字，例如「白」「墨」「素」「青」） -->
+  <div class="curtain__mark">SWAP-3</div>
+</div>
+
+<div class="paper" aria-hidden="true"></div>
+
+<!-- Logo（左上）-->
+<a id="logo" href="#top" aria-label="返回首页">
+  <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+    <rect class="stroke" x="4" y="4" width="52" height="60"/>
+    <!-- SWAP-4-LOGO-CHAR: 一个汉字（与 SWAP-3 同字）-->
+    <text class="fill" x="30" y="44" text-anchor="middle" font-family="Alimama DaoLiTi, STLibian, serif" font-size="32">字</text>
+    <!-- SWAP-5-LOGO-PINYIN: 拼音（5-6 个英文字母，全大写，例如 BAIWU / MOJI / SUYUAN）-->
+    <text class="label" x="30" y="76" text-anchor="middle">PINYIN</text>
+  </svg>
+</a>
+
+<!-- 主导航（右上）-->
+<nav id="main-menu" aria-label="主导航">
+  <ul>
+    <!-- SWAP-6-NAV: 通常 3 项，第一项是当前页 -->
+    <li class="current"><a href="#top">作品</a></li>
+    <li><a href="#about">关于</a></li>
+    <li><a href="#contact">联系</a></li>
+  </ul>
+</nav>
+
+<!-- 主题切换 -->
+<div class="theme-toggle" role="group" aria-label="主题切换">
+  <button data-theme-set="light" data-active="1">Light</button>
+  <button data-theme-set="dark">Dark</button>
+</div>
+
+<!-- 列表 / 画册 切换 -->
+<nav id="project-view" aria-label="视图切换">
+  <ul>
+    <li class="lista current" data-mode-set="list">
+      <a href="#top">
+        <span class="icon"><svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="2"/><rect y="4" width="10" height="2"/><rect y="8" width="10" height="2"/></svg></span>
+        <span>列表</span>
+      </a>
+    </li>
+    <li class="galeria" data-mode-set="gallery">
+      <a href="#top">
+        <span class="icon"><svg width="10" height="10" viewBox="0 0 10 10"><rect width="4" height="4"/><rect x="6" width="4" height="4"/><rect y="6" width="4" height="4"/><rect x="6" y="6" width="4" height="4"/></svg></span>
+        <span>画册</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ========= HOME VIEW ========= -->
+<main class="view-home" id="top">
+
+<!-- 品牌区 -->
+<section class="brand-block">
+  <!-- SWAP-7-BRAND-ZH: 工作室中文名（2-4 字最佳，例如「白屋」「素园」「墨记」）-->
+  <span class="zh">字&nbsp;&nbsp;名</span>
+  <!-- SWAP-8-BRAND-EN: 拼音 · 城市，例如 "Baiwu Studio · Hangzhou" -->
+  <span class="en">SWAP-8 Studio · City</span>
+  <!-- SWAP-9-TAGLINE: 一句话定位，可换行（用 <br>），20-40 字，楷体气质 -->
+  <p class="tagline">学科一、学科二、学科三 ——<br>一句关于工作方式的低调描述</p>
+</section>
+
+<!-- 列表视图（默认）· hover 行 → 右侧大图浮现 -->
+<div class="grid">
+  <section id="projects-list" class="col-10">
+    <div class="itens">
+      <!-- SWAP-10-LIST-ITEMS: N 件作品的横排卡。每件 <a class="item"> 包含：
+           num   - 罗马数字 i. ii. iii. ...
+           project-name - 中文作品名（隶书大字）
+           en-name - 英文副题（hover 时浮现）
+           location - 「地点，年份 · 工艺/规格」（hover 时浮现）
+           photo-thumb img - 4:3 缩略图（hover 时浮现在右侧）
+           href 必须是 #work/{slug}，slug 与 JSON 数据匹配 -->
+
+      <a href="#work/example-one" class="item active">
+        <span class="num">i.</span>
+        <h2 class="project-name">作品一</h2>
+        <span class="en-name">First Work</span>
+        <span class="location">城市，年份 · 工艺标签</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/143/900/1200"></div>
+        </div>
+      </a>
+
+      <a href="#work/example-two" class="item">
+        <span class="num">ii.</span>
+        <h2 class="project-name">作品二</h2>
+        <span class="en-name">Second Work</span>
+        <span class="location">城市，年份 · 工艺标签</span>
+        <div class="photo-thumb">
+          <div class="photo-grid"><img alt="" src="https://picsum.photos/id/165/900/1200"></div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+</div>
+
+<!-- 画册视图（与列表同步，slug 必须一致）-->
+<div class="grid">
+  <section id="projects-gallery" class="col-10">
+    <ul>
+      <!-- SWAP-11-GALLERY-ITEMS: 与 list 同样的 N 件作品，更紧凑的网格视图 -->
+      <li><a href="#work/example-one">
+        <div class="image"><img alt="" src="https://picsum.photos/id/143/900/1200"></div>
+        <span class="ga-title">作品一</span>
+      </a></li>
+      <li><a href="#work/example-two">
+        <div class="image"><img alt="" src="https://picsum.photos/id/165/900/1200"></div>
+        <span class="ga-title">作品二</span>
+      </a></li>
+    </ul>
+  </section>
+</div>
+
+<!-- 关于 -->
+<section class="about-strip" id="about">
+  <div class="inner">
+    <!-- SWAP-12-ABOUT-TITLE: 中文标题 + 英文副题 -->
+    <h3>关&nbsp;于&nbsp;工&nbsp;作&nbsp;室<span class="en">About the Studio</span></h3>
+    <!-- SWAP-13-ABOUT-PARAGRAPHS: 1-3 段楷体段落，每段 60-120 字，散文感 -->
+    <p>第一段：成立背景、地点、动机。</p>
+    <p>第二段：主理人简介、师承、设计观。</p>
+    <!-- SWAP-14-ABOUT-META: 4-6 项事实（成立年、城市、学科、主理人、开放时间等） -->
+    <ul class="meta-list">
+      <li><span class="k">Founded</span><span class="v">年份</span></li>
+      <li><span class="k">Location</span><span class="v">城市 · 地址</span></li>
+      <li><span class="k">Discipline</span><span class="v">学科 · 学科 · 学科</span></li>
+      <li><span class="k">Director</span><span class="v">主理人姓名</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 联系 -->
+<section class="about-strip" id="contact">
+  <div class="inner">
+    <!-- SWAP-15-CONTACT-TITLE -->
+    <h3>来&nbsp;信<span class="en">Get in Touch</span></h3>
+    <!-- SWAP-16-CONTACT-PARAGRAPHS: 1-2 段，邀请来信的语气 -->
+    <p>一句邀请语 + 一句关于回信周期的承诺。</p>
+    <!-- SWAP-17-CONTACT-META: 4-6 项联系方式 -->
+    <ul class="meta-list">
+      <li><span class="k">E-mail</span><span class="v">hi@example.cn</span></li>
+      <li><span class="k">Phone</span><span class="v">+86 ...</span></li>
+      <li><span class="k">Address</span><span class="v">城市 · 详细地址</span></li>
+      <li><span class="k">Instagram</span><span class="v">@handle</span></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- DETAIL VIEW（动态渲染 · 不要改）-->
+<main class="view-detail" id="detail-root" aria-live="polite"></main>
+
+<!-- 旋转 credit -->
+<!-- SWAP-18-CREDIT: 通常是 "Site by {WHO}" -->
+<a id="svp-credit" href="#top">Site by<span>SWAP-18</span></a>
+
+<footer>
+  <!-- SWAP-19-FOOTER: 3 块 — 版权 / ICP / 社交链接 -->
+  <div>© Anno {Y1} — {Y2} · {NAME} Studio</div>
+  <div>{省 ICP 备 编号}</div>
+  <div class="links">
+    <a href="#">Instagram</a>
+    <a href="#">Are.na</a>
+    <a href="#">公众号</a>
+  </div>
+</footer>
+
+<!-- ========= 作品数据（核心）=========
+  SWAP-20-WORKS-DATA：每件作品一条；slug 必须和上方两个视图里 #work/{slug} 完全一致。
+  字段说明：
+    slug         小写英文 + 连字符，URL ID
+    title_zh     中文标题（2-5 字最佳）
+    title_en     英文标题（书名号风格的副题）
+    year         年份或干支年（例如 "甲辰 / 2024"）
+    tag          顶部分类标签（带方括号）
+    cover        详情页大图 URL（必填）
+    meta         4 项 {label, value}（详情页 4 列摘要）
+    lead         开篇大字段，30-70 字，可用 <em>词</em> 强调
+    prose        3-4 段散文，每段 80-150 字
+    specs        6-10 行规格表 [["Key / 中文键", "值"], ...]
+    gallery      3-6 张图，layout 三选一：g-wide / g-half / g-third
+    credits      4-7 对 [["职位 / Role", "名字"], ...]
+-->
+<script type="application/json" id="works-data">
+[
+  {
+    "slug": "example-one",
+    "title_zh": "作品一",
+    "title_en": "First Work — A Subtitle",
+    "year": "甲辰 / 2024",
+    "tag": "[ 分类 · 子分类 ]",
+    "cover": "https://picsum.photos/id/143/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "类型描述"},
+      {"label": "Year / 年份", "value": "2024"},
+      {"label": "Edition / 印量", "value": "首印 320 本"},
+      {"label": "Format / 开本", "value": "130 × 195 毫米"}
+    ],
+    "lead": "一段开篇陈述：作品的核心动机、形式与你最想留给观众的那一句话。可以在关键词上用 <em>关键词</em> 这种小处理。",
+    "prose": [
+      "第一段：作品的语境——时间、地点、为什么开始。80-150 字。",
+      "第二段：创作过程中的某个决定性的细节——一次相遇、一次失败、一次偶然。",
+      "第三段：最后的呈现形式 + 留给观众的感受。"
+    ],
+    "specs": [
+      ["开本 / Format", "130 × 195 毫米"],
+      ["页数 / Pages", "144 页"],
+      ["纸张 / Paper", "本色棉纸 90gsm"],
+      ["装订 / Binding", "线装四目 · 棉麻线"],
+      ["字体 / Typeface", "字体名称"],
+      ["印刷 / Printing", "印刷工艺 · 印厂名"],
+      ["印量 / Edition", "首印 320 本"],
+      ["定价 / Price", "¥ 388"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/143/1600/900", "layout": "g-wide", "caption": "封面"},
+      {"src": "https://picsum.photos/id/40/800/1000", "layout": "g-half", "caption": "内文跨页"},
+      {"src": "https://picsum.photos/id/88/800/1000", "layout": "g-half"},
+      {"src": "https://picsum.photos/id/121/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/175/600/750", "layout": "g-third"},
+      {"src": "https://picsum.photos/id/200/600/750", "layout": "g-third"}
+    ],
+    "credits": [
+      ["设计 / Design", "主理人姓名"],
+      ["排版 / Typesetting", "助理姓名"],
+      ["手工装订 / Binding", "合作工坊"],
+      ["特别鸣谢 / Acknowledgement", "致谢对象"]
+    ]
+  },
+  {
+    "slug": "example-two",
+    "title_zh": "作品二",
+    "title_en": "Second Work",
+    "year": "癸卯 / 2023",
+    "tag": "[ 分类 ]",
+    "cover": "https://picsum.photos/id/165/1800/1100",
+    "meta": [
+      {"label": "Type / 类型", "value": "类型描述"},
+      {"label": "Year / 年份", "value": "2023"},
+      {"label": "Glyphs / 字符", "value": "1,072 字"},
+      {"label": "Use / 用途", "value": "用途描述"}
+    ],
+    "lead": "一句开篇陈述。可以在关键词上用 <em>关键词</em> 强调。",
+    "prose": [
+      "第一段：起源。80-150 字。",
+      "第二段：方法 / 决定。",
+      "第三段：呈现 / 成果。"
+    ],
+    "specs": [
+      ["参数一 / Spec One", "值"],
+      ["参数二 / Spec Two", "值"],
+      ["参数三 / Spec Three", "值"],
+      ["参数四 / Spec Four", "值"]
+    ],
+    "gallery": [
+      {"src": "https://picsum.photos/id/165/1600/900", "layout": "g-wide"},
+      {"src": "https://picsum.photos/id/0/800/1000", "layout": "g-half"},
+      {"src": "https://picsum.photos/id/20/800/1000", "layout": "g-half"}
+    ],
+    "credits": [
+      ["主创 / Lead", "姓名"],
+      ["合作 / In collaboration with", "合作方"]
+    ]
+  }
+]
+</script>
+
+<script>
+/* ============ 帘幕收起 ============ */
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{
+    const c = document.getElementById('curtain');
+    if (c) c.classList.add('is-out');
+  }, 1100);
+  applyRoute();
+  initSvpCredit();
+});
+
+/* ============ Theme toggle ============ */
+(function themeToggle(){
+  const root = document.documentElement;
+  const buttons = document.querySelectorAll('[data-theme-set]');
+  const saved = localStorage.getItem('lishu-theme');
+  if (saved === 'dark' || saved === 'light'){
+    root.setAttribute('data-theme', saved);
+    buttons.forEach(b=> b.dataset.active = (b.dataset.themeSet === saved) ? '1' : '0');
+  }
+  buttons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const t = btn.dataset.themeSet;
+      root.setAttribute('data-theme', t);
+      localStorage.setItem('lishu-theme', t);
+      buttons.forEach(b=> b.dataset.active = (b === btn) ? '1' : '0');
+    });
+  });
+})();
+
+/* ============ List / Gallery 视图切换 ============ */
+(function viewMode(){
+  const items = document.querySelectorAll('#project-view li[data-mode-set]');
+  function setMode(mode){
+    document.body.dataset.mode = mode;
+    items.forEach(li=>{
+      li.classList.toggle('current', li.dataset.modeSet === mode);
+    });
+    localStorage.setItem('lishu-mode', mode);
+  }
+  const saved = localStorage.getItem('lishu-mode');
+  if (saved === 'gallery' || saved === 'list') setMode(saved);
+  items.forEach(li=>{
+    const link = li.querySelector('a');
+    link.addEventListener('click', (e)=>{
+      e.preventDefault();
+      setMode(li.dataset.modeSet);
+    });
+  });
+})();
+
+/* ============ Hover-row 显示缩略图 ============ */
+(function projectListHover(){
+  const list = document.getElementById('projects-list');
+  if (!list) return;
+  const items = list.querySelectorAll('.item');
+  function resetVisibility(){
+    items.forEach((item, i)=>{ item.classList.toggle('active', i === 0); });
+  }
+  items.forEach(item=>{
+    item.addEventListener('mouseenter', ()=>{
+      items.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+  list.addEventListener('mouseleave', resetVisibility);
+  resetVisibility();
+})();
+
+/* ============ 旋转 credit ============ */
+function initSvpCredit(){
+  const credit = document.getElementById('svp-credit');
+  if (!credit) return;
+  const sentinel = document.createElement('div');
+  sentinel.style.height = '1px';
+  document.body.appendChild(sentinel);
+  const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if (entry.isIntersecting) credit.classList.add('visible');
+      else credit.classList.remove('visible');
+    });
+  }, { threshold:0, rootMargin:'0px 0px 300px 0px' });
+  observer.observe(sentinel);
+}
+
+/* ============ 详情页路由 ============ */
+const WORKS = (() => {
+  try { return JSON.parse(document.getElementById('works-data').textContent); }
+  catch(e){ console.error('works-data JSON parse failed:', e); return []; }
+})();
+const BY_SLUG = Object.fromEntries(WORKS.map(w => [w.slug, w]));
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderDetail(slug){
+  const w = BY_SLUG[slug];
+  const root = document.getElementById('detail-root');
+  if (!w){
+    root.innerHTML = `<div class="detail__back-row"><a class="detail__back" href="#top"><span class="arrow">←</span>返回首页 / back to index</a></div><div style="padding:120px var(--pad);text-align:center"><h2 style="font-family:'Alimama DaoLiTi',serif;font-size:48px;letter-spacing:.1em">作品不存在</h2></div>`;
+    return;
+  }
+  const idx = WORKS.findIndex(x => x.slug === slug);
+  const prev = WORKS[(idx - 1 + WORKS.length) % WORKS.length];
+  const next = WORKS[(idx + 1) % WORKS.length];
+
+  const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(w.cover);
+  const heroMedia = isVideo
+    ? `<video src="${escapeHTML(w.cover)}" autoplay muted loop playsinline></video>`
+    : `<img src="${escapeHTML(w.cover)}" alt="${escapeHTML(w.title_zh||'')}">`;
+
+  const metaHTML = (w.meta||[]).map(m => `<dl><dt>${escapeHTML(m.label)}</dt><dd>${escapeHTML(m.value)}</dd></dl>`).join('');
+  const proseHTML = (w.prose||[]).map(p => `<p>${p}</p>`).join('');
+  const galleryHTML = (w.gallery||[]).map(g => {
+    const layout = g.layout || 'g-half';
+    const cap = g.caption ? `<figcaption>${escapeHTML(g.caption)}</figcaption>` : '';
+    return `<figure class="${layout}"><img src="${escapeHTML(g.src)}" alt="">${cap}</figure>`;
+  }).join('');
+  const specsHTML = (w.specs||[]).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  const creditsHTML = (w.credits||[]).map(([role, name]) => `<dt>${role}</dt><dd>${name}</dd>`).join('');
+
+  root.innerHTML = `
+    <div class="detail__back-row">
+      <a class="detail__back" href="#top"><span class="arrow">←</span>back to index / 返回索引</a>
+    </div>
+    <header class="detail__head">
+      <p class="detail__tag">${escapeHTML(w.tag||'')}</p>
+      <div class="detail__title">
+        <span class="zh">${escapeHTML(w.title_zh||'')}</span>
+        <span class="en">${escapeHTML(w.title_en||'')}</span>
+      </div>
+      <div class="detail__year">${escapeHTML(w.year||'')}</div>
+    </header>
+    <div class="detail__hero">${heroMedia}</div>
+    ${metaHTML ? `<div class="detail__meta">${metaHTML}</div>` : ''}
+    <section class="detail__body">
+      ${w.lead ? `<p class="detail__lead">${w.lead}</p>` : ''}
+      ${proseHTML ? `<div class="detail__prose">${proseHTML}</div>` : ''}
+    </section>
+    ${specsHTML ? `<section class="detail__specs"><h4><span class="zh">规&nbsp;格</span>Specifications</h4><dl>${specsHTML}</dl></section>` : ''}
+    ${galleryHTML ? `<div class="detail__gallery">${galleryHTML}</div>` : ''}
+    ${creditsHTML ? `<section class="detail__credits"><h4><span class="zh">致&nbsp;谢</span>Credits</h4><dl>${creditsHTML}</dl></section>` : ''}
+    <nav class="detail__nav" aria-label="作品导航">
+      <a class="prev" href="#work/${escapeHTML(prev.slug)}">
+        <span class="label">← previous · 前一件</span>
+        <span class="name">${escapeHTML(prev.title_zh||'')}</span>
+      </a>
+      <a class="index" href="#top">all works / 全部作品</a>
+      <a class="next" href="#work/${escapeHTML(next.slug)}">
+        <span class="label">next · 下一件 →</span>
+        <span class="name">${escapeHTML(next.title_zh||'')}</span>
+      </a>
+    </nav>
+  `;
+}
+
+function applyRoute(){
+  const h = location.hash || '';
+  if (h.startsWith('#work/')){
+    const slug = h.slice(6);
+    document.body.dataset.view = 'detail';
+    renderDetail(slug);
+    window.scrollTo({top: 0, behavior: 'instant'});
+  } else {
+    document.body.dataset.view = 'home';
+  }
+}
+
+window.addEventListener('hashchange', applyRoute);
+
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const id = a.getAttribute('href');
+    if (id.length<2) return;
+    if (id.startsWith('#work/')) return;
+    const el = document.querySelector(id);
+    if (!el) return;
+    if (id === '#top'){ e.preventDefault(); window.scrollTo({top:0, behavior:'smooth'}); return; }
+    e.preventDefault();
+    const top = el.getBoundingClientRect().top + window.scrollY - 40;
+    window.scrollTo({top, behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>

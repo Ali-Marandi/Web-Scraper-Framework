@@ -1,0 +1,33 @@
+{
+  "student": {
+    "interests": "与 student.json 一致的辅助画像",
+    "family_situation": "...",
+    "career_direction": "...",
+    "subject_scores": { "语文": 0, "数学": 0 },
+    "preferred_cities": ["北京"],
+    "notes": "..."
+  },
+  "intro": "综合测评开篇（可用 <strong> 强调，结合省份/分数/选科/兴趣）",
+  "strategy": "整体填报策略（专业优先还是院校优先、冲稳保主线）",
+  "major_directions": [
+    {
+      "icon": "🧑‍💻",
+      "title": "前沿信息与硬核科技类",
+      "match_level": "极高 | 高 | 较高 | 一般",
+      "description": "匹配度说明 + 就业出口 + 针对该考生的具体建议（可用 HTML）"
+    }
+  ],
+  "recommended_majors": [
+    {
+      "major_name": "必须与 parsed.json 完全一致",
+      "major_class": "可选",
+      "major_code": "必须与 parsed.json 完全一致",
+      "university_name": "必须与 parsed.json 完全一致",
+      "university_code": "必须与 parsed.json 完全一致",
+      "modal": {
+        "title": "专业推荐：专业名称",
+        "body": "<h4>核心推荐维度</h4><ul><li><strong>可就业方向：</strong>...</li><li><strong>职业发展路径：</strong>...</li><li><strong>匹配理由：</strong>...</li></ul>"
+      }
+    }
+  ]
+}

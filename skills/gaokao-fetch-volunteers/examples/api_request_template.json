@@ -1,0 +1,19 @@
+{
+  "province": "北京",
+  "classify": "综合",
+  "subjects": "物理,化学,生物",
+  "gradeType": "本科",
+  "score": 650,
+  "rank": null,
+  "batch": "本科批",
+  "universitys": null,
+  "provinces": null,
+  "tags": null,
+  "majorClass": null,
+  "universityNum": 30,
+  "majorNum": 6,
+  "isAdjust": true,
+  "volunteerType": "ACADEMY_GROUP",
+  "returnUniversityNum": 30,
+  "intentionNum": 0
+}

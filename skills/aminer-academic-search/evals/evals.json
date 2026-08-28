@@ -1,0 +1,166 @@
+{
+  "skill_name": "aminer-academic-search",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'd like to understand Andrew Ng's complete academic profile, including his research interests, important papers he has published, any patents, and research projects he has participated in. Please use the AMiner API to look this up for me. My token is <YOUR_TOKEN>",
+      "expected_output": "The estimated cost (~¥6.00) exceeds the ¥5 threshold. Before executing, display the planned call chain and cost breakdown, and ask the user for confirmation. After the user confirms, run the scholar_profile workflow. After completion, output a cost summary.",
+      "files": [],
+      "expectations": [
+        "Displayed the planned call chain with estimated cost BEFORE making paid API calls",
+        "Estimated total cost exceeds ¥5, so asked the user for confirmation before proceeding",
+        "After user confirmation, called Scholar Search, Scholar Details, Scholar Portrait, Scholar Papers, etc.",
+        "Output contains the selected.name field with value Andrew Ng",
+        "Output contains a cost summary showing each API called and total cost"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Help me deep-dive into the paper 'Attention Is All You Need' — find it, retrieve its full details (abstract, authors, year), and then see what references it cites. My AMiner token is <YOUR_TOKEN>",
+      "expected_output": "Run the paper_deep_dive workflow: search for the paper → retrieve details → retrieve citation relationships. Output the paper abstract, author list, DOI, and list of cited papers.",
+      "files": [],
+      "expectations": [
+        "Called a Paper Search API to locate the target paper",
+        "Called the Paper Details API (paper_detail) to retrieve the abstract",
+        "Called the Paper Citations API (paper_relation) to retrieve the citation list",
+        "Output contains the detail field with an abstract sub-field",
+        "Output contains the citations_count or citations_preview field"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I need to analyze MIT's research strength — I'd like to know which prominent scholars are affiliated with them, what papers they have published, and what patents they hold. Please use the AMiner API to compile a report for me. Token: <YOUR_TOKEN>",
+      "expected_output": "Run the org_analysis workflow: use Org Disambiguation Pro to find MIT's institution ID, then fetch institution details, scholar list, and paper list in parallel, and compile into a report.",
+      "files": [],
+      "expectations": [
+        "Called the Org Disambiguation Pro API (org_disambiguate_pro) to obtain the institution ID",
+        "Called the Org Details API (org_detail) to retrieve MIT's description",
+        "Called the Org Scholars API (org_person_relation) to retrieve the scholar list",
+        "Called the Org Papers API (org_paper_relation) to retrieve the paper list",
+        "Output contains the org_id field",
+        "Output contains the scholars or papers field"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Help me look up Andrew Ng's publication trends",
+      "expected_output": "Detect that the user has not provided a token; immediately stop all subsequent API calls and guide the user to obtain a token from the AMiner Console.",
+      "files": [],
+      "expectations": [
+        "Clearly inform the user that a token is currently missing and AMiner API calls cannot continue",
+        "No API calls were made",
+        "Provide the console link https://open.aminer.cn/open/board?tab=control",
+        "Prompt the user to continue after obtaining a token"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Help me look up Fei-Fei Li from Stanford University on AMiner and give me her most-cited papers and her most recent papers. My token is <YOUR_TOKEN>",
+      "expected_output": "Prefer paper_qa_search_pro with author_ids/organization_ids filters. First call with sort=citation, then with sort=recent. Each call returns up to 10 card items (fixed page size).",
+      "files": [],
+      "expectations": [
+        "Called the Scholar Search API (person_search) to confirm Fei-Fei Li's author_id",
+        "Called paper_qa_search_pro with author_ids (and organization_ids when available)",
+        "Executed two separate queries: one with sort=citation and one with sort=recent",
+        "Each result set returns paper_id/title(/title_zh)/year card fields and AMiner URLs"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Help me check what papers were published in NeurIPS in 2023. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the venue_papers workflow: venue search to get venue_id, then venue_paper_relation with year=2023 to list papers.",
+      "files": [],
+      "expectations": [
+        "Called the Venue Search API (venue_search) to find NeurIPS venue_id",
+        "Called the Venue Papers API (venue_paper_relation) with year=2023",
+        "Output contains a list of paper titles and IDs",
+        "Each paper entity has an AMiner URL appended"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Search for patents related to quantum computing chips and show me the details of the top results. My token is <YOUR_TOKEN>",
+      "expected_output": "Run patent_search to find patents, then patent_detail for the top results. Output patent titles, inventors, IPC codes, and abstracts.",
+      "files": [],
+      "expectations": [
+        "Called the Patent Search API (patent_search) with query about quantum computing",
+        "Called the Patent Details API (patent_detail) for at least one result",
+        "Output contains patent titles and patent URLs",
+        "Output includes structured fields like IPC or assignee"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "帮我查一下唐杰的学术信息，我的 token 是 <YOUR_TOKEN>",
+      "expected_output": "Handle Chinese input: search for the scholar by Chinese name, return profile information with AMiner URLs.",
+      "files": [],
+      "expectations": [
+        "Called the Scholar Search API (person_search) with a Chinese name",
+        "Successfully returned scholar results (name, org, interests)",
+        "Output contains the scholar's AMiner profile URL",
+        "Response is presented clearly despite Chinese input"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Find me all details about a scholar named XXXNOEXISTSCHOLAR on AMiner. My token is <YOUR_TOKEN>",
+      "expected_output": "Handle empty results gracefully: inform the user that no matching scholar was found, suggest refining the query.",
+      "files": [],
+      "expectations": [
+        "Called the Scholar Search API (person_search)",
+        "Detected that no results were returned",
+        "Clearly informed the user that no matching scholar was found",
+        "Did NOT proceed to call paid detail APIs with invalid IDs"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Help me find all papers about deep learning and give me the full details for every single one. My token is <YOUR_TOKEN>",
+      "expected_output": "Apply cost control: search returns many results, but only fetch details for the top 10 by default. Inform the user that results were limited to control costs.",
+      "files": [],
+      "expectations": [
+        "Called a paper search API and found many results",
+        "Did NOT call paper_detail for all results",
+        "Fetched details for at most 10 papers",
+        "Informed the user that results were limited and they can request more if needed"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Call the AMiner venue_search API directly for 'Nature' and show me the raw result. My token is <YOUR_TOKEN>",
+      "expected_output": "Use the raw API call mode to invoke venue_search with name='Nature'. Return the raw JSON response including venue_id, standard name, aliases, and venue_type.",
+      "files": [],
+      "expectations": [
+        "Called venue_search API directly (raw mode or equivalent curl call)",
+        "Output includes the raw API response with venue_id and name fields",
+        "Output includes a venue URL for the result",
+        "Did not invoke any unnecessary paid APIs"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "I need to find patents held by Shou-Cheng Zhang. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the scholar_patents workflow: search scholar by name, then retrieve patent list via person_patent_relation, then fetch patent details for top results. Output a cost summary at the end.",
+      "files": [],
+      "expectations": [
+        "Called Scholar Search API (person_search) to find the scholar",
+        "Called Scholar Patents API (person_patent_relation) to retrieve patent list",
+        "Called Patent Details API (patent_detail) for at least one patent",
+        "Output includes patent titles and patent URLs",
+        "Output includes a cost summary at the end"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Help me deep-dive into the paper 'BERT: Pre-training of Deep Bidirectional Transformers' — get the full details and citation chain. My token is <YOUR_TOKEN>",
+      "expected_output": "Run the paper_deep_dive workflow (estimated ~¥0.12, below the ¥5 threshold, so no confirmation needed). After completion, output a cost summary showing each API called and total cost.",
+      "files": [],
+      "expectations": [
+        "Did NOT ask for cost confirmation (estimated cost is well below ¥5)",
+        "Called paper search, paper detail, and paper relation APIs",
+        "Output includes paper abstract, authors, and citation information",
+        "Output includes a cost summary at the end showing APIs called and total cost"
+      ]
+    }
+  ]
+}

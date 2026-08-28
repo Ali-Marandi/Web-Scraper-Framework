@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-soft: #f5f5f5;
+      --card: #ffffff;
+      --text: #0a0a0a;
+      --text-mute: #6b6b6f;
+      --text-faint: #a8a8ac;
+      --border: rgba(15, 15, 18, 0.06);
+      --border-strong: rgba(15, 15, 18, 0.12);
+
+      --accent: #0a0a0a;
+
+      --color-chong: #e06b66;
+      --bg-chong: #f7efee;
+      --color-wen: #5b9bc4;
+      --bg-wen: #eef3f7;
+      --color-bao: #9cb85e;
+      --bg-bao: #f1f4ea;
+
+      --r-lg: 28px;
+      --r-md: 20px;
+      --r-sm: 14px;
+      --r-xs: 10px;
+
+      --glass-bg: rgba(255, 255, 255, 0.72);
+      --glass-bg-strong: rgba(255, 255, 255, 0.88);
+      --glass-border: rgba(15, 15, 18, 0.06);
+      --glass-hi: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      --glass-shadow: 0 1px 2px rgba(15, 15, 18, 0.03), 0 8px 24px -14px rgba(15, 15, 18, 0.08);
+      --card-shadow: 0 1px 2px rgba(15, 15, 18, 0.03), 0 12px 32px -20px rgba(15, 15, 18, 0.08);
+      --card-shadow-hover: 0 24px 60px -28px rgba(15, 15, 18, 0.18);
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'MiSans',
+                   'HarmonyOS Sans SC', 'Source Han Sans SC', 'Noto Sans CJK SC',
+                   'Microsoft YaHei UI', sans-serif;
+      --font-serif: 'Inter', 'Helvetica Neue', 'Songti SC', 'Source Han Serif SC',
+                    'Noto Serif SC', 'Noto Serif CJK SC', 'STSong', serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-feature-settings: 'cv11', 'ss01', 'ss03', 'tnum';
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+      text-rendering: optimizeLegibility;
+      min-height: 100vh;
+    }
+
+    .num, .stat-box .count, .prob-val, .pill .v, .profile-item .value,
+    .majors-table td, .stat-box .count {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 32px 28px 120px;
+    }
+
+    /* ===================== HERO ===================== */
+    .hero-section { margin-bottom: 36px; }
+
+    .brand-bar {
+      margin-bottom: 24px;
+    }
+    .brand-bar a {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .brand-bar a:hover { opacity: 0.7; }
+    .brand-logo {
+      height: 32px;
+      width: auto;
+      display: block;
+    }
+
+    .hero-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .hero-header h1 {
+      font-family: var(--font-serif);
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      color: var(--text);
+    }
+    .hero-header .meta-time {
+      color: var(--text-mute);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+      padding-bottom: 4px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0;
+      background: var(--card);
+      padding: 14px 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      margin-top: 50px;
+      margin-bottom: 30px;
+      box-shadow: var(--card-shadow);
+    }
+    .profile-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 2px 18px;
+      position: relative;
+    }
+    .profile-item:first-child { padding-left: 0; }
+    .profile-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 10px;
+      bottom: 10px;
+      width: 1px;
+      background: var(--border);
+    }
+    .profile-item .label {
+      font-size: 11px;
+      color: var(--text-faint);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+    }
+    .profile-item .value {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    /* ===================== STATS NAV ===================== */
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 48px;
+      position: relative;
+      scroll-margin-top: 90px;
+    }
+    .stat-box {
+      flex: 1;
+      min-width: 120px;
+      padding: 22px 24px;
+      background: var(--card-dark, #0a0a0a);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--r-md);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--card-shadow);
+      text-decoration: none;
+      color: #f5f5f5;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.2s;
+    }
+    .stat-box.stat-link {
+      cursor: pointer;
+      user-select: none;
+    }
+    .stat-box.stat-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.4);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+    .stat-box.stat-link:active {
+      transform: translateY(0);
+    }
+    .stat-box:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.3);
+      outline-offset: 2px;
+    }
+    .stat-box .count {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .stat-box .label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.55);
+      font-weight: 500;
+    }
+
+    /* ---- stat-box visualization elements ---- */
+    .stat-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .stat-num-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-ring {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+    .stat-ring .track {
+      stroke: rgba(255, 255, 255, 0.1);
+      fill: none;
+    }
+    .stat-ring .ring-fill {
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .stat-ring.animate .ring-fill {
+      stroke-dashoffset: var(--target-offset, 0);
+    }
+    .stat-dist {
+      display: flex;
+      height: 5px;
+      border-radius: 99px;
+      overflow: hidden;
+      gap: 2px;
+    }
+    .stat-dist .seg {
+      border-radius: 99px;
+      min-width: 3px;
+      transition: opacity 0.2s;
+    }
+    .stat-box:hover .stat-dist .seg {
+      opacity: 0.85;
+    }
+
+    /* ===================== PAGE MODULE TITLE ===================== */
+    .page-module-title {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 56px 0 28px 0;
+      letter-spacing: 0.03em;
+      line-height: 1.3;
+    }
+    .page-module-title:first-of-type { margin-top: 0; }
+
+    /* ===================== ANALYSIS ===================== */
+    .analysis-section {
+      margin-bottom: 48px;
+      scroll-margin-top: 90px;
+    }
+    .analysis-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 36px 40px;
+      box-shadow: var(--card-shadow);
+    }
+    .analysis-card h3 {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 14px;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      line-height: 1.4;
+    }
+    .analysis-card h3:first-of-type { margin-top: 0; }
+    .analysis-card p {
+      font-size: 15px;
+      color: var(--text-secondary, #3d3b38);
+      margin-bottom: 16px;
+      line-height: 1.85;
+      letter-spacing: 0.01em;
+    }
+    .analysis-card p strong { color: var(--text); font-weight: 600; }
+    .analysis-card ul {
+      margin-left: 0;
+      margin-bottom: 18px;
+      color: var(--text-secondary, #3d3b38);
+      list-style: none;
+    }
+    .analysis-card li {
+      margin-bottom: 14px;
+      line-height: 1.8;
+      padding-left: 0;
+      position: relative;
+      letter-spacing: 0.01em;
+    }
+    .analysis-card li::before {
+      content: '';
+    }
+    .analysis-card li strong { color: var(--text); font-weight: 600; }
+    .analysis-card em {
+      font-style: normal;
+      background: var(--bg-soft);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }
+
+    /* ===================== CATEGORY ===================== */
+    .category-section {
+      margin-bottom: 48px;
+      scroll-margin-top: 90px;
+    }
+    .category-section:last-of-type { margin-bottom: 0; }
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: 0.03em;
+      line-height: 1.35;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .title-chong::before { background: var(--color-chong); }
+    .title-wen::before { background: var(--color-wen); }
+    .title-bao::before { background: var(--color-bao); }
+
+    /* ===================== SCHOOL CARD ===================== */
+    .school-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      margin-bottom: 14px;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.2s;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .school-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow-hover);
+      border-color: var(--border-strong);
+    }
+    .card-primary {
+      padding: 28px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+    }
+    .school-info { flex: 1; min-width: 0; }
+    .school-info h3 {
+      font-family: var(--font-sans);
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      letter-spacing: 0.01em;
+      line-height: 1.35;
+    }
+    .school-info h3 .rec-school-btn {
+      display: inline-flex;
+      width: fit-content;
+      margin-top: 0;
+      margin-left: 0;
+    }
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+    .tag {
+      padding: 4px 11px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-soft);
+      color: var(--text-mute);
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+
+    .rec-school-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background: linear-gradient(180deg, #f7efee, #f0e4e2);
+      color: #e06b66;
+      border: 1px solid #ddc4c2;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      vertical-align: middle;
+      letter-spacing: 0.04em;
+    }
+    .rec-school-btn:hover {
+      background: #f0e4e2;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px -2px rgba(224, 107, 102, 0.18);
+    }
+
+    .rec-major {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      background: linear-gradient(180deg, #f1f4ea, #e6ebd8);
+      color: #9cb85e;
+      border: 1px solid #cdd3b4;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      vertical-align: middle;
+      transition: all 0.2s ease;
+    }
+    .rec-major:hover {
+      background: #e6ebd8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px -2px rgba(156, 184, 94, 0.18);
+    }
+
+    /* ===================== PROB ===================== */
+    .prob-container {
+      text-align: right;
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+    .prob-container .prob-val {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .prob-val.chong { color: var(--color-chong); }
+    .prob-val.wen { color: var(--color-wen); }
+    .prob-val.bao { color: var(--color-bao); }
+    .prob-val.range { font-size: 36px; }
+    .prob-val .pct { font-size: 0.55em; font-weight: 600; margin-left: 1px; }
+    .prob-container .prob-label {
+      font-size: 14px;
+      color: var(--text-faint);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+
+    /* ===================== DETAILS ===================== */
+    details {
+      border-top: 1px solid var(--border);
+    }
+    summary {
+      list-style: none;
+      padding: 16px 32px;
+      background: var(--bg-soft);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-mute);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background 0.2s, color 0.2s;
+      letter-spacing: 0.03em;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary:hover {
+      background: #ededeb;
+      color: var(--text);
+    }
+    summary::before {
+      content: '+';
+      display: inline-block;
+      width: 20px;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--text-faint);
+    }
+    details[open] summary::before { content: '−'; }
+    details[open] summary {
+      border-bottom: 1px solid var(--border);
+      background: #ededeb;
+      color: var(--text);
+    }
+    .card-secondary { padding: 24px 32px 28px; }
+
+    .majors-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .majors-table th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--text-faint);
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+    .majors-table td {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--text);
+      letter-spacing: 0.01em;
+      line-height: 1.6;
+    }
+    .majors-table tr:last-child td { border-bottom: none; }
+    .majors-table tr:hover td { background: var(--bg-soft); }
+    .major-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      letter-spacing: 0.01em;
+    }
+    .major-meta {
+      font-size: 12px;
+      color: var(--text-faint);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+    .major-history {
+      font-size: 14px;
+      color: var(--text);
+      margin-top: 0;
+      line-height: 1.6;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+    }
+    .major-history span {
+      display: block;
+    }
+
+    /* ===================== FOOTER ===================== */
+    .footer-note {
+      margin-top: 64px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-faint);
+      line-height: 1.8;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===================== STICKY PROGRESS (bottom dock) ===================== */
+    .sticky-progress {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: calc(100vw - 32px);
+      padding: 6px;
+      background: rgba(12, 12, 14, 0.92);
+      backdrop-filter: blur(24px) saturate(140%);
+      -webkit-backdrop-filter: blur(24px) saturate(140%);
+      border-radius: 999px;
+      box-shadow:
+        0 18px 40px -12px rgba(0, 0, 0, 0.35),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      z-index: 50;
+    }
+    .sticky-progress .pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.55);
+      transition: color 0.2s ease, background 0.25s ease;
+      white-space: nowrap;
+      user-select: none;
+      font-family: inherit;
+    }
+    .sticky-progress .pill:hover {
+      color: #ffffff;
+    }
+    .sticky-progress .pill.active {
+      background: #ffffff;
+      color: #0a0a0a;
+    }
+    .sticky-progress .pill .k {
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+    .sticky-progress .pill .icon-top {
+      display: block;
+    }
+    .sticky-progress .pill .v {
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .sticky-progress .pill.advice .v { color: rgba(255, 255, 255, 0.7); }
+    .sticky-progress .pill.chong .v { color: var(--color-chong); }
+    .sticky-progress .pill.wen .v { color: var(--color-wen); }
+    .sticky-progress .pill.bao .v { color: var(--color-bao); }
+    .sticky-progress .pill.active .v { color: #0a0a0a; }
+    .sticky-progress .pill.active.advice .v,
+    .sticky-progress .pill.active.chong .v,
+    .sticky-progress .pill.active.wen .v,
+    .sticky-progress .pill.active.bao .v { color: #0a0a0a; }
+
+    /* ===================== MODAL ===================== */
+    dialog.rec-modal {
+      border: none;
+      border-radius: var(--r-lg);
+      padding: 0;
+      max-width: 540px;
+      width: 92%;
+      box-shadow: 0 24px 60px -20px rgba(15, 15, 18, 0.25);
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--card);
+      color: var(--text);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    dialog.rec-modal[open] { opacity: 1; }
+    dialog.rec-modal::backdrop {
+      background: rgba(10, 10, 10, 0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title {
+      font-family: var(--font-sans);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0;
+    }
+    .modal-close {
+      cursor: pointer;
+      background: var(--bg-soft);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      line-height: 1;
+      color: var(--text-mute);
+      transition: background 0.2s, color 0.2s;
+      display: grid;
+      place-items: center;
+    }
+    .modal-close:hover {
+      background: #e8e8e6;
+      color: var(--text);
+    }
+    .modal-body {
+      padding: 28px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary, #3d3b38);
+      letter-spacing: 0.01em;
+    }
+    .modal-body h4 {
+      color: var(--text);
+      margin-bottom: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .modal-body ul {
+      margin-left: 22px;
+      margin-bottom: 16px;
+      list-style: none;
+    }
+    .modal-body li {
+      margin-bottom: 10px;
+      margin-left: 10px;
+      position: relative;
+      padding-left: 4px;
+      line-height: 1.75;
+    }
+    .modal-body li::before {
+      content: '';
+    }
+    .modal-body li strong { color: var(--text); font-weight: 600; margin-left: 1px; }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 600px) {
+      .container { padding: 24px 18px 100px; }
+      .hero-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .hero-header h1 { font-size: 30px; }
+      .profile-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px 0;
+        padding: 18px 20px;
+      }
+      .profile-item { padding: 0 14px; }
+      .profile-item:nth-child(odd) { padding-left: 0; }
+      .profile-item:nth-child(even) { padding-right: 0; }
+      .profile-item:not(:last-child)::after { display: none; }
+      .profile-item:nth-child(odd)::after {
+        display: block;
+        right: 0;
+      }
+      .card-primary { flex-direction: column; padding: 22px 22px; }
+      .prob-container { text-align: left; }
+      .stats-container { flex-wrap: wrap; }
+      .stat-box { min-width: 45%; }
+      .majors-table { display: block; overflow-x: auto; }
+      .sticky-progress {
+        bottom: 14px;
+        border-radius: 999px;
+        justify-content: space-between;
+        gap: 2px;
+        padding: 5px;
+      }
+      .sticky-progress .pill {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 6px;
+      }
+      .analysis-card { padding: 24px 22px; }
+      .card-secondary { padding: 20px 18px; }
+      .page-module-title { font-size: 22px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header class="hero-section">
+      <div class="brand-bar">
+        <a href="https://agentmore.chatglm.cn/" target="_blank" rel="noopener">
+          <img src="https://sfile.chatglm.cn/workspace/image/ee/eefb29159a.png" alt="清言 · AgentMore" class="brand-logo" />
+        </a>
+      </div>
+      <div class="hero-header">
+        <h1><a href="https://agentmore.chatglm.cn/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ title }}</a></h1>
+        <div class="meta-time">{{ generated_at }} · 智能算法生成</div>
+      </div>
+
+      <div class="profile-grid">
+        <div class="profile-item"><span class="label">省份</span><span class="value">{{ profile.province or '—' }}</span></div>
+        <div class="profile-item"><span class="label">选科</span><span class="value">{{ subjects_display }}</span></div>
+        <div class="profile-item"><span class="label">成绩</span><span class="value">{{ score_display }}</span></div>
+        <div class="profile-item"><span class="label">批次</span><span class="value">{{ profile.batch or '—' }}</span></div>
+        <div class="profile-item"><span class="label">志愿类型</span><span class="value">{{ volunteer_type_label }}</span></div>
+        <div class="profile-item"><span class="label">调剂</span><span class="value">{{ is_adjust_label }}</span></div>
+      </div>
+
+      <div class="stats-container stats-nav" id="statsNav">
+        <a class="stat-box stat-link" href="#top" aria-label="回到顶部概览">
+          <div class="stat-top">
+            <div class="stat-num-group">
+              <span class="count" style="color:#ffffff">{{ stats.total }}</span>
+              <span class="label">推荐志愿</span>
+            </div>
+          </div>
+          <div class="stat-dist" title="冲 {{ stats.chong }} · 稳 {{ stats.wen }} · 保 {{ stats.bao }}">
+            <span class="seg" style="background:var(--color-chong); flex:{{ stats.chong or 1 }}"></span>
+            <span class="seg" style="background:var(--color-wen); flex:{{ stats.wen or 1 }}"></span>
+            <span class="seg" style="background:var(--color-bao); flex:{{ stats.bao or 1 }}"></span>
+          </div>
+        </a>
+
+        <a class="stat-box stat-link" href="#section-chong" aria-label="跳到冲档志愿">
+          <div class="stat-top">
+            <div class="stat-num-group">
+              <span class="count" style="color:var(--color-chong)">{{ stats.chong }}</span>
+              <span class="label">冲档</span>
+            </div>
+            <svg class="stat-ring" viewBox="0 0 36 36">
+              <circle class="track" cx="18" cy="18" r="15.9" stroke-width="3"/>
+              <circle class="ring-fill" cx="18" cy="18" r="15.9" stroke="var(--color-chong)" stroke-width="3"
+                stroke-dasharray="100" stroke-dashoffset="100" data-pct="{{ stat_pcts.chong }}" transform="rotate(-90 18 18)"/>
+            </svg>
+          </div>
+        </a>
+        <a class="stat-box stat-link" href="#section-wen" aria-label="跳到稳档志愿">
+          <div class="stat-top">
+            <div class="stat-num-group">
+              <span class="count" style="color:var(--color-wen)">{{ stats.wen }}</span>
+              <span class="label">稳档</span>
+            </div>
+            <svg class="stat-ring" viewBox="0 0 36 36">
+              <circle class="track" cx="18" cy="18" r="15.9" stroke-width="3"/>
+              <circle class="ring-fill" cx="18" cy="18" r="15.9" stroke="var(--color-wen)" stroke-width="3"
+                stroke-dasharray="100" stroke-dashoffset="100" data-pct="{{ stat_pcts.wen }}" transform="rotate(-90 18 18)"/>
+            </svg>
+          </div>
+        </a>
+        <a class="stat-box stat-link" href="#section-bao" aria-label="跳到保档志愿">
+          <div class="stat-top">
+            <div class="stat-num-group">
+              <span class="count" style="color:var(--color-bao)">{{ stats.bao }}</span>
+              <span class="label">保档</span>
+            </div>
+            <svg class="stat-ring" viewBox="0 0 36 36">
+              <circle class="track" cx="18" cy="18" r="15.9" stroke-width="3"/>
+              <circle class="ring-fill" cx="18" cy="18" r="15.9" stroke="var(--color-bao)" stroke-width="3"
+                stroke-dasharray="100" stroke-dashoffset="100" data-pct="{{ stat_pcts.bao }}" transform="rotate(-90 18 18)"/>
+            </svg>
+          </div>
+        </a>
+      </div>
+    </header>
+
+    <nav class="sticky-progress" id="stickyProgress" aria-label="快速定位导航">
+      <button class="pill" data-target="#top" type="button" aria-label="回到顶部">
+        <svg class="icon-top" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+      {% if has_analysis %}
+      <button class="pill advice" data-target="#section-analysis" type="button" aria-label="跳到综合建议">
+        <span class="k">综合建议</span>
+      </button>
+      {% endif %}
+      <button class="pill chong" data-target="#section-chong" type="button" aria-label="跳到冲档志愿">
+        <span class="k">冲</span><span class="v">{{ stats.chong }}</span>
+      </button>
+      <button class="pill wen" data-target="#section-wen" type="button" aria-label="跳到稳档志愿">
+        <span class="k">稳</span><span class="v">{{ stats.wen }}</span>
+      </button>
+      <button class="pill bao" data-target="#section-bao" type="button" aria-label="跳到保档志愿">
+        <span class="k">保</span><span class="v">{{ stats.bao }}</span>
+      </button>
+    </nav>
+
+    <main>
+      {% if has_analysis %}
+      <h2 class="page-module-title">一、 综合测评与建议</h2>
+      <section class="analysis-section" id="section-analysis" data-tier="建议">
+        <div class="analysis-card">
+          <p>{{ analysis.intro | safe }}</p>
+          <h3>1. 核心定位与策略</h3>
+          <p>{{ analysis.strategy | safe }}</p>
+          <h3>2. 推荐专业方向解析</h3>
+          <ul>
+            {% for d in analysis.major_directions %}
+            <li><strong>{{ d.icon }} {{ d.title }}</strong><br>{{ d.description | safe }}</li>
+            {% endfor %}
+          </ul>
+          <h3>3. 院校梯度布局建议</h3>
+          <p>{{ analysis.school_strategy | safe }}</p>
+        </div>
+      </section>
+      {% endif %}
+
+      <h2 class="page-module-title">{% if has_analysis %}二、 {% endif %}具体志愿推荐列表</h2>
+
+      {% for section in sections %}
+      <section
+        class="category-section"
+        id="{% if section.label == '冲' %}section-chong{% elif section.label == '稳' %}section-wen{% elif section.label == '保' %}section-bao{% else %}section-{{ section.label }}{% endif %}"
+        data-tier="{{ section.label }}"
+      >
+        <h2 class="section-title {{ section.title_class }}">{{ section.label }}档志愿 ({{ section.count }}所)</h2>
+
+        {% for uni in section.universities %}
+        <article class="school-card">
+          <div class="card-primary">
+            <div class="school-info">
+              <h3>
+                {{ uni.index }}. {{ uni.university_name }}
+                {% if uni.group_subtitle %}<span class="group-id" style="font-weight:400;font-size:14px;color:var(--text-mute)">{{ uni.group_subtitle }}</span>{% endif %}
+                {% if uni.rec_id %}
+                <span class="rec-school-btn" data-rec-id="{{ uni.rec_id }}">👍🏻 推荐学校</span>
+                {% endif %}
+              </h3>
+              {% if uni.tag_list %}
+              <div class="tags-container">
+                {% for tag in uni.tag_list %}<span class="tag">{{ tag }}</span>{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% if uni.prob_display %}
+            <div class="prob-container">
+              <div class="prob-val range {{ uni.type_css }}">{{ uni.prob_display | replace('%', '<span class="pct">%</span>') | safe }}</div>
+              <div class="prob-label">{% if uni.prob_min != uni.prob_max %}预测录取率区间{% else %}预测录取率{% endif %}</div>
+            </div>
+            {% endif %}
+          </div>
+
+          {% if uni.has_details %}
+          <details>
+            <summary>
+              {% if uni.has_major_group %}
+                {% if uni.group_count > 1 %}展开查看 {{ uni.group_count }} 个专业组的历年投档与专业详情{% else %}展开查看历年投档与专业详情{% endif %}
+              {% else %}
+                展开查看专业详情（{{ uni.flat_major_count }} 个专业）
+              {% endif %}
+            </summary>
+            <div class="card-secondary">
+              {% if not uni.has_major_group %}
+              <table class="majors-table">
+                <thead>
+                  <tr>
+                    <th>专业名称</th><th>选科要求</th><th>学制/学费</th><th>计划</th>
+                    <th>历年投档（分/位次）</th><th>专业录取率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in uni.flat_majors %}
+                  <tr>
+                    <td>
+                      <div class="major-name">
+                        {{ m.major_name }}
+                        {% if m.rec_id %}<span class="rec-major" data-rec-id="{{ m.rec_id }}">🔥 推荐专业</span>{% endif %}
+                      </div>
+                      {% if m.major_code or m.major_class %}
+                      <div class="major-meta">{% if m.major_code %}代码: {{ m.major_code }}{% endif %}{% if m.major_code and m.major_class %} | {% endif %}{% if m.major_class %}{{ m.major_class }}{% endif %}</div>
+                      {% endif %}
+                    </td>
+                    <td>{{ m.claim or '不限' }}</td>
+                    <td>{{ m.study_year or '—' }}年 / {{ m.study_cost_display }}</td>
+                    <td>{{ m.plan_num or '—' }}</td>
+                    <td>
+                      {% if m.entry_score_history %}
+                      <div class="major-history">
+                        {% for h in m.entry_score_history[:2] %}<span>{{ h.year }}：{{ h.score }}/{{ h.rank }}</span>{% endfor %}
+                      </div>
+                      {% else %}—{% endif %}
+                    </td>
+                    <td>{% if m.enroll_probability is not none %}<strong>{{ m.enroll_probability }}%</strong>{% else %}—{% endif %}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              {% for group in uni.groups %}
+              {% if group.has_content %}
+              <div class="major-group-block" style="margin-bottom:28px;padding-bottom:28px;border-bottom:1px dashed var(--border);">
+                <div style="display:flex;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+                  <h4 style="font-size:15px;font-weight:600;">专业组 {{ group.major_group or '—' }}</h4>
+                  {% if group.enroll_probability is not none %}<span style="font-size:14px;color:var(--text-mute);">专业组录取率 <strong>{{ group.enroll_probability }}%</strong></span>{% endif %}
+                </div>
+                {% if group.score_history %}
+                <div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:16px;font-size:13px;">
+                  {% for h in group.score_history %}
+                  <div><div style="color:var(--text-mute);">{{ h.year }}年投档</div><div style="font-weight:500;">{{ h.score }}分 / 位次{{ h.rank }} / 计划{{ h.plan_num }}</div></div>
+                  {% endfor %}
+                </div>
+                {% endif %}
+                {% if group.majors %}
+                <table class="majors-table">
+                  <thead>
+                    <tr><th>专业名称</th><th>选科要求</th><th>学制/学费</th><th>计划</th><th>专业录取率</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for m in group.majors %}
+                    <tr>
+                      <td>
+                        <div class="major-name">
+                          {{ m.major_name }}
+                          {% if m.rec_id %}<span class="rec-major" data-rec-id="{{ m.rec_id }}">🔥 推荐专业</span>{% endif %}
+                        </div>
+                        {% if m.major_code or m.major_class %}<div class="major-meta">{% if m.major_code %}代码: {{ m.major_code }}{% endif %}{% if m.major_code and m.major_class %} | {% endif %}{% if m.major_class %}{{ m.major_class }}{% endif %}</div>{% endif %}
+                      </td>
+                      <td>{{ m.claim or '不限' }}</td>
+                      <td>{{ m.study_year or '—' }}年 / {{ m.study_cost_display }}</td>
+                      <td>{{ m.plan_num or '—' }}</td>
+                      <td>{% if m.enroll_probability is not none %}<strong>{{ m.enroll_probability }}%</strong>{% else %}—{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+                {% endif %}
+              </div>
+              {% endif %}
+              {% endfor %}
+              {% endif %}
+            </div>
+          </details>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </section>
+      {% else %}
+      <p style="text-align:center;color:var(--text-mute);padding:48px;">暂无推荐院校数据</p>
+      {% endfor %}
+    </main>
+
+    <footer class="footer-note">
+      <p>录取概率说明：冲档通常 ≤30%；稳档约 50%–70%；保档 ≥80%。历年分数缺失时请优先参考录取概率与同位分。</p>
+      <p style="margin-top: 6px;">本报告基于智能算法生成仅供参考，最终填报请务必核对省教育考试院官方目录。</p>
+    </footer>
+  </div>
+
+  <dialog id="recModal" class="rec-modal" aria-labelledby="recModalTitle">
+    <div class="modal-header">
+      <div class="modal-title" id="recModalTitle">推荐详情</div>
+      <button class="modal-close" onclick="closeRecModal()" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body" id="recModalBody"></div>
+  </dialog>
+
+  <script>
+    window.REC_MODALS = {{ rec_modals_json | safe }};
+
+    function openRecModalById(recId) {
+      var data = window.REC_MODALS && window.REC_MODALS[recId];
+      if (!data) return;
+      var modal = document.getElementById('recModal');
+      document.getElementById('recModalTitle').innerText = data.title || '推荐详情';
+      document.getElementById('recModalBody').innerHTML = data.body || '';
+      modal.showModal();
+    }
+
+    function closeRecModal() {
+      document.getElementById('recModal').close();
+    }
+
+    document.getElementById('recModal').addEventListener('click', function(e) {
+      if (e.target === this) this.close();
+    });
+
+    document.addEventListener('click', function(e) {
+      var el = e.target.closest && e.target.closest('[data-rec-id]');
+      if (!el) return;
+      e.preventDefault();
+      openRecModalById(el.getAttribute('data-rec-id'));
+    });
+
+    (function () {
+      var sticky = document.getElementById('stickyProgress');
+      var statsNav = document.getElementById('statsNav');
+      if (!sticky || !statsNav) return;
+
+      function smoothScrollTo(selector) {
+        var el = document.querySelector(selector);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      sticky.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('button[data-target]');
+        if (!btn) return;
+        e.preventDefault();
+        smoothScrollTo(btn.getAttribute('data-target'));
+      });
+
+      var navObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.target !== statsNav) return;
+        });
+      }, { threshold: 0 });
+      navObserver.observe(statsNav);
+
+      // Animate stat rings on load
+      document.querySelectorAll('.stat-ring').forEach(function (svg) {
+        var fill = svg.querySelector('.ring-fill');
+        if (!fill) return;
+        var pct = parseFloat(fill.getAttribute('data-pct')) || 0;
+        var offset = 100 - Math.min(100, Math.max(0, pct));
+        svg.style.setProperty('--target-offset', offset);
+        requestAnimationFrame(function () {
+          setTimeout(function () { svg.classList.add('animate'); }, 100);
+        });
+      });
+
+      var tierSections = Array.prototype.slice.call(document.querySelectorAll('section[data-tier]'));
+      var tierToTarget = { {% if has_analysis %}'建议': '#section-analysis', {% endif %}'冲': '#section-chong', '稳': '#section-wen', '保': '#section-bao' };
+      var pills = Array.prototype.slice.call(sticky.querySelectorAll('button.pill'));
+
+      function setActive(target) {
+        pills.forEach(function (p) {
+          var t = p.getAttribute('data-target');
+          if (t === '#top') {
+            p.classList.remove('active');
+            return;
+          }
+          if (target && t === target) p.classList.add('active');
+          else p.classList.remove('active');
+        });
+      }
+
+      setActive(null);
+
+      var lastActive = null;
+      var ticking = false;
+      function getCurrentTierTarget() {
+        if (!tierSections.length) return null;
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        var probe = y + 120;
+        var current = null;
+        for (var i = 0; i < tierSections.length; i++) {
+          var sec = tierSections[i];
+          var top = sec.getBoundingClientRect().top + y;
+          if (top <= probe) current = sec;
+          else break;
+        }
+        if (!current) return null;
+        var tier = current.getAttribute('data-tier');
+        return tierToTarget[tier] || null;
+      }
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(function () {
+          ticking = false;
+          var target = getCurrentTierTarget();
+          if (target !== lastActive) {
+            lastActive = target;
+            setActive(target);
+          }
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      onScroll();
+
+      if (!document.getElementById('top')) {
+        var topAnchor = document.createElement('div');
+        topAnchor.id = 'top';
+        topAnchor.style.position = 'absolute';
+        topAnchor.style.top = '0';
+        topAnchor.style.left = '0';
+        document.body.prepend(topAnchor);
+      }
+    })();
+  </script>
+</body>
+</html>
