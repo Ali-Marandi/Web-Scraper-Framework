@@ -239,6 +239,7 @@ class QuantPanel(ctk.CTkFrame):
             "Time Series", "Financial Eng.", "Portfolio",
             "ML & NLP", "Network", "Fuzzy", "Advanced",
             "Macro", "Science", "Micro",
+            "Corp. Finance", "Frontier", "Quantum",
         ]
         for name in tab_names:
             self._tabview.add(name)
@@ -253,6 +254,9 @@ class QuantPanel(ctk.CTkFrame):
         self._build_macro_tab()
         self._build_science_tab()
         self._build_micro_tab()
+        self._build_corpfin_tab()
+        self._build_frontier_tab()
+        self._build_quantum_tab()
 
     # ------------------------------------------------------------------
     # Tab 1: Time Series
@@ -1499,6 +1503,231 @@ class QuantPanel(ctk.CTkFrame):
         except Exception as e:
             self._show_error(str(e))
 
+    # ------------------------------------------------------------------
+    # Tab 11: Corporate Finance
+    # ------------------------------------------------------------------
+
+    def _build_corpfin_tab(self):
+        import numpy as np
+        tab = self._tabview.tab("Corp. Finance")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Method:", r, 0)
+        self._cf_method = ctk.CTkOptionMenu(
+            methods, values=["CAPM Estimate", "APT Estimate", "EMH Test Battery",
+                              "Altman Z-Score", "Beneish M-Score"],
+            **_option_menu_opts())
+        self._cf_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Dataset (CAPM/APT/EMH):", r, 0)
+        self._cf_dataset = ctk.CTkOptionMenu(params, values=[], **_option_menu_opts())
+        self._cf_dataset.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Param 1 (WC/TA or RF rate):", r, 0)
+        self._cf_p1 = ctk.CTkEntry(params, **_entry_opts())
+        self._cf_p1.insert(0, "0.3")
+        self._cf_p1.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Param 2 (RE/TA or Mkt Ret):", r, 0)
+        self._cf_p2 = ctk.CTkEntry(params, **_entry_opts())
+        self._cf_p2.insert(0, "0.4")
+        self._cf_p2.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Param 3 (EBIT/TA):", r, 0)
+        self._cf_p3 = ctk.CTkEntry(params, **_entry_opts())
+        self._cf_p3.insert(0, "0.15")
+        self._cf_p3.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Param 4 (MV/DE):", r, 0)
+        self._cf_p4 = ctk.CTkEntry(params, **_entry_opts())
+        self._cf_p4.insert(0, "1.2")
+        self._cf_p4.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Param 5 (Sales/TA):", r, 0)
+        self._cf_p5 = ctk.CTkEntry(params, **_entry_opts())
+        self._cf_p5.insert(0, "2.0")
+        self._cf_p5.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Run Analysis", lambda: threading.Thread(target=self._run_corpfin, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+
+    def _run_corpfin(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._cf_method.get()
+        try:
+            import numpy as np
+            if method == "CAPM Estimate":
+                ds = self._cf_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                n = len(tsd.returns)
+                market = np.random.normal(0.0005, 0.01, n)
+                result = qe.capm_estimate(tsd.returns, market, float(self._cf_p1.get() or 0.02))
+            elif method == "APT Estimate":
+                ds = self._cf_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                n = len(tsd.returns)
+                factors = np.random.randn(n, 3)
+                result = qe.apt_estimate(tsd.returns, factors)
+            elif method == "EMH Test Battery":
+                ds = self._cf_dataset.get()
+                if not ds: return self._show_error("Select a dataset")
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Dataset not found")
+                result = qe.emh_test(tsd.returns, tsd.values)
+            elif method == "Altman Z-Score":
+                result = qe.altman_z_score(
+                    float(self._cf_p1.get()), float(self._cf_p2.get()),
+                    float(self._cf_p3.get()), float(self._cf_p4.get()),
+                    float(self._cf_p5.get()))
+            elif method == "Beneish M-Score":
+                # Default values for 8 component indices
+                result = qe.beneish_m_score(
+                    1.0, 1.0, 1.0, 1.1, 1.0, 1.0, 1.0, 1.0, 0.0)
+            else:
+                result = {"error": f"Unknown: {method}"}
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    # ------------------------------------------------------------------
+    # Tab 12: Frontier Portfolio Models
+    # ------------------------------------------------------------------
+
+    def _build_frontier_tab(self):
+        tab = self._tabview.tab("Frontier")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Method:", r, 0)
+        self._ft_method = ctk.CTkOptionMenu(
+            methods, values=["Full Frontier Analysis", "Risk Parity",
+                              "Kelly Criterion", "CVaR Optimization", "HRP Portfolio"],
+            **_option_menu_opts())
+        self._ft_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Win Probability (Kelly):", r, 0)
+        self._ft_p1 = ctk.CTkEntry(params, **_entry_opts())
+        self._ft_p1.insert(0, "0.55")
+        self._ft_p1.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Win/Loss Ratio (Kelly):", r, 0)
+        self._ft_p2 = ctk.CTkEntry(params, **_entry_opts())
+        self._ft_p2.insert(0, "2.0")
+        self._ft_p2.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "CVaR Confidence Level:", r, 0)
+        self._ft_p3 = ctk.CTkEntry(params, **_entry_opts())
+        self._ft_p3.insert(0, "0.95")
+        self._ft_p3.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Run Analysis", lambda: threading.Thread(target=self._run_frontier, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+
+    def _run_frontier(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._ft_method.get()
+        try:
+            if method == "Full Frontier Analysis":
+                result = qe.frontier_analysis()
+            elif method == "Risk Parity":
+                result = qe.risk_parity()
+            elif method == "Kelly Criterion":
+                wp = float(self._ft_p1.get() or 0.55)
+                wlr = float(self._ft_p2.get() or 2.0)
+                result = qe.kelly_criterion(wp, wlr)
+            elif method == "CVaR Optimization":
+                conf = float(self._ft_p3.get() or 0.95)
+                result = qe.cvar_optimize(confidence=conf)
+            elif method == "HRP Portfolio":
+                result = qe.hrp_portfolio()
+            else:
+                result = {"error": f"Unknown: {method}"}
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    # ------------------------------------------------------------------
+    # Tab 13: Quantum & Synthetic
+    # ------------------------------------------------------------------
+
+    def _build_quantum_tab(self):
+        tab = self._tabview.tab("Quantum")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Method:", r, 0)
+        self._qm_method = ctk.CTkOptionMenu(
+            methods, values=["Quantum Option Pricing", "Diffusion Synthetic Data",
+                              "Federated Learning Sim", "Quantum Game Theory"],
+            **_option_menu_opts())
+        self._qm_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Spot Price / N-assets / N-silos:", r, 0)
+        self._qm_p1 = ctk.CTkEntry(params, **_entry_opts())
+        self._qm_p1.insert(0, "100")
+        self._qm_p1.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Strike / Volatility / N-samples:", r, 0)
+        self._qm_p2 = ctk.CTkEntry(params, **_entry_opts())
+        self._qm_p2.insert(0, "0.2")
+        self._qm_p2.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(params, "Time / Epsilon / Gamma:", r, 0)
+        self._qm_p3 = ctk.CTkEntry(params, **_entry_opts())
+        self._qm_p3.insert(0, "1.0")
+        self._qm_p3.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Run Analysis", lambda: threading.Thread(target=self._run_quantum, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+
+    def _run_quantum(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._qm_method.get()
+        try:
+            if method == "Quantum Option Pricing":
+                S = float(self._qm_p1.get() or 100)
+                K = S * 1.05
+                sigma = float(self._qm_p2.get() or 0.2)
+                T = float(self._qm_p3.get() or 1.0)
+                result = qe.quantum_option_price(S, K, T, 0.02, sigma)
+            elif method == "Diffusion Synthetic Data":
+                na = int(float(self._qm_p1.get() or 5))
+                result = qe.diffusion_generate(n_assets=na, sde_type='GBM')
+            elif method == "Federated Learning Sim":
+                ns = int(float(self._qm_p1.get() or 5))
+                result = qe.federated_learning_sim(n_silos=ns)
+            elif method == "Quantum Game Theory":
+                gamma = float(self._qm_p3.get() or 0.5)
+                result = qe.quantum_game(game_type='prisoners_dilemma', gamma=gamma)
+            else:
+                result = {"error": f"Unknown: {method}"}
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
     # ==================================================================
     # DATA MANAGEMENT ACTIONS
     # ==================================================================
@@ -1608,7 +1837,8 @@ class QuantPanel(ctk.CTkFrame):
             # Update all option menus
             for menu in [self._ts_dataset_menu, self._ml_dataset_menu,
                          self._anom_dataset_menu, self._tda_dataset_menu,
-                         self._macro_dataset, self._sci_dataset, self._micro_dataset]:
+                         self._macro_dataset, self._sci_dataset, self._micro_dataset,
+                         self._cf_dataset]:
                 current = menu.get()
                 menu.configure(values=names)
                 if current in names:

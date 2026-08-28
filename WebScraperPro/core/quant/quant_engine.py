@@ -30,6 +30,13 @@ from .natural_science_models import (ClimateVaR, HotellingRule, SIRModel,
                                       InnovationSCurve, EpidemicFinance)
 from .market_microstructure import (OrderBookSimulator, BidAskModels,
                                      MarketMakerNash, GeopoliticalRiskModel, RegulatoryCapital)
+from .corporate_finance import (CAPMModel, APTModel, EMHTester,
+                                 AltmanZScore, BeneishMScore)
+from .frontier_models import (FrontierAnalytics, ResampledFrontier,
+                               RiskParityOptimizer, KellyCriterion,
+                               CVaROptimizer, HierarchicalRiskParity)
+from .quantum_synthetic import (QuantumMonteCarlo, DiffusionSyntheticData,
+                                 FederatedLearningSim, QuantumGameTheory)
 
 
 class QuantEngine:
@@ -578,6 +585,178 @@ class QuantEngine:
         return self._record('Microstructure', 'Basel III', result)
 
     # =================================================================
+    # EPIDEMIC-FINANCE BRIDGE
+    # =================================================================
+
+    def epidemic_market_stress(self, returns, volatility, infection_rate=None, mobility_index=None) -> Dict:
+        self._log("Epidemic market stress index")
+        model = EpidemicFinance()
+        r = np.array(returns)
+        v = np.array(volatility)
+        n = len(r)
+        inf = np.array(infection_rate) if infection_rate is not None else np.random.uniform(0, 0.05, n)
+        mob = np.array(mobility_index) if mobility_index is not None else np.random.uniform(0.3, 1.0, n)
+        result = model.market_stress_index(r, v, inf, mob)
+        return self._record('Natural Science', 'Epidemic Stress', result)
+
+    def epidemic_recovery_forecast(self, dataset_name: str, shock_date=None) -> Dict:
+        tsd = self.data.get_dataset(dataset_name)
+        if not tsd: return {"error": f"Dataset '{dataset_name}' not found"}
+        self._log(f"Epidemic recovery forecast on {dataset_name}")
+        model = EpidemicFinance()
+        prices = tsd.values
+        sd = shock_date if shock_date else len(prices) * 3 // 4
+        result = model.recovery_forecast(prices[:sd], sd)
+        return self._record('Natural Science', 'Epidemic Recovery', result)
+
+    # =================================================================
+    # CORPORATE FINANCE
+    # =================================================================
+
+    def capm_estimate(self, returns, market_returns, risk_free_rate=0.02) -> Dict:
+        self._log("CAPM estimation")
+        model = CAPMModel()
+        result = model.estimate(np.array(returns), np.array(market_returns), risk_free_rate)
+        return self._record('Corporate Finance', 'CAPM', result)
+
+    def apt_estimate(self, returns, factor_returns) -> Dict:
+        self._log("APT multi-factor estimation")
+        model = APTModel()
+        result = model.estimate(np.array(returns), np.array(factor_returns))
+        return self._record('Corporate Finance', 'APT', result)
+
+    def emh_test(self, returns, prices=None) -> Dict:
+        self._log("EMH test battery")
+        model = EMHTester()
+        rets = np.array(returns)
+        prc = np.array(prices) if prices is not None else None
+        result = model.summary(rets, prc)
+        return self._record('Corporate Finance', 'EMH', result)
+
+    def altman_z_score(self, wc_ta, re_ta, ebit_ta, mv_de, sales_ta,
+                        model_type='manufacturing') -> Dict:
+        self._log(f"Altman Z-Score ({model_type})")
+        model = AltmanZScore()
+        if model_type == 'manufacturing':
+            z = model.manufacturing(wc_ta, re_ta, ebit_ta, mv_de, sales_ta)
+        elif model_type == 'private':
+            z = model.private_non_manufacturing(wc_ta, re_ta, ebit_ta, mv_de, sales_ta)
+        elif model_type == 'emerging':
+            z = model.emerging_markets(wc_ta, re_ta, ebit_ta, mv_de, sales_ta)
+        else:
+            z = model.manufacturing(wc_ta, re_ta, ebit_ta, mv_de, sales_ta)
+        interp = model.interpret(z.get('z_score', 0), model_type)
+        bond = model.bond_equivalent(z.get('z_score', 0), model_type)
+        z['interpretation'] = interp
+        z['credit_equivalent'] = bond
+        return self._record('Corporate Finance', 'Altman Z-Score', z)
+
+    def beneish_m_score(self, dsri, gmri, aqi, sgi, depi, sgai, tgai, lvgi, tata) -> Dict:
+        self._log("Beneish M-Score manipulation detection")
+        model = BeneishMScore()
+        ms = model.m_score(dsri, gmri, aqi, sgi, depi, sgai, tgai, lvgi, tata)
+        prob = model.probability_of_manipulation(ms.get('m_score', 0))
+        ms['manipulation_probability'] = prob
+        return self._record('Corporate Finance', 'Beneish M-Score', ms)
+
+    # =================================================================
+    # FRONTIER PORTFOLIO MODELS
+    # =================================================================
+
+    def frontier_analysis(self, dataset_names: List[str] = None) -> Dict:
+        self._log("Advanced frontier portfolio analysis")
+        rets_df, names = self.data.get_returns_matrix()
+        if rets_df.empty or len(names) < 3:
+            return {"error": "Need at least 3 datasets"}
+        fa = FrontierAnalytics()
+        result = fa.full_analysis(rets_df.values)
+        result['asset_names'] = names
+        return self._record('Frontier Portfolio', 'Full Analysis', result)
+
+    def risk_parity(self, dataset_names: List[str] = None,
+                     risk_budgets=None) -> Dict:
+        rets_df, names = self.data.get_returns_matrix()
+        if rets_df.empty: return {"error": "No data"}
+        self._log(f"Risk parity on {len(names)} assets")
+        rp = RiskParityOptimizer()
+        result = rp.compute(rets_df.values)
+        result['asset_names'] = names
+        return self._record('Frontier Portfolio', 'Risk Parity', result)
+
+    def kelly_criterion(self, win_prob, win_loss_ratio, fraction=1.0) -> Dict:
+        self._log(f"Kelly criterion: p={win_prob}, b={win_loss_ratio}")
+        # Simple two-outcome Kelly formula: f* = (bp - q) / b
+        q = 1 - win_prob
+        kelly_frac = (win_loss_ratio * win_prob - q) / win_loss_ratio if win_loss_ratio > 0 else 0
+        kelly_frac = max(0, kelly_frac) * fraction
+        result = {
+            'kelly_fraction': kelly_frac,
+            'full_kelly': max(0, (win_loss_ratio * win_prob - q) / win_loss_ratio) if win_loss_ratio > 0 else 0,
+            'applied_fraction': fraction,
+            'win_probability': win_prob,
+            'win_loss_ratio': win_loss_ratio,
+        }
+        return self._record('Frontier Portfolio', 'Kelly Criterion', result)
+
+    def cvar_optimize(self, dataset_names: List[str] = None,
+                       confidence=0.95, target_return=None) -> Dict:
+        rets_df, names = self.data.get_returns_matrix()
+        if rets_df.empty: return {"error": "No data"}
+        self._log(f"CVaR optimization on {len(names)} assets")
+        co = CVaROptimizer(alpha=confidence)
+        result = co.compute(rets_df.values)
+        result['asset_names'] = names
+        return self._record('Frontier Portfolio', 'CVaR Optimize', result)
+
+    def hrp_portfolio(self, dataset_names: List[str] = None) -> Dict:
+        rets_df, names = self.data.get_returns_matrix()
+        if rets_df.empty: return {"error": "No data"}
+        self._log(f"Hierarchical Risk Parity on {len(names)} assets")
+        hrp = HierarchicalRiskParity()
+        result = hrp.compute(rets_df.values)
+        result['asset_names'] = names
+        return self._record('Frontier Portfolio', 'HRP', result)
+
+    # =================================================================
+    # QUANTUM & SYNTHETIC DATA
+    # =================================================================
+
+    def quantum_option_price(self, S, K, T, r, sigma, n_qubits=10) -> Dict:
+        self._log(f"Quantum Monte Carlo option pricing: S={S} K={K}")
+        qmc = QuantumMonteCarlo()
+        result = qmc.quantum_option_pricing(S, K, T, r, sigma, n_qubits)
+        bs = qmc.quantum_walk_option(S, K, T, r, sigma)
+        result['quantum_walk_price'] = bs.get('option_price')
+        return self._record('Quantum & Synthetic', 'Quantum Option', result)
+
+    def diffusion_generate(self, n_assets=5, n_days=252, sde_type='GBM') -> Dict:
+        self._log(f"Diffusion synthetic data: {n_assets} assets, {sde_type}")
+        dsd = DiffusionSyntheticData()
+        result = dsd.univariate_diffusion(n_samples=n_days, n_steps=50, sde_type=sde_type)
+        corr = dsd.correlated_diffusion(n_assets, n_samples=n_days, sde_type=sde_type)
+        result['correlated_paths'] = corr
+        return self._record('Quantum & Synthetic', 'Diffusion Generate', result)
+
+    def federated_learning_sim(self, n_silos=5, n_samples=200, n_features=10) -> Dict:
+        self._log(f"Federated learning simulation: {n_silos} silos")
+        fl = FederatedLearningSim()
+        result = fl.cross_silo_simulation(n_silos, n_samples, n_features)
+        dp = fl.differential_privacy_mechanism(np.random.randn(100), epsilon=1.0)
+        result['dp_mechanism'] = dp
+        return self._record('Quantum & Synthetic', 'Federated Learning', result)
+
+    def quantum_game(self, game_type='prisoners_dilemma', gamma=0.5) -> Dict:
+        self._log(f"Quantum game theory: {game_type}")
+        qgt = QuantumGameTheory()
+        if game_type == 'prisoners_dilemma':
+            result = qgt.quantum_prisoners_dilemma(gamma)
+        elif game_type == 'auction':
+            result = qgt.quantum_auction([100, 90, 85])
+        else:
+            result = qgt.quantum_prisoners_dilemma(gamma)
+        return self._record('Quantum & Synthetic', f'Quantum {game_type}', result)
+
+    # =================================================================
     # CONVENIENCE
     # =================================================================
 
@@ -600,6 +779,12 @@ class QuantEngine:
                               'Hotelling Rule', 'Moore\'s Law'],
             'Microstructure': ['Order Book', 'Roll Spread', 'Nash MM',
                              'Geopolitical Risk', 'Basel III'],
+            'Corporate Finance': ['CAPM', 'APT', 'EMH Tests', 'Altman Z-Score',
+                                  'Beneish M-Score'],
+            'Frontier Portfolio': ['Full Frontier Analysis', 'Risk Parity',
+                                   'Kelly Criterion', 'CVaR Optimization', 'HRP'],
+            'Quantum & Synthetic': ['Quantum Option Pricing', 'Diffusion Models',
+                                    'Federated Learning', 'Quantum Game Theory'],
         }
 
     def full_analysis_report(self, dataset_names: List[str]) -> Dict:
