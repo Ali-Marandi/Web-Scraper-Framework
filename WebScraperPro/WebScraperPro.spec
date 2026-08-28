@@ -35,6 +35,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets', 'assets'),
+        ('/usr/share/fonts/truetype/chinese', 'fonts/chinese'),
     ],
     hiddenimports=[
         # Core UI
@@ -60,6 +61,23 @@ a = Analysis(
         'scipy.integrate',
         'scipy.cluster',
         'scipy.cluster.hierarchy',
+        # Charts & Reports
+        'matplotlib',
+        'matplotlib.backends.backend_tkagg',
+        'matplotlib.figure',
+        'matplotlib.pyplot',
+        'reportlab',
+        'reportlab.lib',
+        'reportlab.lib.pagesizes',
+        'reportlab.platypus',
+        'reportlab.lib.styles',
+        'reportlab.lib.colors',
+        'reportlab.lib.units',
+        # REST API
+        'flask',
+        'flask.json',
+        'jinja2',
+        'markupsafe',
     ] + _quant_modules,
     hookspath=[],
     hooksconfig={},

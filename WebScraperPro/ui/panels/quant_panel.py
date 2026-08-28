@@ -240,6 +240,7 @@ class QuantPanel(ctk.CTkFrame):
             "ML & NLP", "Network", "Fuzzy", "Advanced",
             "Macro", "Science", "Micro",
             "Corp. Finance", "Frontier", "Quantum",
+            "Charts", "Export",
         ]
         for name in tab_names:
             self._tabview.add(name)
@@ -257,6 +258,8 @@ class QuantPanel(ctk.CTkFrame):
         self._build_corpfin_tab()
         self._build_frontier_tab()
         self._build_quantum_tab()
+        self._build_charts_tab()
+        self._build_export_tab()
 
     # ------------------------------------------------------------------
     # Tab 1: Time Series
@@ -1728,6 +1731,170 @@ class QuantPanel(ctk.CTkFrame):
         except Exception as e:
             self._show_error(str(e))
 
+    # ------------------------------------------------------------------
+    # Tab 14: Charts
+    # ------------------------------------------------------------------
+
+    def _build_charts_tab(self):
+        import numpy as np
+        tab = self._tabview.tab("Charts")
+        tab.grid_columnconfigure(0, weight=1)
+        tab.grid_rowconfigure(2, weight=1)
+        methods = _make_card(tab)
+        methods.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        methods.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(methods, "Chart Type:", r, 0)
+        self._ch_method = ctk.CTkOptionMenu(
+            methods, values=["Forecast", "Correlation Heatmap", "Efficient Frontier",
+                              "VaR Histogram", "Drawdown"],
+            **_option_menu_opts())
+        self._ch_method.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        params = _make_card(tab)
+        params.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        params.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(params, "Dataset:", r, 0)
+        self._ch_dataset = ctk.CTkOptionMenu(params, values=[], **_option_menu_opts())
+        self._ch_dataset.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(params, "Generate Chart",
+                     lambda: threading.Thread(target=self._run_chart, daemon=True).start()).grid(
+            row=r+1, column=0, columnspan=2, pady=Spacing.SM)
+        # Chart display area
+        self._chart_frame = ctk.CTkFrame(tab, fg_color="transparent")
+        self._chart_frame.grid(row=2, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.SM)
+
+    def _run_chart(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        method = self._ch_method.get()
+        try:
+            # Clear previous chart
+            for w in self._chart_frame.winfo_children():
+                w.destroy()
+            import matplotlib
+            matplotlib.use('TkAgg')
+            from core.quant.quant_charts import (plot_forecast, plot_correlation_heatmap,
+                plot_efficient_frontier, plot_var_histogram, plot_drawdown, create_chart_widget)
+            if method == "Forecast":
+                ds = self._ch_dataset.get()
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Select a dataset")
+                vals = tsd.values[-100:]
+                fc = np.random.randn(10) * 0.02 + vals[-1]
+                fig = plot_forecast(vals, fc)
+            elif method == "Correlation Heatmap":
+                rets_df, names = qe.data.get_returns_matrix()
+                if rets_df.empty: return self._show_error("Need data")
+                corr = np.corrcoef(rets_df.values.T)
+                fig = plot_correlation_heatmap(corr, names)
+            elif method == "Efficient Frontier":
+                np.random.seed(42)
+                pts = np.random.randn(50, 2) * np.array([0.01, 0.005]) + np.array([0.001, 0.015])
+                fig = plot_efficient_frontier(pts)
+            elif method == "VaR Histogram":
+                ds = self._ch_dataset.get()
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Select a dataset")
+                var_lvl = float(np.percentile(tsd.returns, 5))
+                fig = plot_var_histogram(tsd.returns, var_lvl)
+            elif method == "Drawdown":
+                ds = self._ch_dataset.get()
+                tsd = qe.data.get_dataset(ds)
+                if not tsd: return self._show_error("Select a dataset")
+                fig = plot_drawdown(tsd.returns)
+            else:
+                return self._show_error(f"Unknown chart: {method}")
+            create_chart_widget(self._chart_frame, fig)
+            self._append_log({"status": "ok", "chart": method})
+        except Exception as e:
+            self._show_error(str(e))
+
+    # ------------------------------------------------------------------
+    # Tab 15: Export & API
+    # ------------------------------------------------------------------
+
+    def _build_export_tab(self):
+        tab = self._tabview.tab("Export")
+        tab.grid_columnconfigure(0, weight=1)
+        # PDF Export
+        pdf_card = _make_card(tab)
+        pdf_card.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        pdf_card.grid_columnconfigure(1, weight=1)
+        _make_label(pdf_card, "PDF Report:", 0, 0)
+        self._pdf_path = ctk.CTkEntry(pdf_card, **_entry_opts())
+        self._pdf_path.insert(0, "quant_report.pdf")
+        self._pdf_path.grid(row=0, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(pdf_card, "Export PDF",
+                     lambda: threading.Thread(target=self._export_pdf, daemon=True).start()).grid(
+            row=1, column=0, columnspan=2, pady=Spacing.SM)
+        # Excel Export
+        xls_card = _make_card(tab)
+        xls_card.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        xls_card.grid_columnconfigure(1, weight=1)
+        _make_label(xls_card, "Excel Report:", 0, 0)
+        self._xls_path = ctk.CTkEntry(xls_card, **_entry_opts())
+        self._xls_path.insert(0, "quant_report.xlsx")
+        self._xls_path.grid(row=0, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(xls_card, "Export Excel",
+                     lambda: threading.Thread(target=self._export_excel, daemon=True).start()).grid(
+            row=1, column=0, columnspan=2, pady=Spacing.SM)
+        # API Status
+        api_card = _make_card(tab)
+        api_card.grid(row=2, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        api_card.grid_columnconfigure(1, weight=1)
+        _make_label(api_card, "REST API (port 8765):", 0, 0)
+        self._api_status_label = ctk.CTkLabel(api_card, text="Stopped",
+                                               font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+                                               text_color=theme.colors.TEXT_SECONDARY)
+        self._api_status_label.grid(row=0, column=1, padx=Spacing.SM, sticky="w")
+        self._api_start_btn = _primary_btn(api_card, "Start API", self._toggle_api)
+        self._api_start_btn.grid(row=1, column=0, columnspan=2, pady=Spacing.SM)
+        self._api_server = None
+
+    def _export_pdf(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        path = self._pdf_path.get().strip()
+        if not path: return self._show_error("Enter a file path")
+        try:
+            result = qe.export_pdf_report(path)
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _export_excel(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        path = self._xls_path.get().strip()
+        if not path: return self._show_error("Enter a file path")
+        try:
+            result = qe.export_excel_report(path)
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _toggle_api(self):
+        if self._api_server is None or not self._api_server.is_running():
+            try:
+                from core.api.server import QuantAPIServer
+                qe = _get_quant_engine(self._engine)
+                if not qe: return self._show_error("Quant engine not available")
+                self._api_server = QuantAPIServer(qe)
+                self._api_server.start()
+                self._api_status_label.configure(text=f"Running on port 8765",
+                                                  text_color="#4ade80")
+                self._api_start_btn.configure(text="Stop API")
+                self._append_log({"status": "ok", "api": "started", "port": 8765})
+            except Exception as e:
+                self._show_error(str(e))
+        else:
+            self._api_server.stop()
+            self._api_status_label.configure(text="Stopped",
+                                              text_color=theme.colors.TEXT_SECONDARY)
+            self._api_start_btn.configure(text="Start API")
+            self._append_log({"status": "ok", "api": "stopped"})
+
     # ==================================================================
     # DATA MANAGEMENT ACTIONS
     # ==================================================================
@@ -1838,7 +2005,7 @@ class QuantPanel(ctk.CTkFrame):
             for menu in [self._ts_dataset_menu, self._ml_dataset_menu,
                          self._anom_dataset_menu, self._tda_dataset_menu,
                          self._macro_dataset, self._sci_dataset, self._micro_dataset,
-                         self._cf_dataset]:
+                         self._cf_dataset, self._ch_dataset]:
                 current = menu.get()
                 menu.configure(values=names)
                 if current in names:

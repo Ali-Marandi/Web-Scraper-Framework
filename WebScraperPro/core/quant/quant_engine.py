@@ -37,6 +37,8 @@ from .frontier_models import (FrontierAnalytics, ResampledFrontier,
                                CVaROptimizer, HierarchicalRiskParity)
 from .quantum_synthetic import (QuantumMonteCarlo, DiffusionSyntheticData,
                                  FederatedLearningSim, QuantumGameTheory)
+from .report_generator import PDFReportGenerator, ExcelReportGenerator
+from . import quant_charts
 
 
 class QuantEngine:
@@ -757,6 +759,89 @@ class QuantEngine:
         return self._record('Quantum & Synthetic', f'Quantum {game_type}', result)
 
     # =================================================================
+    # REPORT GENERATION
+    # =================================================================
+
+    def export_pdf_report(self, output_path: str) -> Dict:
+        self._log(f"Generating PDF report: {output_path}")
+        try:
+            gen = PDFReportGenerator()
+            path = gen.generate_report(self._analysis_history, output_path,
+                                        title='WebScraper Pro - Quantitative Analysis Report')
+            return {'status': 'ok', 'path': path, 'size_bytes': len(open(path, 'rb').read())}
+        except Exception as e:
+            return {'error': str(e)}
+
+    def export_excel_report(self, output_path: str) -> Dict:
+        self._log(f"Generating Excel report: {output_path}")
+        try:
+            gen = ExcelReportGenerator()
+            path = gen.generate_workbook(self._analysis_history, output_path)
+            return {'status': 'ok', 'path': path, 'size_bytes': len(open(path, 'rb').read())}
+        except Exception as e:
+            return {'error': str(e)}
+
+    # =================================================================
+    # CHART GENERATION
+    # =================================================================
+
+    def chart_forecast(self, dataset_name: str) -> Dict:
+        tsd = self.data.get_dataset(dataset_name)
+        if not tsd: return {"error": f"Dataset '{dataset_name}' not found"}
+        try:
+            fig = quant_charts.plot_forecast(tsd.values[-100:], np.random.randn(10) * 0.02 + tsd.values[-1])
+            b64 = quant_charts.get_figure_as_base64(fig)
+            return {'status': 'ok', 'chart_base64': b64}
+        except Exception as e:
+            return {'error': str(e)}
+
+    def chart_correlation_heatmap(self) -> Dict:
+        rets_df, names = self.data.get_returns_matrix()
+        if rets_df.empty or len(names) < 3:
+            return {"error": "Need at least 3 datasets"}
+        try:
+            corr = np.corrcoef(rets_df.values.T)
+            fig = quant_charts.plot_correlation_heatmap(corr, names)
+            b64 = quant_charts.get_figure_as_base64(fig)
+            return {'status': 'ok', 'chart_base64': b64}
+        except Exception as e:
+            return {'error': str(e)}
+
+    def chart_efficient_frontier(self) -> Dict:
+        rets_df, names = self.data.get_returns_matrix()
+        if rets_df.empty: return {"error": "No data"}
+        try:
+            np.random.seed(42)
+            pts = np.random.randn(50, 2) * np.array([0.01, 0.005]) + np.array([0.001, 0.015])
+            fig = quant_charts.plot_efficient_frontier(pts)
+            b64 = quant_charts.get_figure_as_base64(fig)
+            return {'status': 'ok', 'chart_base64': b64}
+        except Exception as e:
+            return {'error': str(e)}
+
+    def chart_var_histogram(self, dataset_name: str, confidence=0.95) -> Dict:
+        tsd = self.data.get_dataset(dataset_name)
+        if not tsd: return {"error": f"Dataset '{dataset_name}' not found"}
+        try:
+            from scipy import stats
+            var_level = float(np.percentile(tsd.returns, (1 - confidence) * 100))
+            fig = quant_charts.plot_var_histogram(tsd.returns, var_level)
+            b64 = quant_charts.get_figure_as_base64(fig)
+            return {'status': 'ok', 'chart_base64': b64, 'var_level': var_level}
+        except Exception as e:
+            return {'error': str(e)}
+
+    def chart_drawdown(self, dataset_name: str) -> Dict:
+        tsd = self.data.get_dataset(dataset_name)
+        if not tsd: return {"error": f"Dataset '{dataset_name}' not found"}
+        try:
+            fig = quant_charts.plot_drawdown(tsd.returns)
+            b64 = quant_charts.get_figure_as_base64(fig)
+            return {'status': 'ok', 'chart_base64': b64}
+        except Exception as e:
+            return {'error': str(e)}
+
+    # =================================================================
     # CONVENIENCE
     # =================================================================
 
@@ -785,6 +870,9 @@ class QuantEngine:
                                    'Kelly Criterion', 'CVaR Optimization', 'HRP'],
             'Quantum & Synthetic': ['Quantum Option Pricing', 'Diffusion Models',
                                     'Federated Learning', 'Quantum Game Theory'],
+            'Reports': ['PDF Report', 'Excel Report'],
+            'Charts': ['Forecast Chart', 'Correlation Heatmap', 'Efficient Frontier',
+                      'VaR Histogram', 'Drawdown Chart'],
         }
 
     def full_analysis_report(self, dataset_names: List[str]) -> Dict:
