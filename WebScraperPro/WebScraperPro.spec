@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-WebScraper Pro v1.4.0 — PyInstaller build specification
+WebScraper Pro v1.5.0 — PyInstaller build specification
 Optimized for Windows desktop EXE with full quant finance engine.
 """
 
@@ -27,6 +27,10 @@ _quant_modules = [
     'core.quant.corporate_finance',
     'core.quant.frontier_models',
     'core.quant.quantum_synthetic',
+    'core.quant.report_generator',
+    'core.quant.quant_charts',
+    'core.api',
+    'core.api.server',
 ]
 
 a = Analysis(
