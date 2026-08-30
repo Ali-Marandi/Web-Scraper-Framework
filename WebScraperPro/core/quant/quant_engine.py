@@ -39,6 +39,7 @@ from .quantum_synthetic import (QuantumMonteCarlo, DiffusionSyntheticData,
                                  FederatedLearningSim, QuantumGameTheory)
 from .report_generator import PDFReportGenerator, ExcelReportGenerator
 from . import quant_charts
+from .market_data import MarketDataFeed
 
 
 class QuantEngine:
@@ -46,6 +47,7 @@ class QuantEngine:
 
     def __init__(self):
         self.data = QuantDataManager()
+        self.market = MarketDataFeed()
         self._log_callback: Optional[Callable] = None
         self._progress_callback: Optional[Callable] = None
         self._analysis_history: List[Dict] = []
@@ -759,6 +761,32 @@ class QuantEngine:
         return self._record('Quantum & Synthetic', f'Quantum {game_type}', result)
 
     # =================================================================
+    # MARKET DATA
+    # =================================================================
+
+    def fetch_market_data(self, symbol: str, provider: str = "yahoo",
+                           period: str = "1y") -> Dict:
+        """Fetch real market data and load into the data manager."""
+        self._log(f"Fetching {symbol} from {provider}")
+        result = self.market.load_into_quant_data(
+            self.data, symbol, provider=provider, period=period)
+        return self._record('Market Data', f'Fetch {symbol}', result)
+
+    def get_market_quote(self, symbol: str, provider: str = "yahoo") -> Dict:
+        """Get latest quote for a symbol."""
+        self._log(f"Quote request: {symbol}")
+        return self.market.get_quote(symbol, provider=provider)
+
+    def get_batch_quotes(self, symbols: List[str]) -> Dict:
+        """Get quotes for multiple symbols."""
+        self._log(f"Batch quote: {len(symbols)} symbols")
+        return self.market.get_batch_quotes(symbols)
+
+    def get_popular_tickers(self) -> Dict:
+        """Get curated list of popular tickers."""
+        return {"tickers": self.market.popular_tickers()}
+
+    # =================================================================
     # REPORT GENERATION
     # =================================================================
 
@@ -873,6 +901,8 @@ class QuantEngine:
             'Reports': ['PDF Report', 'Excel Report'],
             'Charts': ['Forecast Chart', 'Correlation Heatmap', 'Efficient Frontier',
                       'VaR Histogram', 'Drawdown Chart'],
+            'Market Data': ['Yahoo Finance', 'Alpha Vantage', 'Batch Quotes',
+                           'Popular Tickers'],
         }
 
     def full_analysis_report(self, dataset_names: List[str]) -> Dict:

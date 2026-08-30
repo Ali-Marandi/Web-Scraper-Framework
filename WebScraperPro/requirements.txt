@@ -11,3 +11,5 @@ scipy>=1.11.0
 matplotlib>=3.7.0
 flask>=3.0.0
 reportlab>=4.0.0
+yfinance>=0.2.0
+websockets>=12.0

@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-WebScraper Pro v1.5.0 — PyInstaller build specification
+WebScraper Pro v1.6.0 — PyInstaller build specification
 Optimized for Windows desktop EXE with full quant finance engine.
 """
 
@@ -31,6 +31,9 @@ _quant_modules = [
     'core.quant.quant_charts',
     'core.api',
     'core.api.server',
+    'core.api.websocket_server',
+    'core.quant.market_data',
+    'core.log_manager',
 ]
 
 a = Analysis(
@@ -82,6 +85,16 @@ a = Analysis(
         'flask.json',
         'jinja2',
         'markupsafe',
+        # Market Data
+        'yfinance',
+        'yfinance.base',
+        'yfinance.ticker',
+        # WebSocket
+        'websockets',
+        'websockets.server',
+        'websockets.legacy',
+        'websockets.legacy.server',
+        'asyncio',
     ] + _quant_modules,
     hookspath=[],
     hooksconfig={},

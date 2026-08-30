@@ -240,7 +240,7 @@ class QuantPanel(ctk.CTkFrame):
             "ML & NLP", "Network", "Fuzzy", "Advanced",
             "Macro", "Science", "Micro",
             "Corp. Finance", "Frontier", "Quantum",
-            "Charts", "Export",
+            "Market Data", "Charts", "Export",
         ]
         for name in tab_names:
             self._tabview.add(name)
@@ -258,6 +258,7 @@ class QuantPanel(ctk.CTkFrame):
         self._build_corpfin_tab()
         self._build_frontier_tab()
         self._build_quantum_tab()
+        self._build_market_tab()
         self._build_charts_tab()
         self._build_export_tab()
 
@@ -1732,7 +1733,110 @@ class QuantPanel(ctk.CTkFrame):
             self._show_error(str(e))
 
     # ------------------------------------------------------------------
-    # Tab 14: Charts
+    # Tab 14: Market Data
+    # ------------------------------------------------------------------
+
+    def _build_market_tab(self):
+        tab = self._tabview.tab("Market Data")
+        tab.grid_columnconfigure(1, weight=1)
+        tab.grid_rowconfigure(4, weight=1)
+
+        # Fetch row
+        fetch_card = _make_card(tab)
+        fetch_card.grid(row=0, column=0, sticky="ew", padx=Spacing.MD, pady=(Spacing.SM, 0))
+        fetch_card.grid_columnconfigure(1, weight=1)
+        r = 0
+        _make_label(fetch_card, "Symbol:", r, 0)
+        self._md_symbol = ctk.CTkEntry(fetch_card, **_entry_opts())
+        self._md_symbol.insert(0, "AAPL")
+        self._md_symbol.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(fetch_card, "Provider:", r, 0)
+        self._md_provider = ctk.CTkOptionMenu(
+            fetch_card, values=["yahoo", "alpha_vantage"], **_option_menu_opts())
+        self._md_provider.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        _make_label(fetch_card, "Period:", r, 0)
+        self._md_period = ctk.CTkOptionMenu(
+            fetch_card, values=["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"], **_option_menu_opts())
+        self._md_period.set("1y")
+        self._md_period.grid(row=r, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        r += 1
+        btn_row = ctk.CTkFrame(fetch_card, fg_color="transparent")
+        btn_row.grid(row=r, column=0, columnspan=2, pady=Spacing.SM)
+        _primary_btn(btn_row, "Fetch Data",
+                     lambda: threading.Thread(target=self._fetch_market_data, daemon=True).start()).pack(
+            side="left", padx=Spacing.XS)
+        _secondary_btn(btn_row, "Get Quote",
+                       lambda: threading.Thread(target=self._get_quote, daemon=True).start()).pack(
+            side="left", padx=Spacing.XS)
+        _secondary_btn(btn_row, "Popular Tickers", self._show_popular_tickers).pack(
+            side="left", padx=Spacing.XS)
+
+        # Batch quote row
+        batch_card = _make_card(tab)
+        batch_card.grid(row=1, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        batch_card.grid_columnconfigure(1, weight=1)
+        _make_label(batch_card, "Batch (comma-sep):", 0, 0)
+        self._md_batch = ctk.CTkEntry(batch_card, **_entry_opts())
+        self._md_batch.insert(0, "AAPL, GOOGL, MSFT, TSLA, NVDA")
+        self._md_batch.grid(row=0, column=1, padx=Spacing.SM, pady=Spacing.XS, sticky="ew")
+        _primary_btn(batch_card, "Fetch Batch",
+                     lambda: threading.Thread(target=self._batch_quotes, daemon=True).start()).grid(
+            row=1, column=0, columnspan=2, pady=Spacing.SM)
+
+        # Results area
+        self._market_results = _make_results_box(tab, height=300)
+        self._market_results.grid(row=4, column=0, sticky="nsew", padx=Spacing.MD, pady=Spacing.SM)
+
+    def _fetch_market_data(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        symbol = self._md_symbol.get().strip().upper()
+        provider = self._md_provider.get()
+        period = self._md_period.get()
+        if not symbol: return self._show_error("Enter a symbol")
+        try:
+            result = qe.fetch_market_data(symbol, provider=provider, period=period)
+            _set_results(self._market_results, result)
+            self.after(0, self._refresh_dataset_lists)
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _get_quote(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        symbol = self._md_symbol.get().strip().upper()
+        if not symbol: return self._show_error("Enter a symbol")
+        try:
+            result = qe.get_market_quote(symbol, provider=self._md_provider.get())
+            _set_results(self._market_results, result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _batch_quotes(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        raw = self._md_batch.get().strip()
+        symbols = [s.strip().upper() for s in raw.split(",") if s.strip()]
+        if not symbols: return self._show_error("Enter symbols")
+        try:
+            result = qe.get_batch_quotes(symbols)
+            _set_results(self._market_results, result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _show_popular_tickers(self):
+        qe = _get_quant_engine(self._engine)
+        if not qe: return self._show_error("Quant engine not available")
+        try:
+            result = qe.get_popular_tickers()
+            _set_results(self._market_results, result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    # ------------------------------------------------------------------
+    # Tab 15: Charts
     # ------------------------------------------------------------------
 
     def _build_charts_tab(self):
@@ -1811,7 +1915,7 @@ class QuantPanel(ctk.CTkFrame):
             self._show_error(str(e))
 
     # ------------------------------------------------------------------
-    # Tab 15: Export & API
+    # Tab 16: Export & API & WebSocket & Logs
     # ------------------------------------------------------------------
 
     def _build_export_tab(self):
@@ -1839,7 +1943,7 @@ class QuantPanel(ctk.CTkFrame):
         _primary_btn(xls_card, "Export Excel",
                      lambda: threading.Thread(target=self._export_excel, daemon=True).start()).grid(
             row=1, column=0, columnspan=2, pady=Spacing.SM)
-        # API Status
+        # REST API Status
         api_card = _make_card(tab)
         api_card.grid(row=2, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
         api_card.grid_columnconfigure(1, weight=1)
@@ -1848,9 +1952,40 @@ class QuantPanel(ctk.CTkFrame):
                                                font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
                                                text_color=theme.colors.TEXT_SECONDARY)
         self._api_status_label.grid(row=0, column=1, padx=Spacing.SM, sticky="w")
-        self._api_start_btn = _primary_btn(api_card, "Start API", self._toggle_api)
-        self._api_start_btn.grid(row=1, column=0, columnspan=2, pady=Spacing.SM)
+        api_btn_row = ctk.CTkFrame(api_card, fg_color="transparent")
+        api_btn_row.grid(row=1, column=0, columnspan=2, pady=Spacing.SM)
+        self._api_start_btn = _primary_btn(api_btn_row, "Start REST API", self._toggle_api)
+        self._api_start_btn.pack(side="left", padx=Spacing.XS)
         self._api_server = None
+        # WebSocket Status
+        ws_card = _make_card(tab)
+        ws_card.grid(row=3, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        ws_card.grid_columnconfigure(1, weight=1)
+        _make_label(ws_card, "WebSocket (port 8766):", 0, 0)
+        self._ws_status_label = ctk.CTkLabel(ws_card, text="Stopped",
+                                              font=(Typography.FONT_FAMILY, Typography.SMALL_SIZE),
+                                              text_color=theme.colors.TEXT_SECONDARY)
+        self._ws_status_label.grid(row=0, column=1, padx=Spacing.SM, sticky="w")
+        self._ws_start_btn = _primary_btn(ws_card, "Start WebSocket", self._toggle_websocket)
+        self._ws_start_btn.grid(row=1, column=0, columnspan=2, pady=Spacing.SM)
+        self._ws_server = None
+        # Log Management
+        log_card = _make_card(tab)
+        log_card.grid(row=4, column=0, sticky="ew", padx=Spacing.MD, pady=Spacing.SM)
+        log_card.grid_columnconfigure(1, weight=1)
+        log_btn_row = ctk.CTkFrame(log_card, fg_color="transparent")
+        log_btn_row.grid(row=0, column=0, columnspan=2, pady=Spacing.SM)
+        _secondary_btn(log_btn_row, "View Logs",
+                       lambda: threading.Thread(target=self._view_logs, daemon=True).start()).pack(
+            side="left", padx=Spacing.XS)
+        _secondary_btn(log_btn_row, "Export Logs (JSON)",
+                       lambda: threading.Thread(target=self._export_logs, daemon=True).start()).pack(
+            side="left", padx=Spacing.XS)
+        _secondary_btn(log_btn_row, "Log Stats",
+                       lambda: threading.Thread(target=self._log_stats, daemon=True).start()).pack(
+            side="left", padx=Spacing.XS)
+        _secondary_btn(log_btn_row, "Clear Logs", self._clear_logs).pack(
+            side="left", padx=Spacing.XS)
 
     def _export_pdf(self):
         qe = _get_quant_engine(self._engine)
@@ -1884,7 +2019,7 @@ class QuantPanel(ctk.CTkFrame):
                 self._api_server.start()
                 self._api_status_label.configure(text=f"Running on port 8765",
                                                   text_color="#4ade80")
-                self._api_start_btn.configure(text="Stop API")
+                self._api_start_btn.configure(text="Stop REST API")
                 self._append_log({"status": "ok", "api": "started", "port": 8765})
             except Exception as e:
                 self._show_error(str(e))
@@ -1892,8 +2027,66 @@ class QuantPanel(ctk.CTkFrame):
             self._api_server.stop()
             self._api_status_label.configure(text="Stopped",
                                               text_color=theme.colors.TEXT_SECONDARY)
-            self._api_start_btn.configure(text="Start API")
+            self._api_start_btn.configure(text="Start REST API")
             self._append_log({"status": "ok", "api": "stopped"})
+
+    def _toggle_websocket(self):
+        if self._ws_server is None or not self._ws_server.is_running():
+            try:
+                from core.api.websocket_server import QuantWebSocketServer
+                qe = _get_quant_engine(self._engine)
+                if not qe: return self._show_error("Quant engine not available")
+                self._ws_server = QuantWebSocketServer(qe)
+                self._ws_server.start()
+                import time
+                time.sleep(0.5)
+                self._ws_status_label.configure(text=f"Running on port 8766",
+                                                 text_color="#4ade80")
+                self._ws_start_btn.configure(text="Stop WebSocket")
+                self._append_log({"status": "ok", "websocket": "started", "port": 8766})
+            except Exception as e:
+                self._show_error(str(e))
+        else:
+            self._ws_server.stop()
+            self._ws_status_label.configure(text="Stopped",
+                                             text_color=theme.colors.TEXT_SECONDARY)
+            self._ws_start_btn.configure(text="Start WebSocket")
+            self._append_log({"status": "ok", "websocket": "stopped"})
+
+    def _view_logs(self):
+        try:
+            from core.log_manager import LogManager
+            lm = LogManager.get_instance()
+            entries = lm.get_recent(limit=30)
+            self._display_result(entries if entries else {"message": "No log entries"})
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _export_logs(self):
+        try:
+            from core.log_manager import LogManager
+            lm = LogManager.get_instance()
+            result = lm.export_logs("webscraperpro_logs.json", format="json")
+            self._display_result(result)
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _log_stats(self):
+        try:
+            from core.log_manager import LogManager
+            lm = LogManager.get_instance()
+            self._display_result(lm.get_log_stats())
+        except Exception as e:
+            self._show_error(str(e))
+
+    def _clear_logs(self):
+        try:
+            from core.log_manager import LogManager
+            lm = LogManager.get_instance()
+            lm.clear_logs()
+            self._append_log({"status": "ok", "logs_cleared": True})
+        except Exception as e:
+            self._show_error(str(e))
 
     # ==================================================================
     # DATA MANAGEMENT ACTIONS

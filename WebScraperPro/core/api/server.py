@@ -34,8 +34,8 @@ class QuantAPIServer:
         Bind port for the Flask server.
     """
 
-    VERSION = "v1.5.0"
-    METHOD_COUNT = 72
+    VERSION = "v1.6.0"
+    METHOD_COUNT = 76
 
     def __init__(
         self,
@@ -282,6 +282,85 @@ class QuantAPIServer:
             try:
                 history = getattr(self._engine, "history", [])
                 return jsonify({"history": history}), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        # --------------------------------------------------------------
+        # Market Data
+        # --------------------------------------------------------------
+        @app.route("/api/v1/market/quote/<symbol>", methods=["GET"])
+        def market_quote(symbol: str) -> tuple[Response, int]:
+            try:
+                provider = request.args.get("provider", "yahoo")
+                result = self._engine.get_market_quote(symbol, provider=provider)
+                return jsonify({"symbol": symbol, "data": result}), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        @app.route("/api/v1/market/fetch", methods=["POST"])
+        def market_fetch() -> tuple[Response, int]:
+            try:
+                data = request.get_json(force=True)
+                symbol = data.get("symbol", "AAPL")
+                provider = data.get("provider", "yahoo")
+                period = data.get("period", "1y")
+                result = self._engine.fetch_market_data(symbol, provider=provider, period=period)
+                return jsonify({"status": "fetched", "result": result}), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        @app.route("/api/v1/market/batch-quotes", methods=["POST"])
+        def market_batch() -> tuple[Response, int]:
+            try:
+                data = request.get_json(force=True)
+                symbols = data.get("symbols", ["AAPL", "GOOGL", "MSFT"])
+                result = self._engine.get_batch_quotes(symbols)
+                return jsonify({"quotes": result}), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        @app.route("/api/v1/market/tickers", methods=["GET"])
+        def popular_tickers() -> tuple[Response, int]:
+            try:
+                result = self._engine.get_popular_tickers()
+                return jsonify(result), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        # --------------------------------------------------------------
+        # Log Management
+        # --------------------------------------------------------------
+        @app.route("/api/v1/logs/recent", methods=["GET"])
+        def logs_recent() -> tuple[Response, int]:
+            try:
+                from core.log_manager import LogManager
+                lm = LogManager.get_instance()
+                limit = int(request.args.get("limit", 50))
+                level = request.args.get("level", None)
+                entries = lm.get_recent(limit=limit, level=level)
+                return jsonify({"entries": entries, "count": len(entries)}), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        @app.route("/api/v1/logs/stats", methods=["GET"])
+        def logs_stats() -> tuple[Response, int]:
+            try:
+                from core.log_manager import LogManager
+                lm = LogManager.get_instance()
+                return jsonify(lm.get_log_stats()), 200
+            except Exception as exc:
+                return jsonify({"error": str(exc)}), 400
+
+        @app.route("/api/v1/logs/export", methods=["POST"])
+        def logs_export() -> tuple[Response, int]:
+            try:
+                from core.log_manager import LogManager
+                lm = LogManager.get_instance()
+                data = request.get_json(force=True)
+                output_path = data.get("output_path", "logs_export.json")
+                fmt = data.get("format", "json")
+                result = lm.export_logs(output_path, format=fmt)
+                return jsonify(result), 200
             except Exception as exc:
                 return jsonify({"error": str(exc)}), 400
 
