@@ -1,10 +1,46 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Application/runtime data
+projects/
+history/
+.download/
 tool-results/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
 dist/
 build/
 *.spec
-projects/
-history/
-worklog.md
-.download/
+*.egg-info/
+
+# Local tooling
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
